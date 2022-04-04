@@ -17,7 +17,7 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR})
 
 FILE(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp" "${HDR_DIR}/*.hpp")
 ADD_CUSTOM_TARGET(prechecks
-  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=1 ${SRC_FILES}
+  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_FILES}
   COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_FILES}
   COMMAND clang-format -i ${SRC_FILES}
 )
