@@ -1,2 +1,2 @@
 # opengl-practice
-My OpenGL practice.
+My OpenGL 4.6 core practice.
