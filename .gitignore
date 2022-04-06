@@ -23,7 +23,7 @@
 # Compiled Static libraries
 *.lai
 *.la
-#*.a
+*.a
 *.lib
 
 # Executables
@@ -32,7 +32,7 @@
 *.app
 
 # Static and shared libraries
-#lib/
+lib/
 
 # Build files
 CMakeCache.txt
