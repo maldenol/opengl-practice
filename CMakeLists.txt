@@ -1,8 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.21.0)
 
-PROJECT(opengl-practice VERSION 1.0.0 LANGUAGES C CXX)
+PROJECT(opengl-practice VERSION 1.0.0 LANGUAGES CXX)
 
-SET(CMAKE_C_COMPILER gcc)
 SET(CMAKE_CXX_COMPILER g++)
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -15,15 +14,16 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR})
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR})
 
-FILE(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp" "${HDR_DIR}/*.hpp")
-ADD_CUSTOM_TARGET(prechecks
-  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_FILES}
-  COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_FILES}
-  COMMAND clang-format -i ${SRC_FILES}
+FILE(GLOB_RECURSE SRC_CXX_FILES "${SRC_DIR}/*.cpp")
+FILE(GLOB_RECURSE HDR_CXX_FILES "${HDR_DIR}/*.hpp")
+ADD_CUSTOM_TARGET(checks
+  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_CXX_FILES} ${HDR_CXX_FILES}
+  COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_CXX_FILES} ${HDR_CXX_FILES}
+  COMMAND clang-format -i ${SRC_CXX_FILES} ${HDR_CXX_FILES}
 )
 
 ADD_CUSTOM_TARGET(dev)
-ADD_DEPENDENCIES(dev prechecks)
+ADD_DEPENDENCIES(dev checks)
 
 FILE(GLOB TARGET_DIRS ${SRC_DIR}/*)
 FOREACH(TARGET_DIR ${TARGET_DIRS})
