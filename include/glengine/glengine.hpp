@@ -4,7 +4,6 @@
 // All the headers
 #include "filesystem.hpp"
 #include "shader.hpp"
-#include "mesh.hpp"
 
 // Qt5
 #include <QGuiApplication>
