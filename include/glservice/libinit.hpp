@@ -1,17 +1,14 @@
-#ifndef GLENGINE_GLENGINE_HPP
-#define GLENGINE_GLENGINE_HPP
-
-// All the headers
-#include "filesystem.hpp"
-#include "shader.hpp"
+#ifndef GLSERVICE_LIBINIT_HPP
+#define GLSERVICE_LIBINIT_HPP
 
 // Qt5
 #include <QGuiApplication>
 
 // OpenGL
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-namespace glengine {
+namespace glservice {
 
 // Initializes Qt Gui application
 QGuiApplication initQGuiApplication(int argc, char *argv[]);
@@ -31,6 +28,6 @@ GLFWwindow *initWindow(int width, int height, const char *title);
 // Terminates GLFW window
 void terminateWindow(GLFWwindow *window);
 
-}  // namespace glengine
+}  // namespace glservice
 
 #endif

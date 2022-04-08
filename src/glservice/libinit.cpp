@@ -1,5 +1,5 @@
 // Header file
-#include <glengine/glengine.hpp>
+#include <glservice/libinit.hpp>
 
 // STD
 #include <iostream>
@@ -9,20 +9,20 @@
 #include <GLFW/glfw3.h>
 
 // Initializes Qt Gui application
-QGuiApplication glengine::initQGuiApplication(int argc, char *argv[]) {
+QGuiApplication glservice::initQGuiApplication(int argc, char *argv[]) {
   // Initializing Qt Gui application
   QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   return QGuiApplication{argc, argv};
 }
 
 // Terminates Qt Gui application
-void glengine::terminateQGuiApplication(QGuiApplication &app) {
+void glservice::terminateQGuiApplication(QGuiApplication &app) {
   // Closing Qt Gui application
   app.quit();
 }
 
 // Initializes GLFW
-int glengine::initGLFW() {
+int glservice::initGLFW() {
   // Initializing GLFW
   if (glfwInit() == GLFW_FALSE) {
     std::cout << "error: failed to init GLFW" << std::endl;
@@ -37,13 +37,13 @@ int glengine::initGLFW() {
 }
 
 // Terminates GLFW
-void glengine::terminateGLFW() {
+void glservice::terminateGLFW() {
   // Terminating GLFW
   glfwTerminate();
 }
 
 // Creates GLFW window and loads OpenGL functions with GLAD
-GLFWwindow *glengine::initWindow(int width, int height, const char *title) {
+GLFWwindow *glservice::initWindow(int width, int height, const char *title) {
   // Creating a window
   GLFWwindow *window = glfwCreateWindow(width, height, title, nullptr, nullptr);
   if (window == nullptr) {
@@ -72,7 +72,7 @@ GLFWwindow *glengine::initWindow(int width, int height, const char *title) {
 }
 
 // Terminates GLFW window
-void glengine::terminateWindow(GLFWwindow *window) {
+void glservice::terminateWindow(GLFWwindow *window) {
   // Making window close
   glfwSetWindowShouldClose(window, true);
 }

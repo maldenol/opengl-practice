@@ -1,5 +1,5 @@
 // Header file
-#include <glengine/shader.hpp>
+#include <glservice/shader.hpp>
 
 // STD
 #include <chrono>
@@ -19,8 +19,8 @@ using namespace std::chrono_literals;
 constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
 
 // Initializes shader program with shaders
-GLuint glengine::initShaderProgram(std::vector<GLuint>       &shaders,
-                                   const std::vector<GLuint> &shaderTypes) {
+GLuint glservice::initShaderProgram(std::vector<GLuint>       &shaders,
+                                    const std::vector<GLuint> &shaderTypes) {
   // Getting shader count
   size_t shaderCount = shaders.size();
 
@@ -42,7 +42,7 @@ GLuint glengine::initShaderProgram(std::vector<GLuint>       &shaders,
 }
 
 // Compiles shader with source code
-void glengine::compileShader(GLuint shader, const QString &source) {
+void glservice::compileShader(GLuint shader, const QString &source) {
   // Setting shader's source and compiling it
   const char *shaderSource = source.toLocal8Bit().data();
   glShaderSource(shader, 1, &shaderSource, nullptr);
@@ -78,11 +78,11 @@ void glengine::compileShader(GLuint shader, const QString &source) {
 }
 
 // Watches for modifications of shader files (must be run in thread)
-void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
-                             GLFWwindow *window, std::mutex &glfwContextMutex,
-                             GLuint                      shaderProgram,
-                             const std::vector<GLuint>  &shaders,
-                             const std::vector<QString> &shaderFileNames) {
+void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
+                              GLFWwindow *window, std::mutex &glfwContextMutex,
+                              GLuint                      shaderProgram,
+                              const std::vector<GLuint>  &shaders,
+                              const std::vector<QString> &shaderFileNames) {
   // Getting shader count
   size_t shaderCount = shaders.size();
 
@@ -121,7 +121,7 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
         QString     shaderSource{shaderFileTextStream.readAll()};
 
         // Compiling shader
-        glengine::compileShader(shaders[i], shaderSource);
+        glservice::compileShader(shaders[i], shaderSource);
 
         // Updating last modification time
         shaderLastModificationTimes[i] = shaderModificationTime;

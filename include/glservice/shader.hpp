@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SHADER_HPP
-#define GLENGINE_SHADER_HPP
+#ifndef GLSERVICE_SHADER_HPP
+#define GLSERVICE_SHADER_HPP
 
 // STD
 #include <atomic>
@@ -10,10 +10,11 @@
 #include <QString>
 
 // OpenGL
+#define GLFW_INCLUDE_NONE
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-namespace glengine {
+namespace glservice {
 
 // Initializes shader program with shaders
 GLuint initShaderProgram(std::vector<GLuint>       &shaders,
@@ -28,6 +29,6 @@ void shaderWatcher(const std::atomic<bool> &isRunning, GLFWwindow *window,
                    const std::vector<GLuint>  &shaders,
                    const std::vector<QString> &shaderFileNames);
 
-}  // namespace glengine
+}  // namespace glservice
 
 #endif

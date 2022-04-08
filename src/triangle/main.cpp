@@ -19,8 +19,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-// Internal library "glengine"
-#include <glengine/glengine.hpp>
+// Internal library "glservice"
+#include <glservice/glservice.hpp>
 
 // for "ms"
 using namespace std::chrono_literals;
@@ -44,13 +44,13 @@ void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication app = glengine::initQGuiApplication(argc, argv);
+  QGuiApplication app = glservice::initQGuiApplication(argc, argv);
 
   // Initializing GLFW
-  glengine::initGLFW();
+  glservice::initGLFW();
 
   // Creating GLFW window and loading OpenGL functions with GLAD
-  GLFWwindow *window = glengine::initWindow(kWidth, kHeight, "triangle");
+  GLFWwindow *window = glservice::initWindow(kWidth, kHeight, "triangle");
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -61,19 +61,19 @@ int main(int argc, char *argv[]) {
   // Creating arrays of shaders, according filenames and types
   std::vector<GLuint>  shaders{0, 0};
   std::vector<QString> shaderFileNames{
-      glengine::getAbsolutePathRelativeToExecutable("vertexShader.glsl"),
-      glengine::getAbsolutePathRelativeToExecutable("fragmentShader.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("vertexShader.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("fragmentShader.glsl"),
   };
   std::vector<GLuint> shaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
   // Creating and configuring a shader program
-  GLuint shaderProgram = glengine::initShaderProgram(shaders, shaderTypes);
+  GLuint shaderProgram = glservice::initShaderProgram(shaders, shaderTypes);
   // Running shaderWatcher thread
   std::mutex        glfwContextMutex{};
   std::atomic<bool> shaderWatcherIsRunning = true;
-  std::thread       shaderWatcherThread{glengine::shaderWatcher,
+  std::thread       shaderWatcherThread{glservice::shaderWatcher,
                                   std::cref(shaderWatcherIsRunning),
                                   window,
                                   std::ref(glfwContextMutex),
@@ -146,10 +146,10 @@ int main(int argc, char *argv[]) {
   shaderWatcherThread.join();
 
   // Terminating GLFW
-  glengine::terminateGLFW();
+  glservice::terminateGLFW();
 
   // Terminating Qt Gui application
-  glengine::terminateQGuiApplication(app);
+  glservice::terminateQGuiApplication(app);
 
   return 0;
 }
@@ -162,7 +162,7 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
 void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     // Terminating window
-    glengine::terminateWindow(window);
+    glservice::terminateWindow(window);
     return;
   }
 
@@ -222,7 +222,7 @@ GLuint initTexture(const QString &filename) {
   stbi_set_flip_vertically_on_load(true);
   int            textureWidth{}, textureHeight{}, componentCount{};
   unsigned char *textureImage =
-      stbi_load(glengine::getAbsolutePathRelativeToExecutable(filename)
+      stbi_load(glservice::getAbsolutePathRelativeToExecutable(filename)
                     .toLocal8Bit()
                     .data(),
                 &textureWidth, &textureHeight, &componentCount, 0);
