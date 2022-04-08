@@ -71,10 +71,6 @@ void glservice::compileShader(GLuint shader, const QString &source) {
     }
     std::cout << std::endl;
   }
-  // If compilation have succeed and there is an info log
-  else if (infoLogLength > 0) {
-    std::cout << "info: shader #" << shader << "\n" << &infoLog[0] << std::endl;
-  }
 }
 
 // Watches for modifications of shader files (must be run in thread)
@@ -159,10 +155,6 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
           std::cout << "no error information";
         }
         std::cout << std::endl;
-        // If linkage have succeed and there is an info log
-      } else if (infoLogLength > 0) {
-        std::cout << "info: shader program #" << shaderProgram << "\n"
-                  << &infoLog[0] << std::endl;
       }
     }
 

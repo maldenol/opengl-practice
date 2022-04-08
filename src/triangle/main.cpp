@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
   };
   // Setting location of textures
   glUseProgram(shaderProgram);
-  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
-  glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0);
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 1);
   glUseProgram(0);
 
   // Vertices and their indices to make a mesh from triangles
@@ -105,6 +105,9 @@ int main(int argc, char *argv[]) {
   };
   // Creating and configuring a mesh and getting its VAO
   GLuint vao = initMesh(vertices, indices);
+
+  // Enabling Z-testing
+  glEnable(GL_DEPTH_TEST);
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -126,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     // Clearing background
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Drawing mesh
     drawMesh(vao, indices.size(), shaderProgram, textures);
