@@ -58,39 +58,32 @@ int main(int argc, char *argv[]) {
   // Setting callback function on window resize
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-  // Creating arrays of shaders, according filenames and types
-  std::vector<GLuint>  shaders{0, 0};
+  // Creating arrays of filenames and types of shaders
+  std::vector<GLenum> shaderTypes{
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
+  };
   std::vector<QString> shaderFileNames{
       glservice::getAbsolutePathRelativeToExecutable("vertexShader.glsl"),
       glservice::getAbsolutePathRelativeToExecutable("fragmentShader.glsl"),
   };
-  std::vector<GLuint> shaderTypes{
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-  };
-  // Creating and configuring a shader program
-  GLuint shaderProgram = glservice::initShaderProgram(shaders, shaderTypes);
+  // Creating a shader program
+  GLuint shaderProgram = glCreateProgram();
   // Running shaderWatcher thread
   std::mutex        glfwContextMutex{};
   std::atomic<bool> shaderWatcherIsRunning = true;
-  std::thread       shaderWatcherThread{glservice::shaderWatcher,
-                                  std::cref(shaderWatcherIsRunning),
-                                  window,
-                                  std::ref(glfwContextMutex),
-                                  shaderProgram,
-                                  std::cref(shaders),
-                                  std::cref(shaderFileNames)};
+  std::atomic<bool> shadersAreRecompiled   = false;
+  std::thread       shaderWatcherThread{
+      glservice::shaderWatcher,       std::cref(shaderWatcherIsRunning),
+      std::ref(shadersAreRecompiled), window,
+      std::ref(glfwContextMutex),     shaderProgram,
+      std::cref(shaderTypes),         std::cref(shaderFileNames)};
 
   // Loading textures
   std::vector<GLuint> textures{
       initTexture("texture1.png"),
       initTexture("texture2.png"),
   };
-  // Setting location of textures
-  glUseProgram(shaderProgram);
-  glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0);
-  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 1);
-  glUseProgram(0);
 
   // Vertices and their indices to make a mesh from triangles
   std::vector<float> vertices{
@@ -130,6 +123,18 @@ int main(int argc, char *argv[]) {
     // Clearing background
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // If shaders are recompiled
+    if (shadersAreRecompiled) {
+      // Setting location of textures
+      glUseProgram(shaderProgram);
+      glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0);
+      glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 1);
+      glUseProgram(0);
+
+      // Notifying that all routine after shader recompilation is done
+      shadersAreRecompiled = false;
+    }
 
     // Drawing mesh
     drawMesh(vao, indices.size(), shaderProgram, textures);

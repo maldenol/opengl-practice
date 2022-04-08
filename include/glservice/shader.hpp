@@ -16,17 +16,14 @@
 
 namespace glservice {
 
-// Initializes shader program with shaders
-GLuint initShaderProgram(std::vector<GLuint>       &shaders,
-                         const std::vector<GLuint> &shaderTypes);
-
 // Compiles shader with source code
 void compileShader(GLuint shader, const QString &source);
 
 // Watches for modifications of shader files (must be run in thread)
-void shaderWatcher(const std::atomic<bool> &isRunning, GLFWwindow *window,
+void shaderWatcher(const std::atomic<bool> &isRunning,
+                   std::atomic<bool> &shadersAreRecompiled, GLFWwindow *window,
                    std::mutex &glfwContextMutex, GLuint shaderProgram,
-                   const std::vector<GLuint>  &shaders,
+                   const std::vector<GLenum>  &shaderTypes,
                    const std::vector<QString> &shaderFileNames);
 
 }  // namespace glservice
