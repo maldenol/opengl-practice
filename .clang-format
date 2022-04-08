@@ -10,3 +10,4 @@ AlignEscapedNewlines: Left
 AlignOperands: Align
 AlignTrailingComments: true
 SortIncludes: false
+CommentPragmas: '^[^ ]'
