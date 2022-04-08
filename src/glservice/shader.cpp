@@ -4,6 +4,7 @@
 // STD
 #include <chrono>
 #include <iostream>
+#include <string>
 #include <thread>
 
 // Qt5
@@ -21,8 +22,9 @@ constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
 // Compiles shader with source code
 void glservice::compileShader(GLuint shader, const QString &source) {
   // Setting shader's source and compiling it
-  const char *shaderSource = source.toLocal8Bit().data();
-  glShaderSource(shader, 1, &shaderSource, nullptr);
+  std::string shaderSourceString = source.toStdString();
+  const char *shaderSourceBuffer = shaderSourceString.c_str();
+  glShaderSource(shader, 1, &shaderSourceBuffer, nullptr);
   glCompileShader(shader);
 
   // Getting compilation success code
