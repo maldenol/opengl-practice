@@ -5,5 +5,6 @@
 #include "filesystem.hpp"
 #include "libinit.hpp"
 #include "shader.hpp"
+#include "camera/camera.hpp"
 
 #endif

@@ -17,7 +17,6 @@
 
 // GLM
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 // STB
@@ -26,9 +25,6 @@
 
 // Internal library "glservice"
 #include <glservice/glservice.hpp>
-
-// Internal library "camera"
-#include "camera.hpp"
 
 // for "ms"
 using namespace std::chrono_literals;
@@ -47,7 +43,8 @@ GLuint initMesh(const std::vector<float>  &vertices,
                 const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);
 void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
-                const std::vector<GLuint> &textures, const BaseCamera &camera);
+                const std::vector<GLuint>   &textures,
+                const glservice::BaseCamera &camera);
 
 // Main function
 int main(int argc, char *argv[]) {
@@ -113,7 +110,7 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Creating a camera
-  PerspectiveCamera camera{};
+  glservice::PerspectiveCamera camera{};
   camera.setPosition(1.0f, 1.0f, 1.0f);
   camera.lookAt(-1.0f, -1.0f, -1.0f);
 
@@ -284,7 +281,8 @@ GLuint initTexture(const QString &filename) {
 
 // Draws mesh
 void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
-              const std::vector<GLuint> &textures, const BaseCamera &camera) {
+              const std::vector<GLuint>   &textures,
+              const glservice::BaseCamera &camera) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);
   // Binding VAO with associated VBO and EBO
