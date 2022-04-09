@@ -47,7 +47,7 @@ GLuint initMesh(const std::vector<float>  &vertices,
                 const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);
 void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
-                const std::vector<GLuint> &textures, const Camera &camera);
+                const std::vector<GLuint> &textures, const BaseCamera &camera);
 
 // Main function
 int main(int argc, char *argv[]) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Creating a camera
-  Camera camera{};
+  PerspectiveCamera camera{};
   camera.setPosition(1.0f, 1.0f, 1.0f);
   camera.lookAt(-1.0f, -1.0f, -1.0f);
 
@@ -284,7 +284,7 @@ GLuint initTexture(const QString &filename) {
 
 // Draws mesh
 void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
-              const std::vector<GLuint> &textures, const Camera &camera) {
+              const std::vector<GLuint> &textures, const BaseCamera &camera) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);
   // Binding VAO with associated VBO and EBO
@@ -303,7 +303,7 @@ void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE,
                      glm::value_ptr(camera.getViewMatrix()));
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "proj"), 1, GL_FALSE,
-                     glm::value_ptr(camera.getPerspProjMatrix()));
+                     glm::value_ptr(camera.getProjMatrix()));
 
   // Drawing mesh
   //glDrawArrays(GL_TRIANGLES, 0, 3); // without vertices (EBO) method
