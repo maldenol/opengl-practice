@@ -5,7 +5,7 @@
 #include <utility>
 
 glservice::BaseCamera::BaseCamera() noexcept : _pos{glm::vec3{0.0f}} {
-  this->lookAt(0.0f, 0.0f, -1.0f);
+  this->lookAt(glm::vec3{0.0f, 0.0f, -1.0f});
 }
 
 glservice::BaseCamera::BaseCamera(const BaseCamera &camera) noexcept
@@ -46,14 +46,12 @@ glservice::BaseCamera &glservice::BaseCamera::operator=(
 
 glservice::BaseCamera::~BaseCamera() noexcept {}
 
-void glservice::BaseCamera::setPosition(float eyeX, float eyeY,
-                                        float eyeZ) noexcept {
-  _pos = glm::vec3{eyeX, eyeY, eyeZ};
+void glservice::BaseCamera::setPosition(const glm::vec3 &pos) noexcept {
+  _pos = pos;
 }
 
-void glservice::BaseCamera::lookAt(float centerX, float centerY,
-                                   float centerZ) noexcept {
-  _lookAt  = glm::vec3{centerX, centerY, centerZ};
+void glservice::BaseCamera::lookAt(const glm::vec3 &lookAt) noexcept {
+  _lookAt  = lookAt;
   _forward = glm::normalize(_lookAt - _pos);
   _right   = glm::cross(_forward, glm::vec3{0.0f, 1.0f, 0.0f});
   _up      = glm::cross(_right, _forward);

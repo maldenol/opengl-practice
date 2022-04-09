@@ -111,8 +111,8 @@ int main(int argc, char *argv[]) {
 
   // Creating a camera
   glservice::PerspectiveCamera camera{};
-  camera.setPosition(1.0f, 1.0f, 1.0f);
-  camera.lookAt(-1.0f, -1.0f, -1.0f);
+  camera.setPosition(glm::vec3{1.0f, 1.0f, 1.0f});
+  camera.lookAt(glm::vec3{-1.0f, -1.0f, -1.0f});
 
   // Render cycle
   while (true) {
@@ -301,7 +301,7 @@ void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE,
                      glm::value_ptr(camera.getViewMatrix()));
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "proj"), 1, GL_FALSE,
-                     glm::value_ptr(camera.getProjMatrix()));
+                     glm::value_ptr(camera.getProjectionMatrix()));
 
   // Drawing mesh
   //glDrawArrays(GL_TRIANGLES, 0, 3); // without vertices (EBO) method

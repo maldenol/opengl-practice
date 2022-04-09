@@ -8,13 +8,14 @@
 namespace glservice {
 
 class BaseCamera {
- protected:
+ private:
   glm::vec3 _pos{};
   glm::vec3 _forward{};
   glm::vec3 _right{};
   glm::vec3 _up{};
   glm::vec3 _lookAt{};
 
+ protected:
   BaseCamera() noexcept;
   BaseCamera(const BaseCamera &camera) noexcept;
   BaseCamera &operator=(const BaseCamera &camera) noexcept;
@@ -23,8 +24,8 @@ class BaseCamera {
   virtual ~BaseCamera() noexcept;
 
  public:
-  void setPosition(float eyeX, float eyeY, float eyeZ) noexcept;
-  void lookAt(float centerX, float centerY, float centerZ) noexcept;
+  void setPosition(const glm::vec3 &pos) noexcept;
+  void lookAt(const glm::vec3 &lookAt) noexcept;
 
   const glm::vec3 &getPosition() const noexcept;
   const glm::vec3 &getForwardDirection() const noexcept;
@@ -33,7 +34,7 @@ class BaseCamera {
   const glm::vec3 &getLookAtCenter() const noexcept;
 
   glm::mat4         getViewMatrix() const noexcept;
-  virtual glm::mat4 getProjMatrix() const noexcept = 0;
+  virtual glm::mat4 getProjectionMatrix() const noexcept = 0;
 };
 
 }  // namespace glservice

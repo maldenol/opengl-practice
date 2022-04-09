@@ -7,7 +7,7 @@
 namespace glservice {
 
 class OrthographicCamera : public BaseCamera {
- protected:
+ private:
   float _leftBorder{};
   float _rightBorder{};
   float _bottomBorder{};
@@ -25,10 +25,16 @@ class OrthographicCamera : public BaseCamera {
   OrthographicCamera &operator=(OrthographicCamera &&camera) noexcept;
   virtual ~OrthographicCamera() noexcept;
 
-  void setProjection(float leftBorder, float rightBorder, float bottomBorder,
-                     float topBorder, float nearPlane, float farPlane);
+  void setProjectionAttributes(float leftBorder, float rightBorder,
+                               float bottomBorder, float topBorder,
+                               float nearPlane, float farPlane) noexcept;
 
-  glm::mat4 getProjMatrix() const noexcept final;
+  void getProjectionAttributes(float &leftBorder, float &rightBorder,
+                               float &bottomBorder, float &topBorder,
+                               float &nearPlane,
+                               float &farPlane) const noexcept;
+
+  glm::mat4 getProjectionMatrix() const noexcept final;
 };
 
 }  // namespace glservice

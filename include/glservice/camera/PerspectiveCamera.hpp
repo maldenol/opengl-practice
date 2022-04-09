@@ -7,7 +7,7 @@
 namespace glservice {
 
 class PerspectiveCamera : public BaseCamera {
- protected:
+ private:
   float _verticalFOV{};
   float _aspectRatio{};
   float _nearPlane{};
@@ -23,10 +23,14 @@ class PerspectiveCamera : public BaseCamera {
   PerspectiveCamera &operator=(PerspectiveCamera &&camera) noexcept;
   virtual ~PerspectiveCamera() noexcept;
 
-  void setProjection(float verticalFOV, float aspectRatio, float nearPlane,
-                     float farPlane);
+  void setProjectionAttributes(float verticalFOV, float aspectRatio,
+                               float nearPlane, float farPlane) noexcept;
 
-  glm::mat4 getProjMatrix() const noexcept final;
+  void getProjectionAttributes(float &verticalFOV, float &aspectRatio,
+                               float &nearPlane,
+                               float &farPlane) const noexcept;
+
+  glm::mat4 getProjectionMatrix() const noexcept final;
 };
 
 }  // namespace glservice

@@ -64,16 +64,24 @@ glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
 
 glservice::PerspectiveCamera::~PerspectiveCamera() noexcept {}
 
-void glservice::PerspectiveCamera::setProjection(float verticalFOV,
-                                                 float aspectRatio,
-                                                 float nearPlane,
-                                                 float farPlane) {
+void glservice::PerspectiveCamera::setProjectionAttributes(
+    float verticalFOV, float aspectRatio, float nearPlane,
+    float farPlane) noexcept {
   _verticalFOV = verticalFOV;
   _aspectRatio = aspectRatio;
   _nearPlane   = nearPlane;
   _farPlane    = farPlane;
 }
 
-glm::mat4 glservice::PerspectiveCamera::getProjMatrix() const noexcept {
+void glservice::PerspectiveCamera::getProjectionAttributes(
+    float &verticalFOV, float &aspectRatio, float &nearPlane,
+    float &farPlane) const noexcept {
+  verticalFOV = _verticalFOV;
+  aspectRatio = _aspectRatio;
+  nearPlane   = _nearPlane;
+  farPlane    = _farPlane;
+}
+
+glm::mat4 glservice::PerspectiveCamera::getProjectionMatrix() const noexcept {
   return glm::perspective(_verticalFOV, _aspectRatio, _nearPlane, _farPlane);
 }
