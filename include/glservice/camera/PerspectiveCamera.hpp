@@ -25,12 +25,11 @@ class PerspectiveCamera : public BaseCamera {
 
   void setProjectionAttributes(float verticalFOV, float aspectRatio,
                                float nearPlane, float farPlane) noexcept;
-
   void getProjectionAttributes(float &verticalFOV, float &aspectRatio,
                                float &nearPlane,
                                float &farPlane) const noexcept;
 
-  glm::mat4 getProjectionMatrix() const noexcept final;
+  glm::mat4 getProjectionMatrix() const noexcept override;
 };
 
 }  // namespace glservice

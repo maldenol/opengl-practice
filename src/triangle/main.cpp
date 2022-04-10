@@ -26,9 +26,9 @@
 using namespace std::chrono_literals;
 
 // Global constants
-constexpr unsigned int          kWidth               = 800;
-constexpr unsigned int          kHeight              = 600;
-constexpr std::chrono::duration kRenderCycleInterval = 16ms;
+static constexpr unsigned int          kWidth               = 800;
+static constexpr unsigned int          kHeight              = 600;
+static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 
 // Functions for GLFW
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);

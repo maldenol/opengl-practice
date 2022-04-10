@@ -28,13 +28,12 @@ class OrthographicCamera : public BaseCamera {
   void setProjectionAttributes(float leftBorder, float rightBorder,
                                float bottomBorder, float topBorder,
                                float nearPlane, float farPlane) noexcept;
-
   void getProjectionAttributes(float &leftBorder, float &rightBorder,
                                float &bottomBorder, float &topBorder,
                                float &nearPlane,
                                float &farPlane) const noexcept;
 
-  glm::mat4 getProjectionMatrix() const noexcept final;
+  glm::mat4 getProjectionMatrix() const noexcept override;
 };
 
 }  // namespace glservice

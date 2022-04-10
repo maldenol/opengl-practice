@@ -17,7 +17,7 @@
 using namespace std::chrono_literals;
 
 // Global constants
-constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
+static constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
 
 // Compiles shader with source code
 void glservice::compileShader(GLuint shader, const QString &source) {

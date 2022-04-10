@@ -4,20 +4,33 @@
 // STD
 #include <utility>
 
+// GLM
+#include <glm/gtc/matrix_transform.hpp>
+
+// Global constants
+static constexpr float kInitVerticalFov = glm::radians(60.0f);
+static constexpr float kInitAspectRatio = 4.0f / 3.0f;
+static constexpr float kInitNearPlane   = 0.1f;
+static constexpr float kInitFarPlane    = 100.0f;
+
 glservice::PerspectiveCamera::PerspectiveCamera() noexcept
     : BaseCamera{},
-      _verticalFOV{glm::radians(45.0f)},
-      _aspectRatio{4.0f / 3.0f},
-      _nearPlane{0.1f},
-      _farPlane{100.0f} {}
+      _verticalFOV{kInitVerticalFov},
+      _aspectRatio{kInitAspectRatio},
+      _nearPlane{kInitNearPlane},
+      _farPlane{kInitFarPlane} {}
 
 glservice::PerspectiveCamera::PerspectiveCamera(
     const BaseCamera &camera) noexcept
-    : BaseCamera{camera} {}
+    : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
+      _verticalFOV{kInitVerticalFov},
+      _aspectRatio{kInitAspectRatio},
+      _nearPlane{kInitNearPlane},
+      _farPlane{kInitFarPlane} {}
 
 glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
     const BaseCamera &camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
   return *this;
 }
@@ -32,7 +45,7 @@ glservice::PerspectiveCamera::PerspectiveCamera(
 
 glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
     const PerspectiveCamera &camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
   _verticalFOV = camera._verticalFOV;
   _aspectRatio = camera._aspectRatio;
@@ -52,7 +65,7 @@ glservice::PerspectiveCamera::PerspectiveCamera(
 
 glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
     PerspectiveCamera &&camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<BaseCamera &&>(camera));
 
   std::swap(_verticalFOV, camera._verticalFOV);
   std::swap(_aspectRatio, camera._aspectRatio);

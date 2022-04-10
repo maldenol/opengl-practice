@@ -4,22 +4,39 @@
 // STD
 #include <utility>
 
+// GLM
+#include <glm/gtc/matrix_transform.hpp>
+
+// Global constants
+static constexpr float kInitLeftBorder   = -1.0f;
+static constexpr float kInitRightBorder  = 1.0f;
+static constexpr float kInitBottomBorder = -1.0f;
+static constexpr float kInitTopBorder    = 1.0f;
+static constexpr float kInitNearPlane    = 0.1f;
+static constexpr float kInitFarPlane     = 100.0f;
+
 glservice::OrthographicCamera::OrthographicCamera() noexcept
     : BaseCamera{},
-      _leftBorder{-1.0f},
-      _rightBorder{1.0f},
-      _bottomBorder{-1.0f},
-      _topBorder{1.0f},
-      _nearPlane{0.1f},
-      _farPlane{100.0f} {}
+      _leftBorder{kInitLeftBorder},
+      _rightBorder{kInitRightBorder},
+      _bottomBorder{kInitBottomBorder},
+      _topBorder{kInitTopBorder},
+      _nearPlane{kInitNearPlane},
+      _farPlane{kInitFarPlane} {}
 
 glservice::OrthographicCamera::OrthographicCamera(
     const BaseCamera &camera) noexcept
-    : BaseCamera{camera} {}
+    : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
+      _leftBorder{kInitLeftBorder},
+      _rightBorder{kInitRightBorder},
+      _bottomBorder{kInitBottomBorder},
+      _topBorder{kInitTopBorder},
+      _nearPlane{kInitNearPlane},
+      _farPlane{kInitFarPlane} {}
 
 glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
     const BaseCamera &camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
   return *this;
 }
@@ -36,7 +53,7 @@ glservice::OrthographicCamera::OrthographicCamera(
 
 glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
     const OrthographicCamera &camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
   _leftBorder   = camera._leftBorder;
   _rightBorder  = camera._rightBorder;
@@ -60,7 +77,7 @@ glservice::OrthographicCamera::OrthographicCamera(
 
 glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
     OrthographicCamera &&camera) noexcept {
-  this->BaseCamera::operator=(camera);
+  this->BaseCamera::operator=(dynamic_cast<BaseCamera &&>(camera));
 
   std::swap(_leftBorder, camera._leftBorder);
   std::swap(_rightBorder, camera._rightBorder);
