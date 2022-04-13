@@ -12,6 +12,5 @@ QString glservice::getAbsolutePathOfExecutableDirectory() {
 
 // Translates relative to executable path into absolute
 QString glservice::getAbsolutePathRelativeToExecutable(const QString &path) {
-  return glservice::getAbsolutePathOfExecutableDirectory() + QDir::separator() +
-         path;
+  return glservice::getAbsolutePathOfExecutableDirectory() + QDir::separator() + path;
 }

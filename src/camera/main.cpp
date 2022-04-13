@@ -50,8 +50,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
 
 // Functions for meshes
-GLuint initMesh(const std::vector<float>  &vertices,
-                const std::vector<GLuint> &indices);
+GLuint initMesh(const std::vector<float> &vertices, const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);
 void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
                 const std::vector<GLuint> &textures);
@@ -96,11 +95,10 @@ int main(int argc, char *argv[]) {
   std::mutex        glfwContextMutex{};
   std::atomic<bool> shaderWatcherIsRunning = true;
   std::atomic<bool> shadersAreRecompiled   = false;
-  std::thread       shaderWatcherThread{
-      glservice::shaderWatcher,       std::cref(shaderWatcherIsRunning),
-      std::ref(shadersAreRecompiled), window,
-      std::ref(glfwContextMutex),     shaderProgram,
-      std::cref(shaderTypes),         std::cref(shaderFileNames)};
+  std::thread shaderWatcherThread{glservice::shaderWatcher,       std::cref(shaderWatcherIsRunning),
+                                  std::ref(shadersAreRecompiled), window,
+                                  std::ref(glfwContextMutex),     shaderProgram,
+                                  std::cref(shaderTypes),         std::cref(shaderFileNames)};
 
   // Loading textures
   std::vector<GLuint> textures{
@@ -132,8 +130,7 @@ int main(int argc, char *argv[]) {
       dynamic_cast<glservice::Camera5DoFController *>(&gCameraController);
   if (camera5DoFController != nullptr) {
     camera5DoFController->updateLook();
-    camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f),
-                                         glm::radians(85.0f));
+    camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
   }
 
   // Starting clock
@@ -221,8 +218,7 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
       dynamic_cast<glservice::Camera5DoFController *>(&gCameraController);
   if (camera5DoFController != nullptr) {
     // Rotating camera
-    camera5DoFController->addAngles(glm::radians(offsetX),
-                                    glm::radians(offsetY));
+    camera5DoFController->addAngles(glm::radians(offsetX), glm::radians(offsetY));
   }
 
   // If cameraController is Camera6DoFController
@@ -241,10 +237,9 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
       dynamic_cast<glservice::OrthographicCamera *>(&gCamera);
   if (orthoCamera != nullptr) {
     // Getting orthographic projection attributes of camera
-    float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{},
-        farPlane{};
-    orthoCamera->getProjectionAttributes(leftBorder, rightBorder, bottomBorder,
-                                         topBorder, nearPlane, farPlane);
+    float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{}, farPlane{};
+    orthoCamera->getProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
+                                         nearPlane, farPlane);
 
     // Updating border attributes
     leftBorder -= static_cast<float>(glm::radians(offsetY));
@@ -253,8 +248,8 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     topBorder += static_cast<float>(glm::radians(offsetY));
 
     // Setting orthographic projection attributes of camera
-    orthoCamera->setProjectionAttributes(leftBorder, rightBorder, bottomBorder,
-                                         topBorder, nearPlane, farPlane);
+    orthoCamera->setProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
+                                         nearPlane, farPlane);
   }
 
   // Checking if camera is perspective
@@ -263,8 +258,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
   if (perspCamera != nullptr) {
     // Getting perspective projection attributes of camera
     float verticalVOF{}, aspectRatio{}, nearPlane{}, farPlane{};
-    perspCamera->getProjectionAttributes(verticalVOF, aspectRatio, nearPlane,
-                                         farPlane);
+    perspCamera->getProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
 
     // Updating verticalFOV attribute
     verticalVOF -= static_cast<float>(glm::radians(offsetY));
@@ -275,8 +269,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     }
 
     // Setting perspective projection attributes of camera
-    perspCamera->setProjectionAttributes(verticalVOF, aspectRatio, nearPlane,
-                                         farPlane);
+    perspCamera->setProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
   }
 }
 
@@ -321,8 +314,7 @@ void processUserInput(GLFWwindow *window) {
 }
 
 // Initializes mesh based on vertices and indices
-GLuint initMesh(const std::vector<float>  &vertices,
-                const std::vector<GLuint> &indices) {
+GLuint initMesh(const std::vector<float> &vertices, const std::vector<GLuint> &indices) {
   // Creating VAO, VBO and EBO
   GLuint vao{};
   glGenVertexArrays(1, &vao);
@@ -336,17 +328,15 @@ GLuint initMesh(const std::vector<float>  &vertices,
 
   // Binding and filling VBO
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0],
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
   // Binding and filling EBO
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
-               &indices[0], GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0],
+               GL_STATIC_DRAW);
 
   // Configuring and enabling VBO's attributes
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        reinterpret_cast<void *>(0));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(0));
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
                         reinterpret_cast<void *>(3 * sizeof(float)));
@@ -367,13 +357,10 @@ GLuint initTexture(const QString &filename) {
   stbi_set_flip_vertically_on_load(true);
   int            textureWidth{}, textureHeight{}, componentCount{};
   unsigned char *textureImage =
-      stbi_load(glservice::getAbsolutePathRelativeToExecutable(filename)
-                    .toLocal8Bit()
-                    .data(),
+      stbi_load(glservice::getAbsolutePathRelativeToExecutable(filename).toLocal8Bit().data(),
                 &textureWidth, &textureHeight, &componentCount, 0);
   if (textureImage == nullptr) {
-    std::cout << "error: failed to load image " << filename.toStdString()
-              << std::endl;
+    std::cout << "error: failed to load image " << filename.toStdString() << std::endl;
     // Freeing texture image memory
     stbi_image_free(textureImage);
     return 0;
@@ -388,15 +375,14 @@ GLuint initTexture(const QString &filename) {
 
   // Filling texture with image data and generating mip-maps
   GLenum format = (componentCount == 3) ? GL_RGB : GL_RGBA;
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, format,
-               GL_UNSIGNED_BYTE, textureImage);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE,
+               textureImage);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   // Configuring texture
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   // Unbinding texture

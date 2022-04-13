@@ -13,11 +13,9 @@ class Camera3DoFController {
  public:
   Camera3DoFController(BaseCamera *camera) noexcept;
   Camera3DoFController(const Camera3DoFController &cameraController) noexcept;
-  Camera3DoFController &operator=(
-      const Camera3DoFController &cameraController) noexcept;
+  Camera3DoFController &operator=(const Camera3DoFController &cameraController) noexcept;
   Camera3DoFController(Camera3DoFController &&cameraController) noexcept;
-  Camera3DoFController &operator=(
-      Camera3DoFController &&cameraController) noexcept;
+  Camera3DoFController &operator=(Camera3DoFController &&cameraController) noexcept;
   virtual ~Camera3DoFController() noexcept;
 
   virtual void      setCamera(BaseCamera *camera) noexcept;

@@ -20,8 +20,7 @@ glservice::PerspectiveCamera::PerspectiveCamera() noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
-glservice::PerspectiveCamera::PerspectiveCamera(
-    const BaseCamera &camera) noexcept
+glservice::PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _verticalFOV{kInitVerticalFov},
       _aspectRatio{kInitAspectRatio},
@@ -35,8 +34,7 @@ glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
   return *this;
 }
 
-glservice::PerspectiveCamera::PerspectiveCamera(
-    const PerspectiveCamera &camera) noexcept
+glservice::PerspectiveCamera::PerspectiveCamera(const PerspectiveCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _verticalFOV{camera._verticalFOV},
       _aspectRatio{camera._aspectRatio},
@@ -55,8 +53,7 @@ glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
   return *this;
 }
 
-glservice::PerspectiveCamera::PerspectiveCamera(
-    PerspectiveCamera &&camera) noexcept
+glservice::PerspectiveCamera::PerspectiveCamera(PerspectiveCamera &&camera) noexcept
     : BaseCamera{dynamic_cast<BaseCamera &&>(camera)},
       _verticalFOV{std::exchange(camera._verticalFOV, 0.0f)},
       _aspectRatio{std::exchange(camera._aspectRatio, 0.0f)},
@@ -77,18 +74,18 @@ glservice::PerspectiveCamera &glservice::PerspectiveCamera::operator=(
 
 glservice::PerspectiveCamera::~PerspectiveCamera() noexcept {}
 
-void glservice::PerspectiveCamera::setProjectionAttributes(
-    float verticalFOV, float aspectRatio, float nearPlane,
-    float farPlane) noexcept {
+void glservice::PerspectiveCamera::setProjectionAttributes(float verticalFOV, float aspectRatio,
+                                                           float nearPlane,
+                                                           float farPlane) noexcept {
   _verticalFOV = verticalFOV;
   _aspectRatio = aspectRatio;
   _nearPlane   = nearPlane;
   _farPlane    = farPlane;
 }
 
-void glservice::PerspectiveCamera::getProjectionAttributes(
-    float &verticalFOV, float &aspectRatio, float &nearPlane,
-    float &farPlane) const noexcept {
+void glservice::PerspectiveCamera::getProjectionAttributes(float &verticalFOV, float &aspectRatio,
+                                                           float &nearPlane,
+                                                           float &farPlane) const noexcept {
   verticalFOV = _verticalFOV;
   aspectRatio = _aspectRatio;
   nearPlane   = _nearPlane;

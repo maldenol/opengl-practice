@@ -25,12 +25,12 @@ void glservice::terminateQGuiApplication(QGuiApplication &app) {
 int glservice::initGLFW() {
   // Initializing GLFW
   if (glfwInit() == GLFW_FALSE) {
-    std::cout << "error: failed to init GLFW" << std::endl;
+    std::cout << "error: failed to initialize GLFW" << std::endl;
 
     return -1;
   }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   return 0;
@@ -56,8 +56,7 @@ GLFWwindow *glservice::initWindow(int width, int height, const char *title) {
 
   // Loading OpenGL functions using GLAD
   if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
-    std::cout << "error: failed to load OpenGL functions using GLAD"
-              << std::endl;
+    std::cout << "error: failed to load OpenGL functions using GLAD" << std::endl;
 
     // Releasing OpenGL context
     glfwMakeContextCurrent(nullptr);

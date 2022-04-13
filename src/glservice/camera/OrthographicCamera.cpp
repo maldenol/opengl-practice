@@ -24,8 +24,7 @@ glservice::OrthographicCamera::OrthographicCamera() noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
-glservice::OrthographicCamera::OrthographicCamera(
-    const BaseCamera &camera) noexcept
+glservice::OrthographicCamera::OrthographicCamera(const BaseCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _leftBorder{kInitLeftBorder},
       _rightBorder{kInitRightBorder},
@@ -41,8 +40,7 @@ glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
   return *this;
 }
 
-glservice::OrthographicCamera::OrthographicCamera(
-    const OrthographicCamera &camera) noexcept
+glservice::OrthographicCamera::OrthographicCamera(const OrthographicCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _leftBorder{camera._leftBorder},
       _rightBorder{camera._rightBorder},
@@ -65,8 +63,7 @@ glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
   return *this;
 }
 
-glservice::OrthographicCamera::OrthographicCamera(
-    OrthographicCamera &&camera) noexcept
+glservice::OrthographicCamera::OrthographicCamera(OrthographicCamera &&camera) noexcept
     : BaseCamera{dynamic_cast<BaseCamera &&>(camera)},
       _leftBorder{std::exchange(camera._leftBorder, 0.0f)},
       _rightBorder{std::exchange(camera._rightBorder, 0.0f)},
@@ -91,9 +88,10 @@ glservice::OrthographicCamera &glservice::OrthographicCamera::operator=(
 
 glservice::OrthographicCamera::~OrthographicCamera() noexcept {}
 
-void glservice::OrthographicCamera::setProjectionAttributes(
-    float leftBorder, float rightBorder, float bottomBorder, float topBorder,
-    float nearPlane, float farPlane) noexcept {
+void glservice::OrthographicCamera::setProjectionAttributes(float leftBorder, float rightBorder,
+                                                            float bottomBorder, float topBorder,
+                                                            float nearPlane,
+                                                            float farPlane) noexcept {
   _leftBorder   = leftBorder;
   _rightBorder  = rightBorder;
   _bottomBorder = bottomBorder;
@@ -102,9 +100,10 @@ void glservice::OrthographicCamera::setProjectionAttributes(
   _farPlane     = farPlane;
 }
 
-void glservice::OrthographicCamera::getProjectionAttributes(
-    float &leftBorder, float &rightBorder, float &bottomBorder,
-    float &topBorder, float &nearPlane, float &farPlane) const noexcept {
+void glservice::OrthographicCamera::getProjectionAttributes(float &leftBorder, float &rightBorder,
+                                                            float &bottomBorder, float &topBorder,
+                                                            float &nearPlane,
+                                                            float &farPlane) const noexcept {
   leftBorder   = _leftBorder;
   rightBorder  = _rightBorder;
   bottomBorder = _bottomBorder;
@@ -114,6 +113,5 @@ void glservice::OrthographicCamera::getProjectionAttributes(
 }
 
 glm::mat4 glservice::OrthographicCamera::getProjectionMatrix() const noexcept {
-  return glm::ortho(_leftBorder, _rightBorder, _bottomBorder, _topBorder,
-                    _nearPlane, _farPlane);
+  return glm::ortho(_leftBorder, _rightBorder, _bottomBorder, _topBorder, _nearPlane, _farPlane);
 }

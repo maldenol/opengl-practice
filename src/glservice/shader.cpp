@@ -54,9 +54,8 @@ void glservice::compileShader(GLuint shader, const QString &source) {
 
 // Watches for modifications of shader files (must be run in thread)
 void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
-                              std::atomic<bool>       &shadersAreRecompiled,
-                              GLFWwindow *window, std::mutex &glfwContextMutex,
-                              GLuint                      shaderProgram,
+                              std::atomic<bool> &shadersAreRecompiled, GLFWwindow *window,
+                              std::mutex &glfwContextMutex, GLuint shaderProgram,
                               const std::vector<GLenum>  &shaderTypes,
                               const std::vector<QString> &shaderFileNames) {
   // Getting shader count
@@ -82,13 +81,11 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
     for (size_t i = 0; i < shaderCount; ++i) {
       QFile shaderFile{shaderFileNames[i]};
       if (!shaderFile.open(QFile::ReadOnly | QFile::Text)) {
-        std::cout << "error: unable to find "
-                  << shaderFileNames[i].toStdString() << std::endl;
+        std::cout << "error: unable to find " << shaderFileNames[i].toStdString() << std::endl;
         continue;
       }
       QFileInfo shaderFileInfo{shaderFile};
-      qint64    shaderModificationTime =
-          shaderFileInfo.lastModified().toMSecsSinceEpoch();
+      qint64    shaderModificationTime = shaderFileInfo.lastModified().toMSecsSinceEpoch();
 
       // If shader was modified
       if (shaderModificationTime > shaderLastModificationTimes[i]) {
@@ -109,8 +106,8 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
             // Reading shader source code from file
             QFile innerShaderFile{shaderFileNames[j]};
             if (!innerShaderFile.open(QFile::ReadOnly | QFile::Text)) {
-              std::cout << "error: unable to find "
-                        << shaderFileNames[j].toStdString() << std::endl;
+              std::cout << "error: unable to find " << shaderFileNames[j].toStdString()
+                        << std::endl;
               continue;
             }
             QTextStream innerShaderFileTextStream{&innerShaderFile};
@@ -136,12 +133,10 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
           // Getting linkage info log
           std::vector<char> infoLog{};
           infoLog.resize(infoLogLength + 1);
-          glGetProgramInfoLog(shaderProgram, infoLogLength, nullptr,
-                              &infoLog[0]);
+          glGetProgramInfoLog(shaderProgram, infoLogLength, nullptr, &infoLog[0]);
           // If linkage have failed
           if (success == GL_FALSE) {
-            std::cout << "error: unable to link shaders in program #"
-                      << shaderProgram << "\n";
+            std::cout << "error: unable to link shaders in program #" << shaderProgram << "\n";
             // If there is an info log
             if (infoLogLength > 0) {
               std::cout << &infoLog[0];

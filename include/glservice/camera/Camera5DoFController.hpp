@@ -20,14 +20,11 @@ class Camera5DoFController : public Camera3DoFController {
  public:
   Camera5DoFController(BaseCamera *camera) noexcept;
   Camera5DoFController(const Camera3DoFController &cameraController) noexcept;
-  Camera5DoFController &operator=(
-      const Camera3DoFController &cameraController) noexcept;
+  Camera5DoFController &operator=(const Camera3DoFController &cameraController) noexcept;
   Camera5DoFController(const Camera5DoFController &cameraController) noexcept;
-  Camera5DoFController &operator=(
-      const Camera5DoFController &cameraController) noexcept;
+  Camera5DoFController &operator=(const Camera5DoFController &cameraController) noexcept;
   Camera5DoFController(Camera5DoFController &&cameraController) noexcept;
-  Camera5DoFController &operator=(
-      Camera5DoFController &&cameraController) noexcept;
+  Camera5DoFController &operator=(Camera5DoFController &&cameraController) noexcept;
   virtual ~Camera5DoFController() noexcept;
 
   void setCamera(BaseCamera *camera) noexcept override;
@@ -38,11 +35,9 @@ class Camera5DoFController : public Camera3DoFController {
   void setAngles(float angleUp, float angleRight) noexcept;
   void getAngles(float &angleUp, float &angleRight) noexcept;
 
-  void setAngleLimits(float angleUpLimitMin, float angleUpLimitMax,
-                      float angleRightLimitMin,
+  void setAngleLimits(float angleUpLimitMin, float angleUpLimitMax, float angleRightLimitMin,
                       float angleRightLimitMax) noexcept;
-  void getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
-                      float &angleRightLimitMin,
+  void getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax, float &angleRightLimitMin,
                       float &angleRightLimitMax) noexcept;
 
   void addAngles(float angleUp, float angleRight) noexcept;

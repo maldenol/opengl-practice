@@ -7,14 +7,12 @@
 // GLM
 #include <glm/gtx/rotate_vector.hpp>
 
-glservice::Camera6DoFController::Camera6DoFController(
-    BaseCamera *camera) noexcept
+glservice::Camera6DoFController::Camera6DoFController(BaseCamera *camera) noexcept
     : Camera3DoFController{camera} {}
 
 glservice::Camera6DoFController::Camera6DoFController(
     const Camera3DoFController &cameraController) noexcept
-    : Camera3DoFController{
-          dynamic_cast<const Camera3DoFController &>(cameraController)} {}
+    : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)} {}
 
 glservice::Camera6DoFController &glservice::Camera6DoFController::operator=(
     const Camera3DoFController &cameraController) noexcept {
@@ -26,8 +24,7 @@ glservice::Camera6DoFController &glservice::Camera6DoFController::operator=(
 
 glservice::Camera6DoFController::Camera6DoFController(
     const Camera6DoFController &cameraController) noexcept
-    : Camera3DoFController{
-          dynamic_cast<const Camera3DoFController &>(cameraController)} {}
+    : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)} {}
 
 glservice::Camera6DoFController &glservice::Camera6DoFController::operator=(
     const Camera6DoFController &cameraController) noexcept {
@@ -39,13 +36,11 @@ glservice::Camera6DoFController &glservice::Camera6DoFController::operator=(
 
 glservice::Camera6DoFController::Camera6DoFController(
     Camera6DoFController &&cameraController) noexcept
-    : Camera3DoFController{
-          dynamic_cast<Camera3DoFController &&>(cameraController)} {}
+    : Camera3DoFController{dynamic_cast<Camera3DoFController &&>(cameraController)} {}
 
 glservice::Camera6DoFController &glservice::Camera6DoFController::operator=(
     Camera6DoFController &&cameraController) noexcept {
-  this->Camera3DoFController::operator=(
-      dynamic_cast<Camera3DoFController &&>(cameraController));
+  this->Camera3DoFController::operator=(dynamic_cast<Camera3DoFController &&>(cameraController));
 
   return *this;
 }

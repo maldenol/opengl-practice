@@ -4,8 +4,7 @@
 // STD
 #include <utility>
 
-glservice::Camera3DoFController::Camera3DoFController(
-    BaseCamera *camera) noexcept
+glservice::Camera3DoFController::Camera3DoFController(BaseCamera *camera) noexcept
     : _camera{camera} {}
 
 glservice::Camera3DoFController::Camera3DoFController(
@@ -32,12 +31,9 @@ glservice::Camera3DoFController &glservice::Camera3DoFController::operator=(
 
 glservice::Camera3DoFController::~Camera3DoFController() noexcept {}
 
-void glservice::Camera3DoFController::setCamera(BaseCamera *camera) noexcept {
-  _camera = camera;
-}
+void glservice::Camera3DoFController::setCamera(BaseCamera *camera) noexcept { _camera = camera; }
 
-const glservice::BaseCamera *glservice::Camera3DoFController::getCamera()
-    const noexcept {
+const glservice::BaseCamera *glservice::Camera3DoFController::getCamera() const noexcept {
   return _camera;
 }
 

@@ -20,9 +20,8 @@ namespace glservice {
 void compileShader(GLuint shader, const QString &source);
 
 // Watches for modifications of shader files (must be run in thread)
-void shaderWatcher(const std::atomic<bool> &isRunning,
-                   std::atomic<bool> &shadersAreRecompiled, GLFWwindow *window,
-                   std::mutex &glfwContextMutex, GLuint shaderProgram,
+void shaderWatcher(const std::atomic<bool> &isRunning, std::atomic<bool> &shadersAreRecompiled,
+                   GLFWwindow *window, std::mutex &glfwContextMutex, GLuint shaderProgram,
                    const std::vector<GLenum>  &shaderTypes,
                    const std::vector<QString> &shaderFileNames);
 
