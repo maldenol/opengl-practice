@@ -19,8 +19,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-// Internal library "glservice"
-#include <glservice/glservice.hpp>
+// "glservice" internal library
+#include <glservice.hpp>
 
 // for "ms"
 using namespace std::chrono_literals;

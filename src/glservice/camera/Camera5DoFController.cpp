@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/camera/Camera5DoFController.hpp>
+#include "./Camera5DoFController.hpp"
 
 // STD
 #include <utility>

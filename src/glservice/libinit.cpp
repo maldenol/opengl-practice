@@ -1,12 +1,11 @@
 // Header file
-#include <glservice/libinit.hpp>
+#include "./libinit.hpp"
 
 // STD
 #include <iostream>
 
 // OpenGL
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 // Initializes Qt Gui application
 QGuiApplication glservice::initQGuiApplication(int argc, char *argv[]) {

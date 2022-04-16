@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/camera/Camera3DoFController.hpp>
+#include "./Camera3DoFController.hpp"
 
 // STD
 #include <utility>

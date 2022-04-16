@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/camera/BaseCamera.hpp>
+#include "./BaseCamera.hpp"
 
 // STD
 #include <utility>

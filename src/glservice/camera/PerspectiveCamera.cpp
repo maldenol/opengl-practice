@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/camera/PerspectiveCamera.hpp>
+#include "./PerspectiveCamera.hpp"
 
 // STD
 #include <utility>

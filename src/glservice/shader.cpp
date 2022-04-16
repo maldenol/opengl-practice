@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/shader.hpp>
+#include "./shader.hpp"
 
 // STD
 #include <chrono>
@@ -150,7 +150,7 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
 
           // For each shader
           for (size_t j = 0; j < shaderCount; ++j) {
-            // Deaching shader to shader program
+            // Detaching shader to shader program
             glDetachShader(shaderProgram, shaders[j]);
             // Deleting shader
             glDeleteShader(shaders[j]);

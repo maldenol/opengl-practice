@@ -1,5 +1,5 @@
 // Header file
-#include <glservice/camera/OrthographicCamera.hpp>
+#include "./OrthographicCamera.hpp"
 
 // STD
 #include <utility>
