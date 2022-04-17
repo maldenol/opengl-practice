@@ -274,6 +274,10 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
 }
 
 void processUserInput(GLFWwindow *window) {
+  static bool sPressed{};
+  bool        released{true};
+
+  // Processing movement
   float distance = kCameraVelocity * gDeltaTime;
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     gCameraController.moveForward(distance);
@@ -297,6 +301,7 @@ void processUserInput(GLFWwindow *window) {
   // If cameraController is Camera6DoFController
   glservice::Camera6DoFController *camera6DoFController =
       dynamic_cast<glservice::Camera6DoFController *>(&gCameraController);
+  // Processing movement
   if (camera6DoFController != nullptr) {
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
       camera6DoFController->rotateForward(-distance);
@@ -306,10 +311,29 @@ void processUserInput(GLFWwindow *window) {
     }
   }
 
+  // Toggling fullscreen mode
+  if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
+      if (glfwGetWindowMonitor(window) == nullptr) {
+        glservice::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      } else {
+        glservice::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      }
+    }
+  }
+
+  // Terminating window
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    // Terminating window
     glservice::terminateWindow(window);
     return;
+  }
+
+  if (released) {
+    sPressed = false;
   }
 }
 

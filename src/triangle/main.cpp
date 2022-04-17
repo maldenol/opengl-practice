@@ -166,18 +166,41 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
 }
 
 void processUserInput(GLFWwindow *window) {
+  static bool sPressed{};
+  bool        released{true};
+
+  // Terminating window
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    // Terminating window
     glservice::terminateWindow(window);
     return;
   }
 
+  // Toggling fullscreen mode
+  if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
+      if (glfwGetWindowMonitor(window) == nullptr) {
+        glservice::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      } else {
+        glservice::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      }
+    }
+  }
+
+  // Setting polygon mode for both sides to GL_LINE
   if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-    // Setting polygon mode for both sides to GL_LINE
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-    // Setting polygon mode for both sides to GL_FILL
+  }
+  // Setting polygon mode for both sides to GL_FILL
+  else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+
+  if (released) {
+    sPressed = false;
   }
 }
 

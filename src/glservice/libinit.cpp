@@ -74,3 +74,30 @@ void glservice::terminateWindow(GLFWwindow *window) {
   // Making window close
   glfwSetWindowShouldClose(window, true);
 }
+
+// Enables fullscreen mode for given window
+void glservice::enableFullscreenMode(GLFWwindow *window) {
+  GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
+  const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+  glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+}
+
+// Enables fullscreen mode for given window
+void glservice::enableFullscreenMode(GLFWwindow *window, int &posX, int &posY, int &width,
+                                     int &height) {
+  glfwGetWindowPos(window, &posX, &posY);
+  glfwGetWindowSize(window, &width, &height);
+  enableFullscreenMode(window);
+}
+
+// Disables fullscreen mode for given window
+void glservice::disableFullscreenMode(GLFWwindow *window, int posX, int posY, int width,
+                                      int height) {
+  GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
+  const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+  if (width == 0 || height == 0) {
+    width  = mode->width;
+    height = mode->height;
+  }
+  glfwSetWindowMonitor(window, nullptr, posX, posY, width, height, mode->refreshRate);
+}
