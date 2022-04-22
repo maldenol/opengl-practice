@@ -35,7 +35,8 @@ void enableFullscreenMode(GLFWwindow *window);
 void enableFullscreenMode(GLFWwindow *window, int &posX, int &posY, int &width, int &height);
 
 // Disables fullscreen mode for given window
-void disableFullscreenMode(GLFWwindow *window, int posX = 0, int posY = 0, int width = 0, int height = 0);
+void disableFullscreenMode(GLFWwindow *window, int posX = 0, int posY = 0, int width = 0,
+                           int height = 0);
 
 }  // namespace glservice
 

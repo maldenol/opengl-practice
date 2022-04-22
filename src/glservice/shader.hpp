@@ -23,7 +23,8 @@ void compileShader(GLuint shader, const QString &source);
 void compileShader(GLuint shader, const std::string &source);
 
 // Creates shader program compiling and linking given shaders
-GLuint createShaderProgram(const std::vector<GLenum> &shaderTypes, const std::vector<std::string> &shaderSources);
+GLuint createShaderProgram(const std::vector<GLenum>      &shaderTypes,
+                           const std::vector<std::string> &shaderSources);
 
 // Watches for modifications of shader files (must be run in thread)
 void shaderWatcher(const std::atomic<bool> &isRunning, std::atomic<bool> &shadersAreRecompiled,
