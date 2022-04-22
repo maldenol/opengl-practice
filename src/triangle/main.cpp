@@ -35,9 +35,10 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void processUserInput(GLFWwindow *window);
 
 // Functions for meshes
-GLuint initMesh(const std::vector<float> &vertices, const std::vector<GLuint> &indices);
+void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
+                const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);
-void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
+void   drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
                 const std::vector<GLuint> &textures);
 
 // Main function
@@ -94,8 +95,9 @@ int main(int argc, char *argv[]) {
       0, 1, 2,  // top-left
       1, 3, 2,  // bottom-right
   };
-  // Creating and configuring a mesh and getting its VAO
-  GLuint vao = initMesh(vertices, indices);
+  // Creating and configuring a mesh and getting its VAO and VBO
+  GLuint vao{}, vbo{};
+  initMesh(vao, vbo, vertices, indices);
 
   // Enabling Z-testing
   glEnable(GL_DEPTH_TEST);
@@ -135,7 +137,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Drawing mesh
-    drawMesh(vao, indices.size(), shaderProgram, textures);
+    drawMesh(vao, vbo, indices.size(), shaderProgram, textures);
 
     // Swapping front and back buffers
     glfwSwapBuffers(window);
@@ -205,11 +207,10 @@ void processUserInput(GLFWwindow *window) {
 }
 
 // Initializes mesh based on vertices and indices
-GLuint initMesh(const std::vector<float> &vertices, const std::vector<GLuint> &indices) {
+void initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
+              const std::vector<GLuint> &indices) {
   // Creating VAO, VBO and EBO
-  GLuint vao{};
   glGenVertexArrays(1, &vao);
-  GLuint vbo{};
   glGenBuffers(1, &vbo);
   GLuint ebo{};
   glGenBuffers(1, &ebo);
@@ -236,10 +237,9 @@ GLuint initMesh(const std::vector<float> &vertices, const std::vector<GLuint> &i
                         reinterpret_cast<void *>(6 * sizeof(float)));
   glEnableVertexAttribArray(2);
 
-  // Unbinding configured VAO to use it later
+  // Unbinding configured VAO and VBO
   glBindVertexArray(0);
-
-  return vao;
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 // Initializes 2D texture
@@ -286,12 +286,13 @@ GLuint initTexture(const QString &filename) {
 }
 
 // Draws mesh
-void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
+void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
               const std::vector<GLuint> &textures) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);
-  // Binding VAO with associated VBO and EBO
+  // Binding VAO with associated EBO and VBO
   glBindVertexArray(vao);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
   // For each texture
   for (size_t i = 0; i < textures.size(); ++i) {
@@ -305,12 +306,13 @@ void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
   glUniform1f(glGetUniformLocation(shaderProgram, "mixRatio"), mixRatio);
 
   // Drawing mesh
-  //glDrawArrays(GL_TRIANGLES, 0, 3); // without vertices (EBO) method
+  //glDrawArrays(GL_TRIANGLES, 0, 6); // without vertices (EBO) method
   glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT,
-                 0);  // with vertices (EBO) method
+                 0);  // with indices (EBO) method
 
-  // Unbinding VAO
+  // Unbinding configured VAO and VBO
   glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
   // Unbinding shader program
   glUseProgram(0);
 }

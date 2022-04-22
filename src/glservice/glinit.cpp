@@ -1,5 +1,5 @@
 // Header file
-#include "./libinit.hpp"
+#include "./glinit.hpp"
 
 // STD
 #include <iostream>

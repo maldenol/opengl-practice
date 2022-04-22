@@ -1,5 +1,5 @@
-#ifndef GLSERVICE_LIBINIT_HPP
-#define GLSERVICE_LIBINIT_HPP
+#ifndef GLSERVICE_GLINIT_HPP
+#define GLSERVICE_GLINIT_HPP
 
 // Qt5
 #include <QGuiApplication>

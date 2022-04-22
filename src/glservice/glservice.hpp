@@ -3,7 +3,8 @@
 
 // All the headers
 #include "filesystem.hpp"
-#include "libinit.hpp"
+#include "gldebug.hpp"
+#include "glinit.hpp"
 #include "shader.hpp"
 #include "camera/camera.hpp"
 
