@@ -22,10 +22,10 @@ int initGLFW();
 // Terminates GLFW
 void terminateGLFW();
 
-// Creates GLFW window and loads OpenGL functions with GLAD
-GLFWwindow *initWindow(int width, int height, const char *title);
+// Initializes GLFW and returns configured window with OpenGL context
+GLFWwindow *createWindow(int width, int height, const std::string &title, int openGLVersionMajor, int openGLVersionMinor);
 
-// Terminates GLFW window
+// Terminates window with OpenGL context and GLFW
 void terminateWindow(GLFWwindow *window);
 
 // Enables fullscreen mode for given window

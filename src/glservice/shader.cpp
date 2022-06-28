@@ -188,7 +188,7 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
       QFile shaderFile{shaderFileNames[i]};
       if (!shaderFile.open(QFile::ReadOnly | QFile::Text)) {
         std::cout << "error: unable to find " << shaderFileNames[i].toStdString() << std::endl;
-        continue;
+        break;
       }
       QFileInfo shaderFileInfo{shaderFile};
       qint64    shaderModificationTime = shaderFileInfo.lastModified().toMSecsSinceEpoch();

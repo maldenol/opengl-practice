@@ -28,6 +28,8 @@ using namespace std::chrono_literals;
 // Global constants
 static constexpr unsigned int          kWidth               = 800;
 static constexpr unsigned int          kHeight              = 600;
+static constexpr int                   kOpenGLVersionMajor  = 4;
+static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 
 // Functions for GLFW
@@ -46,17 +48,19 @@ int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
   QGuiApplication app = glservice::initQGuiApplication(argc, argv);
 
-  // Initializing GLFW
-  glservice::initGLFW();
-
-  // Creating GLFW window and loading OpenGL functions with GLAD
-  GLFWwindow *window = glservice::initWindow(kWidth, kHeight, "triangle");
+  // Initializing GLFW and getting configured window with OpenGL context
+  GLFWwindow *window = glservice::createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
   // Setting callback function on window resize
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+  // Setting OpenGL clear color
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  // Enabling Z-testing
+  glEnable(GL_DEPTH_TEST);
 
   // Creating arrays of filenames and types of shaders
   std::vector<GLenum> shaderTypes{
@@ -99,9 +103,6 @@ int main(int argc, char *argv[]) {
   GLuint vao{}, vbo{};
   initMesh(vao, vbo, vertices, indices);
 
-  // Enabling Z-testing
-  glEnable(GL_DEPTH_TEST);
-
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
 
@@ -120,8 +121,7 @@ int main(int argc, char *argv[]) {
     // Processing user input
     processUserInput(window);
 
-    // Clearing background
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    // Clearing color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // If shaders are recompiled
@@ -153,8 +153,8 @@ int main(int argc, char *argv[]) {
   shaderWatcherIsRunning = false;
   shaderWatcherThread.join();
 
-  // Terminating GLFW
-  glservice::terminateGLFW();
+  // Terminating window with OpenGL context and GLFW
+  glservice::terminateWindow(window);
 
   // Terminating Qt Gui application
   glservice::terminateQGuiApplication(app);
