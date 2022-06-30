@@ -152,13 +152,13 @@ glservice::Mesh glservice::generateCube(float size, int lod, const std::vector<G
           ld.z -= halfSize;
           rd.z -= halfSize;
 
-          luUV.x += 3.0f / 4.0f;
+          luUV.x += 1.0f / 4.0f;
           luUV.y += 1.0f / 3.0f;
-          ruUV.x += 3.0f / 4.0f;
+          ruUV.x += 1.0f / 4.0f;
           ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 3.0f / 4.0f;
+          ldUV.x += 1.0f / 4.0f;
           ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 3.0f / 4.0f;
+          rdUV.x += 1.0f / 4.0f;
           rdUV.y += 1.0f / 3.0f;
           break;
         case 5:  // z+
@@ -174,13 +174,13 @@ glservice::Mesh glservice::generateCube(float size, int lod, const std::vector<G
           ld.z += halfSize;
           rd.z += halfSize;
 
-          luUV.x += 1.0f / 4.0f;
+          luUV.x += 3.0f / 4.0f;
           luUV.y += 1.0f / 3.0f;
-          ruUV.x += 1.0f / 4.0f;
+          ruUV.x += 3.0f / 4.0f;
           ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 1.0f / 4.0f;
+          ldUV.x += 3.0f / 4.0f;
           ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 1.0f / 4.0f;
+          rdUV.x += 3.0f / 4.0f;
           rdUV.y += 1.0f / 3.0f;
           break;
       }

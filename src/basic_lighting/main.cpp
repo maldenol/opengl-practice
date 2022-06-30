@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Setting OpenGL clear color
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   // Enabling Z-testing
   glEnable(GL_DEPTH_TEST);
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   // Loading textures
   std::vector<std::vector<GLuint>> textures{
       std::vector<GLuint>{glservice::loadTexture("texture1.png")},
-      std::vector<GLuint>{glservice::loadTexture("texture1.png")},
+      std::vector<GLuint>{glservice::loadTexture("texture3.png")},
   };
 
   // Creating and configuring meshes
@@ -143,17 +143,22 @@ int main(int argc, char *argv[]) {
           1, 3, 2,  // bottom-right
       },
       textures[0], objectSP));
-  meshes.push_back(glservice::generatePlane(1.0f, 10, textures[1], objectSP));
+  //meshes.push_back(glservice::generatePlane(1.0f, 10, textures[1], objectSP));
   meshes.push_back(glservice::generateCube(1.0f, 10, textures[1], objectSP));
-  meshes.push_back(glservice::generateQuadSphere(1.0f, 10, textures[1], objectSP));
-  meshes.push_back(glservice::generateUVSphere(1.0f, 10, textures[1], objectSP));
-  meshes.push_back(glservice::generateIcoSphere(1.0f, textures[1], objectSP));
+  //meshes.push_back(glservice::generateQuadSphere(1.0f, 10, textures[1], objectSP));
+  //meshes.push_back(glservice::generateUVSphere(1.0f, 10, textures[1], objectSP));
+  //meshes.push_back(glservice::generateIcoSphere(1.0f, textures[1], objectSP));
+  meshes.push_back(glservice::generateCube(1.0f, 10, textures[1], sourceSP));
+  meshes[meshes.size() - 2].scale     = glm::vec3{1.0f, 2.0f, 1.0f};
+  meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 5.0f, -5.0f};
+  meshes[meshes.size() - 1].rotate    = glm::vec3{0.0f, 0.0f, 0.0f};
+  meshes[meshes.size() - 1].scale     = glm::vec3{1.0f, 2.0f, 1.0f};
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPosition(glm::vec3{1.0f, 0.0f, 1.0f});
+  gCamera.setPosition(glm::vec3{0.0f, 0.0f, 1.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
   glservice::Camera5DoFController *camera5DoFController =
@@ -191,10 +196,16 @@ int main(int argc, char *argv[]) {
 
     // If object shaders are recompiled
     if (objectShadersAreRecompiled) {
-      // Setting location of textures
+      // Setting uniform values
       glUseProgram(objectSP);
       glUniform1i(glGetUniformLocation(objectSP, "texture0"), 0);
-      glUniform3f(glGetUniformLocation(objectSP, "lightColor"), 1.0f, 1.0f, 1.0f);
+      glUniform3f(glGetUniformLocation(objectSP, "ambLightCol"), 1.0f, 1.0f, 1.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "ambLightInt"), 1.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "ambCoef"), 0.1f);
+      glUniform3f(glGetUniformLocation(objectSP, "lightCol"), 1.0f, 1.0f, 1.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "lightInt"), 3.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "diffCoef"), 1.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "specCoef"), 1.0f);
       glUseProgram(0);
 
       // Notifying that all routine after object shader recompilation is done
@@ -203,7 +214,7 @@ int main(int argc, char *argv[]) {
 
     // If source shaders are recompiled
     if (sourceShadersAreRecompiled) {
-      // Setting location of textures
+      // Setting uniform values
       glUseProgram(sourceSP);
       glUniform1i(glGetUniformLocation(sourceSP, "texture0"), 0);
       glUseProgram(0);
@@ -211,6 +222,14 @@ int main(int argc, char *argv[]) {
       // Notifying that all routine after source shader recompilation is done
       sourceShadersAreRecompiled = false;
     }
+
+    // Updating object shader program uniform values
+    glUseProgram(objectSP);
+    glUniform3fv(glGetUniformLocation(objectSP, "lightPos"), 1,
+                 glm::value_ptr(meshes[meshes.size() - 1].translate));
+    glUniform3fv(glGetUniformLocation(objectSP, "cameraPos"), 1,
+                 glm::value_ptr(gCamera.getPosition()));
+    glUseProgram(0);
 
     // Rendering meshes
     for (unsigned int i = 0; i < meshes.size(); ++i) {

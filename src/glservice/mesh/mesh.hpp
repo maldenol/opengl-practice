@@ -23,20 +23,23 @@ namespace glservice {
 
 // Mesh struct
 struct Mesh {
-  const GLuint              vao;
-  const GLuint              vbo;
-  const GLsizei             indexCount;
-  const std::vector<GLuint> textures;
-  const GLuint              shaderProgram;
+  GLuint              vao{};
+  GLuint              vbo{};
+  GLsizei             indexCount{};
+  std::vector<GLuint> textures{};
+  GLuint              shaderProgram{};
+  glm::vec3           translate{};
+  glm::vec3           rotate{};
+  glm::vec3           scale{1.0f};
 };
 
 // VBO attribute struct
 struct VBOAttribute {
-  GLint       size;
-  GLenum      type;
-  GLboolean   normalized;
-  GLsizei     stride;
-  const void *pointer;
+  GLint       size{};
+  GLenum      type{};
+  GLboolean   normalized{};
+  GLsizei     stride{};
+  const void *pointer{};
 };
 
 // Generates mesh based on VBO attributes, vertex buffer, indices, textures and shader program

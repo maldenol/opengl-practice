@@ -1,6 +1,9 @@
 // Header file
 #include "./mesh.hpp"
 
+// GLM
+#include <glm/gtx/euler_angles.hpp>
+
 // Renders mesh
 void glservice::renderMesh(const Mesh &mesh, const BaseCamera &camera) {
   // Setting specific shader program to use for render
@@ -16,9 +19,17 @@ void glservice::renderMesh(const Mesh &mesh, const BaseCamera &camera) {
     glBindTexture(GL_TEXTURE_2D, mesh.textures[i]);
   }
 
+  // Calculating mesh model matrix
+  glm::mat4x4 modelMatrix{1.0f};
+  modelMatrix = glm::translate(modelMatrix, mesh.translate);
+  modelMatrix =
+      modelMatrix * glm::eulerAngleXYZ(glm::radians(mesh.rotate.x), glm::radians(mesh.rotate.y),
+                                       glm::radians(mesh.rotate.z));
+  modelMatrix = glm::scale(modelMatrix, mesh.scale);
+
   // Updating shader uniform variables
   glUniformMatrix4fv(glGetUniformLocation(mesh.shaderProgram, "model"), 1, GL_FALSE,
-                     glm::value_ptr(glm::mat4{1.0f}));
+                     glm::value_ptr(modelMatrix));
   glUniformMatrix4fv(glGetUniformLocation(mesh.shaderProgram, "view"), 1, GL_FALSE,
                      glm::value_ptr(camera.getViewMatrix()));
   glUniformMatrix4fv(glGetUniformLocation(mesh.shaderProgram, "proj"), 1, GL_FALSE,
