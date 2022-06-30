@@ -15,14 +15,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-// GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-// STB
-//#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
-
 // "glservice" internal library
 #include <glservice.hpp>
 
@@ -42,6 +34,7 @@ float                           gCurrTime{};
 float                           gDeltaTime{};
 glservice::PerspectiveCamera    gCamera{};
 glservice::Camera6DoFController gCameraController{&gCamera};
+int                             gPolygonMode{};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -50,13 +43,6 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void cursorPosCallback(GLFWwindow *window, double posX, double posY);
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
-
-// Functions for meshes
-void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
-                const std::vector<GLuint> &indices);
-GLuint initTexture(const QString &filename);
-void   drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
-                const std::vector<GLuint> &textures);
 
 // Main function
 int main(int argc, char *argv[]) {
@@ -83,45 +69,85 @@ int main(int argc, char *argv[]) {
   // Enabling Z-testing
   glEnable(GL_DEPTH_TEST);
 
-  // Creating arrays of filenames and types of shaders
-  std::vector<GLuint> shaderTypes{
+  // Creating arrays of types of shaders
+  std::vector<GLuint> objectShaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
-  std::vector<QString> shaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("cameraVS.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("cameraFS.glsl"),
+  std::vector<GLuint> sourceShaderTypes{
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
   };
-  // Creating a shader program
-  GLuint shaderProgram = glCreateProgram();
-  // Running shaderWatcher thread
+  // Creating arrays of filenames of shaders
+  std::vector<QString> objectShaderFileNames{
+      glservice::getAbsolutePathRelativeToExecutable("objectVS.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("objectFS.glsl"),
+  };
+  std::vector<QString> sourceShaderFileNames{
+      glservice::getAbsolutePathRelativeToExecutable("sourceVS.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("sourceFS.glsl"),
+  };
+  // Creating shader programs
+  GLuint objectSP = glCreateProgram();
+  GLuint sourceSP = glCreateProgram();
+  // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
-  std::atomic<bool> shaderWatcherIsRunning = true;
-  std::atomic<bool> shadersAreRecompiled   = false;
-  std::thread shaderWatcherThread{glservice::shaderWatcher,       std::cref(shaderWatcherIsRunning),
-                                  std::ref(shadersAreRecompiled), window,
-                                  std::ref(glfwContextMutex),     shaderProgram,
-                                  std::cref(shaderTypes),         std::cref(shaderFileNames)};
+  std::atomic<bool> objectShaderWatcherIsRunning = true;
+  std::atomic<bool> objectShadersAreRecompiled   = false;
+  std::thread       objectShaderWatcherThread{glservice::shaderWatcher,
+                                        std::cref(objectShaderWatcherIsRunning),
+                                        std::ref(objectShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        objectSP,
+                                        std::cref(objectShaderTypes),
+                                        std::cref(objectShaderFileNames)};
+  std::atomic<bool> sourceShaderWatcherIsRunning = true;
+  std::atomic<bool> sourceShadersAreRecompiled   = false;
+  std::thread       sourceShaderWatcherThread{glservice::shaderWatcher,
+                                        std::cref(sourceShaderWatcherIsRunning),
+                                        std::ref(sourceShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        sourceSP,
+                                        std::cref(sourceShaderTypes),
+                                        std::cref(sourceShaderFileNames)};
 
   // Loading textures
-  std::vector<GLuint> textures{
-      initTexture("texture1.png"),
+  std::vector<std::vector<GLuint>> textures{
+      std::vector<GLuint>{glservice::loadTexture("texture1.png")},
+      std::vector<GLuint>{glservice::loadTexture("texture1.png")},
   };
 
-  // Vertices and their indices to make a mesh from triangles
-  std::vector<float> vertices{
-      -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  1.0f,  // top-left
-      0.5f,   0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  1.0f,  // top-right
-      -0.25f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f, 0.0f,  // bottom-left
-      0.25f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.75f, 0.0f,  // bottom-right
-  };
-  std::vector<GLuint> indices{
-      0, 1, 2,  // top-left
-      1, 3, 2,  // bottom-right
-  };
-  // Creating and configuring a mesh and getting its VAO and VBO
-  GLuint vao{}, vbo{};
-  initMesh(vao, vbo, vertices, indices);
+  // Creating and configuring meshes
+  std::vector<glservice::Mesh> meshes{};
+  meshes.push_back(glservice::generateMesh(
+      std::vector<glservice::VBOAttribute>{
+          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
+                                  reinterpret_cast<void *>(0)                },
+          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
+                                  reinterpret_cast<void *>(3 * sizeof(float))},
+          glservice::VBOAttribute{2, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
+                                  reinterpret_cast<void *>(6 * sizeof(float))},
+          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
+                                  reinterpret_cast<void *>(8 * sizeof(float))},
+  },
+      std::vector<float>{
+          -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f,  // top-left
+          0.5f,   0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,  // top-right
+          -0.25f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f, 0.0f, 0.0f, 0.0f, 1.0f,  // bottom-left
+          0.25f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.75f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom-right
+      },
+      std::vector<GLuint>{
+          0, 1, 2,  // top-left
+          1, 3, 2,  // bottom-right
+      },
+      textures[0], objectSP));
+  meshes.push_back(glservice::generatePlane(1.0f, 10, textures[1], objectSP));
+  meshes.push_back(glservice::generateCube(1.0f, 10, textures[1], objectSP));
+  meshes.push_back(glservice::generateQuadSphere(1.0f, 10, textures[1], objectSP));
+  meshes.push_back(glservice::generateUVSphere(1.0f, 10, textures[1], objectSP));
+  meshes.push_back(glservice::generateIcoSphere(1.0f, textures[1], objectSP));
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -163,19 +189,33 @@ int main(int argc, char *argv[]) {
     // Clearing color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // If shaders are recompiled
-    if (shadersAreRecompiled) {
+    // If object shaders are recompiled
+    if (objectShadersAreRecompiled) {
       // Setting location of textures
-      glUseProgram(shaderProgram);
-      glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0);
+      glUseProgram(objectSP);
+      glUniform1i(glGetUniformLocation(objectSP, "texture0"), 0);
+      glUniform3f(glGetUniformLocation(objectSP, "lightColor"), 1.0f, 1.0f, 1.0f);
       glUseProgram(0);
 
-      // Notifying that all routine after shader recompilation is done
-      shadersAreRecompiled = false;
+      // Notifying that all routine after object shader recompilation is done
+      objectShadersAreRecompiled = false;
     }
 
-    // Drawing mesh
-    drawMesh(vao, vbo, indices.size(), shaderProgram, textures);
+    // If source shaders are recompiled
+    if (sourceShadersAreRecompiled) {
+      // Setting location of textures
+      glUseProgram(sourceSP);
+      glUniform1i(glGetUniformLocation(sourceSP, "texture0"), 0);
+      glUseProgram(0);
+
+      // Notifying that all routine after source shader recompilation is done
+      sourceShadersAreRecompiled = false;
+    }
+
+    // Rendering meshes
+    for (unsigned int i = 0; i < meshes.size(); ++i) {
+      glservice::renderMesh(meshes[i], gCamera);
+    }
 
     // Swapping front and back buffers
     glfwSwapBuffers(window);
@@ -187,9 +227,11 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(kRenderCycleInterval);
   }
 
-  // Waiting for shaderWatcher to stop
-  shaderWatcherIsRunning = false;
-  shaderWatcherThread.join();
+  // Waiting for shaderWatchers to stop
+  objectShaderWatcherIsRunning = false;
+  objectShaderWatcherThread.join();
+  sourceShaderWatcherIsRunning = false;
+  sourceShaderWatcherThread.join();
 
   // Terminating window with OpenGL context and GLFW
   glservice::terminateWindow(window);
@@ -329,6 +371,33 @@ void processUserInput(GLFWwindow *window) {
     }
   }
 
+  // Toggling polygon mode for both sides
+  if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      gPolygonMode = (gPolygonMode + 1) % 3;
+      switch (gPolygonMode) {
+        case 0:
+          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          glDisable(GL_PROGRAM_POINT_SIZE);
+          glPointSize(1);
+          break;
+        case 1:
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          glDisable(GL_PROGRAM_POINT_SIZE);
+          glPointSize(1);
+          break;
+        case 2:
+          glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+          glEnable(GL_PROGRAM_POINT_SIZE);
+          glPointSize(10);
+          break;
+      }
+    }
+  }
+
   // Terminating window
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glservice::terminateWindow(window);
@@ -338,117 +407,4 @@ void processUserInput(GLFWwindow *window) {
   if (released) {
     sPressed = false;
   }
-}
-
-// Initializes mesh based on vertices and indices
-void initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
-              const std::vector<GLuint> &indices) {
-  // Creating VAO, VBO and EBO
-  glGenVertexArrays(1, &vao);
-  glGenBuffers(1, &vbo);
-  GLuint ebo{};
-  glGenBuffers(1, &ebo);
-
-  // Binding VAO to bind to it VBO and EBO and then configure them
-  glBindVertexArray(vao);
-
-  // Binding and filling VBO
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-
-  // Binding and filling EBO
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0],
-               GL_STATIC_DRAW);
-
-  // Configuring and enabling VBO's attributes
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void *>(0));
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        reinterpret_cast<void *>(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        reinterpret_cast<void *>(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
-
-  // Unbinding configured VAO and VBO
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-// Initializes 2D texture
-GLuint initTexture(const QString &filename) {
-  // Loading texture image
-  stbi_set_flip_vertically_on_load(true);
-  int            textureWidth{}, textureHeight{}, componentCount{};
-  unsigned char *textureImage =
-      stbi_load(glservice::getAbsolutePathRelativeToExecutable(filename).toLocal8Bit().data(),
-                &textureWidth, &textureHeight, &componentCount, 0);
-  if (textureImage == nullptr) {
-    std::cout << "error: failed to load image " << filename.toStdString() << std::endl;
-    // Freeing texture image memory
-    stbi_image_free(textureImage);
-    return 0;
-  }
-
-  // Creating texture
-  GLuint texture{};
-  glGenTextures(1, &texture);
-
-  // Binding texture
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  // Filling texture with image data and generating mip-maps
-  GLenum format = (componentCount == 3) ? GL_RGB : GL_RGBA;
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE,
-               textureImage);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  // Configuring texture
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // Unbinding texture
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  // Freeing texture image memory
-  stbi_image_free(textureImage);
-
-  return texture;
-}
-
-// Draws mesh
-void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
-              const std::vector<GLuint> &textures) {
-  // Setting specific shader program to use for render
-  glUseProgram(shaderProgram);
-  // Binding VAO with associated EBO and VBO
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-  // For each texture
-  for (size_t i = 0; i < textures.size(); ++i) {
-    // Binding texture to texture unit
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, textures[i]);
-  }
-
-  // Updating shader uniform variables
-  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE,
-                     glm::value_ptr(glm::mat4{1.0f}));
-  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE,
-                     glm::value_ptr(gCamera.getViewMatrix()));
-  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "proj"), 1, GL_FALSE,
-                     glm::value_ptr(gCamera.getProjectionMatrix()));
-
-  // Drawing mesh
-  glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
-  // Unbinding configured VAO and VBO
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  // Unbinding shader program
-  glUseProgram(0);
 }

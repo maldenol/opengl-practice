@@ -23,7 +23,8 @@ int initGLFW();
 void terminateGLFW();
 
 // Initializes GLFW and returns configured window with OpenGL context
-GLFWwindow *createWindow(int width, int height, const std::string &title, int openGLVersionMajor, int openGLVersionMinor);
+GLFWwindow *createWindow(int width, int height, const std::string &title, int openGLVersionMajor,
+                         int openGLVersionMinor);
 
 // Terminates window with OpenGL context and GLFW
 void terminateWindow(GLFWwindow *window);

@@ -42,7 +42,8 @@ glservice::Camera5DoFController::Camera5DoFController(
       _angleUpLimitMin{cameraController._angleUpLimitMin},
       _angleUpLimitMax{cameraController._angleUpLimitMax},
       _angleRightLimitMin{cameraController._angleRightLimitMin},
-      _angleRightLimitMax{cameraController._angleRightLimitMax} {}
+      _angleRightLimitMax{cameraController._angleRightLimitMax},
+      _baseLookDirection{cameraController._baseLookDirection} {}
 
 glservice::Camera5DoFController &glservice::Camera5DoFController::operator=(
     const Camera5DoFController &cameraController) noexcept {
@@ -111,7 +112,7 @@ void glservice::Camera5DoFController::setAngles(float angleUp, float angleRight)
   _angleRight = angleIntoBounds(_angleRight, _angleRightLimitMin, _angleRightLimitMax);
 }
 
-void glservice::Camera5DoFController::getAngles(float &angleUp, float &angleRight) noexcept {
+void glservice::Camera5DoFController::getAngles(float &angleUp, float &angleRight) const noexcept {
   angleUp    = _angleUp;
   angleRight = _angleRight;
 }
@@ -127,7 +128,7 @@ void glservice::Camera5DoFController::setAngleLimits(float angleUpLimitMin, floa
 
 void glservice::Camera5DoFController::getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
                                                      float &angleRightLimitMin,
-                                                     float &angleRightLimitMax) noexcept {
+                                                     float &angleRightLimitMax) const noexcept {
   angleUpLimitMin    = _angleUpLimitMin;
   angleUpLimitMax    = _angleUpLimitMax;
   angleRightLimitMin = _angleRightLimitMin;

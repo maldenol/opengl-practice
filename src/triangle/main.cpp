@@ -16,7 +16,7 @@
 #include <GLFW/glfw3.h>
 
 // STB
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 // "glservice" internal library
@@ -49,7 +49,8 @@ int main(int argc, char *argv[]) {
   QGuiApplication app = glservice::initQGuiApplication(argc, argv);
 
   // Initializing GLFW and getting configured window with OpenGL context
-  GLFWwindow *window = glservice::createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
+  GLFWwindow *window = glservice::createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor,
+                                               kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -68,8 +69,8 @@ int main(int argc, char *argv[]) {
       GL_FRAGMENT_SHADER,
   };
   std::vector<QString> shaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("vertexShader.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("fragmentShader.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("triangleVS.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("triangleFS.glsl"),
   };
   // Creating a shader program
   GLuint shaderProgram = glCreateProgram();
@@ -302,7 +303,7 @@ void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
   }
 
   // Updating shader uniform variables
-  float mixRatio = cos(static_cast<float>(glfwGetTime())) / 2.0f + 0.5f;
+  float mixRatio = std::cos(static_cast<float>(glfwGetTime())) / 2.0f + 0.5f;
   glUniform1f(glGetUniformLocation(shaderProgram, "mixRatio"), mixRatio);
 
   // Drawing mesh

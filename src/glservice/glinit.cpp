@@ -22,7 +22,7 @@ void glservice::terminateQGuiApplication(QGuiApplication &app) {
 
 // Initializes GLFW and returns configured window with OpenGL context
 GLFWwindow *glservice::createWindow(int width, int height, const std::string &title,
-                                int openGLVersionMajor, int openGLVersionMinor) {
+                                    int openGLVersionMajor, int openGLVersionMinor) {
   // Initializing GLFW
   if (glfwInit() == GLFW_FALSE) {
     std::cout << "error: failed to initialize GLFW" << std::endl;

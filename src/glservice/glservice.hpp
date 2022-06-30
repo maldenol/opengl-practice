@@ -7,5 +7,6 @@
 #include "glinit.hpp"
 #include "shader.hpp"
 #include "camera/camera.hpp"
+#include "mesh/mesh.hpp"
 
 #endif

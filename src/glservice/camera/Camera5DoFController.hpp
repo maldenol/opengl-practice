@@ -33,12 +33,12 @@ class Camera5DoFController : public Camera3DoFController {
   void moveUp(float distance) noexcept override;
 
   void setAngles(float angleUp, float angleRight) noexcept;
-  void getAngles(float &angleUp, float &angleRight) noexcept;
+  void getAngles(float &angleUp, float &angleRight) const noexcept;
 
   void setAngleLimits(float angleUpLimitMin, float angleUpLimitMax, float angleRightLimitMin,
                       float angleRightLimitMax) noexcept;
   void getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax, float &angleRightLimitMin,
-                      float &angleRightLimitMax) noexcept;
+                      float &angleRightLimitMax) const noexcept;
 
   void addAngles(float angleUp, float angleRight) noexcept;
 };
