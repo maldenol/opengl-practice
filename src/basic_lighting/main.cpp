@@ -127,32 +127,10 @@ int main(int argc, char *argv[]) {
 
   // Creating and configuring meshes
   std::vector<glservice::Mesh> meshes{};
-  meshes.push_back(glservice::generateMesh(
-      std::vector<glservice::VBOAttribute>{
-          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
-                                  reinterpret_cast<void *>(0)                },
-          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
-                                  reinterpret_cast<void *>(3 * sizeof(float))},
-          glservice::VBOAttribute{2, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
-                                  reinterpret_cast<void *>(6 * sizeof(float))},
-          glservice::VBOAttribute{3, GL_FLOAT, GL_FALSE, 11 * sizeof(float),
-                                  reinterpret_cast<void *>(8 * sizeof(float))},
-  },
-      std::vector<float>{
-          -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f,  // top-left
-          0.5f,   0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,  // top-right
-          -0.25f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.25f, 0.0f, 0.0f, 0.0f, 1.0f,  // bottom-left
-          0.25f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.75f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom-right
-      },
-      std::vector<GLuint>{
-          0, 1, 2,  // top-left
-          1, 3, 2,  // bottom-right
-      },
-      objectSP, textures[0]));
   meshes.push_back(glservice::generateCube(1.0f, 10, false, objectSP, textures[1]));
   meshes[meshes.size() - 1].material.glossiness = 5.0f;
   meshes.push_back(glservice::generateCube(1.0f, 10, true, sourceSP, textures[0]));
-  meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 5.0f, -5.0f};
+  meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 2.0f, -2.0f};
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);

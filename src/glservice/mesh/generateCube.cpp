@@ -23,10 +23,12 @@ glservice::Mesh glservice::generateCube(float size, int lod, bool enableCubemap,
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
+  std::vector<glm::vec3> tangents{};
   std::vector<glm::vec2> uvs{};
   std::vector<GLuint>    indices{};
   vertices.resize(vertexCount);
   normals.resize(vertexCount);
+  tangents.resize(vertexCount);
   uvs.resize(vertexCount);
   indices.resize(indexCount);
 
@@ -213,6 +215,15 @@ glservice::Mesh glservice::generateCube(float size, int lod, bool enableCubemap,
       normals[vertexOffset + 2] = n;
       normals[vertexOffset + 3] = n;
 
+      tangents[vertexOffset]     = calculateTangent(std::vector<glm::vec3>{lu, ld, rd},
+                                                    std::vector<glm::vec2>{luUV, ldUV, rdUV});
+      tangents[vertexOffset + 1] = calculateTangent(std::vector<glm::vec3>{ld, rd, ru},
+                                                    std::vector<glm::vec2>{ldUV, rdUV, ruUV});
+      tangents[vertexOffset + 2] = calculateTangent(std::vector<glm::vec3>{rd, ru, lu},
+                                                    std::vector<glm::vec2>{rdUV, ruUV, luUV});
+      tangents[vertexOffset + 3] = calculateTangent(std::vector<glm::vec3>{ru, lu, ld},
+                                                    std::vector<glm::vec2>{ruUV, luUV, ldUV});
+
       uvs[vertexOffset]     = luUV;
       uvs[vertexOffset + 1] = ruUV;
       uvs[vertexOffset + 2] = ldUV;
@@ -227,8 +238,9 @@ glservice::Mesh glservice::generateCube(float size, int lod, bool enableCubemap,
     }
   }
 
-  // Generating vertex buffer based on vertices, normals and uvs
-  std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
+  // Generating vertex buffer based on vertices, normals, tangents and uvs
+  std::vector<float> vertexBuffer{
+      glservice::generateVertexBuffer(vertices, normals, tangents, uvs)};
 
   // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
@@ -237,10 +249,10 @@ glservice::Mesh glservice::generateCube(float size, int lod, bool enableCubemap,
       VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float), reinterpret_cast<void *>(0)});
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(3 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(6 * sizeof(float))});
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(8 * sizeof(float))});
+                                       reinterpret_cast<void *>(6 * sizeof(float))});
+  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                       reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Generating and returning the mesh
   return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);

@@ -33,6 +33,7 @@ struct Material {
   float diffCoef{0.6f};
   float specCoef{0.3f};
   float glossiness{1.0f};
+  float maxHeight{};
 
   std::vector<Texture> textures{};
 };
@@ -65,9 +66,15 @@ Mesh generateMesh(const std::vector<VBOAttribute> &vboAttributes,
                   const std::vector<float> &vertexBuffer, const std::vector<GLuint> &indices,
                   GLuint shaderProgram, const std::vector<Texture> &textures);
 
-// Generates vertex buffer based on vertices, normals and uvs
+// Generates vertex buffer based on vertices, normals, tangents and uvs
 std::vector<float> generateVertexBuffer(std::vector<glm::vec3> vertices,
-                                        std::vector<glm::vec3> normals, std::vector<glm::vec2> uvs);
+                                        std::vector<glm::vec3> normals,
+                                        std::vector<glm::vec3> tangents,
+                                        std::vector<glm::vec2> uvs);
+
+// Calculates tangent by given positions and UVs of 3 points
+glm::vec3 calculateTangent(const std::vector<glm::vec3> &pointPositions,
+                           const std::vector<glm::vec2> &pointUVs);
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 Mesh generatePlane(float size, int lod, GLuint shaderProgram, const std::vector<Texture> &textures);

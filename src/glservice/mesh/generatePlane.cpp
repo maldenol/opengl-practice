@@ -17,10 +17,12 @@ glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgr
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
+  std::vector<glm::vec3> tangents{};
   std::vector<glm::vec2> uvs{};
   std::vector<GLuint>    indices{};
   vertices.resize(vertexCount);
   normals.resize(vertexCount);
+  tangents.resize(vertexCount);
   uvs.resize(vertexCount);
   indices.resize(indexCount);
 
@@ -47,25 +49,46 @@ glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgr
 
     constexpr glm::vec3 kForward{0.0f, 0.0f, 1.0f};
 
+    const glm::vec3 lu{lux, luy, 0.0f};
+    const glm::vec3 ru{rux, ruy, 0.0f};
+    const glm::vec3 ld{ldx, ldy, 0.0f};
+    const glm::vec3 rd{rdx, rdy, 0.0f};
+
+    const glm::vec3 n{-kForward};
+
+    const glm::vec2 luUV{luu, luv};
+    const glm::vec2 ruUV{ruu, ruv};
+    const glm::vec2 ldUV{ldu, ldv};
+    const glm::vec2 rdUV{rdu, rdv};
+
     const int vertexOffset = v * 4;
     const int indexOffset  = v * 6;
 
-    vertices[vertexOffset]     = glm::vec3{lux, luy, 0.0f};  // left-up
-    vertices[vertexOffset + 1] = glm::vec3{rux, ruy, 0.0f};  // right-up
-    vertices[vertexOffset + 2] = glm::vec3{ldx, ldy, 0.0f};  // left-down
-    vertices[vertexOffset + 3] = glm::vec3{rdx, rdy, 0.0f};  // right-down
+    vertices[vertexOffset]     = lu;  // left-up
+    vertices[vertexOffset + 1] = ru;  // right-up
+    vertices[vertexOffset + 2] = ld;  // left-down
+    vertices[vertexOffset + 3] = rd;  // right-down
 
-    normals[vertexOffset]     = -kForward;  // left-up
-    normals[vertexOffset + 1] = -kForward;  // right-up
-    normals[vertexOffset + 2] = -kForward;  // left-down
-    normals[vertexOffset + 3] = -kForward;  // right-down
+    normals[vertexOffset]     = n;  // left-up
+    normals[vertexOffset + 1] = n;  // right-up
+    normals[vertexOffset + 2] = n;  // left-down
+    normals[vertexOffset + 3] = n;  // right-down
 
-    uvs[vertexOffset]     = glm::vec2{luu, luv};  // left-up
-    uvs[vertexOffset + 1] = glm::vec2{ruu, ruv};  // right-up
-    uvs[vertexOffset + 2] = glm::vec2{ldu, ldv};  // left-down
-    uvs[vertexOffset + 3] = glm::vec2{rdu, rdv};  // right-down
+    tangents[vertexOffset]     = calculateTangent(  // left-up
+        std::vector<glm::vec3>{lu, ld, rd}, std::vector<glm::vec2>{luUV, ldUV, rdUV});
+    tangents[vertexOffset + 1] = calculateTangent(  // right-up
+        std::vector<glm::vec3>{ld, rd, ru}, std::vector<glm::vec2>{ldUV, rdUV, ruUV});
+    tangents[vertexOffset + 2] = calculateTangent(  // left-down
+        std::vector<glm::vec3>{rd, ru, lu}, std::vector<glm::vec2>{rdUV, ruUV, luUV});
+    tangents[vertexOffset + 3] = calculateTangent(  // right-down
+        std::vector<glm::vec3>{ru, lu, ld}, std::vector<glm::vec2>{ruUV, luUV, ldUV});
 
-    indices[indexOffset]     = vertexOffset;      // left-up triangle
+    uvs[vertexOffset]     = luUV;  // left-up
+    uvs[vertexOffset + 1] = ruUV;  // right-up
+    uvs[vertexOffset + 2] = ldUV;  // left-down
+    uvs[vertexOffset + 3] = rdUV;  // right-down
+
+    indices[indexOffset]     = vertexOffset;
     indices[indexOffset + 1] = vertexOffset + 1;  // left-up triangle
     indices[indexOffset + 2] = vertexOffset + 2;  // left-up triangle
     indices[indexOffset + 3] = vertexOffset + 1;  // right-down triangle
@@ -73,8 +96,9 @@ glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgr
     indices[indexOffset + 5] = vertexOffset + 2;  // right-down triangle
   }
 
-  // Generating vertex buffer based on vertices, normals and uvs
-  std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
+  // Generating vertex buffer based on vertices, normals, tangents and uvs
+  std::vector<float> vertexBuffer{
+      glservice::generateVertexBuffer(vertices, normals, tangents, uvs)};
 
   // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
@@ -83,10 +107,10 @@ glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgr
       VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float), reinterpret_cast<void *>(0)});
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(3 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(6 * sizeof(float))});
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(8 * sizeof(float))});
+                                       reinterpret_cast<void *>(6 * sizeof(float))});
+  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                       reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Generating and returning the mesh
   return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
