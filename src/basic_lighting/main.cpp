@@ -115,9 +115,14 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<glservice::Texture>> textures{
-      std::vector<glservice::Texture>{},
+      std::vector<glservice::Texture>{                                                                },
       std::vector<glservice::Texture>{
-          glservice::Texture{0, glservice::loadTexture("texture3.png")}},
+                                      glservice::Texture{0, glservice::loadTexture("albedoMap.png")},glservice::Texture{1, glservice::loadTexture("normalMap.png")},
+                                      glservice::Texture{2, glservice::loadTexture("heightMap.png")},
+                                      glservice::Texture{3, glservice::loadTexture("ambientOcclusionMap.png")},
+                                      glservice::Texture{4, glservice::loadTexture("roughnessMap.png")},
+                                      //glservice::Texture{5, glservice::loadTexture("emissionMap.png")},
+      },
   };
 
   // Creating and configuring meshes
@@ -144,12 +149,9 @@ int main(int argc, char *argv[]) {
           1, 3, 2,  // bottom-right
       },
       objectSP, textures[0]));
-  //meshes.push_back(glservice::generatePlane(1.0f, 10, objectSP, textures[1]));
-  meshes.push_back(glservice::generateCube(1.0f, 10, objectSP, textures[1]));
-  //meshes.push_back(glservice::generateQuadSphere(1.0f, 10, objectSP, textures[1]));
-  //meshes.push_back(glservice::generateUVSphere(1.0f, 10, objectSP, textures[1]));
-  //meshes.push_back(glservice::generateIcoSphere(1.0f, objectSP, textures[1]));
-  meshes.push_back(glservice::generateCube(1.0f, 10, sourceSP, textures[0]));
+  meshes.push_back(glservice::generateCube(1.0f, 10, false, objectSP, textures[1]));
+  meshes[meshes.size() - 1].material.glossiness = 5.0f;
+  meshes.push_back(glservice::generateCube(1.0f, 10, true, sourceSP, textures[0]));
   meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 5.0f, -5.0f};
 
   // Releasing OpenGL context
@@ -237,6 +239,11 @@ int main(int argc, char *argv[]) {
       glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.glossiness"),
                   mesh.material.glossiness);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.texture"), 0);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.normalMap"), 1);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.heightMap"), 2);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.ambOccMap"), 3);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.roughMap"), 4);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.emissMap"), 5);
       glUseProgram(0);
 
       glservice::renderMesh(mesh, gCamera);

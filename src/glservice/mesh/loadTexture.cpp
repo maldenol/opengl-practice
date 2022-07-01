@@ -34,7 +34,21 @@ GLuint glservice::loadTexture(const QString &filename) {
   glBindTexture(GL_TEXTURE_2D, texture);
 
   // Filling texture with image data and generating mip-maps
-  GLenum format = (componentCount == 3) ? GL_RGB : GL_RGBA;
+  GLenum format = 0;
+  switch (componentCount) {
+    case 1:
+      format = GL_RED;
+      break;
+    case 2:
+      format = GL_RG;
+      break;
+    case 3:
+      format = GL_RGB;
+      break;
+    case 4:
+      format = GL_RGBA;
+      break;
+  }
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE,
                textureImage);
   glGenerateMipmap(GL_TEXTURE_2D);

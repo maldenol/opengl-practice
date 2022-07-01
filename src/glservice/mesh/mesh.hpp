@@ -71,10 +71,11 @@ std::vector<float> generateVertexBuffer(std::vector<glm::vec3> vertices,
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 Mesh generatePlane(float size, int lod, GLuint shaderProgram, const std::vector<Texture> &textures);
-// Generates cube mesh based on size, level-of-detail, shader program and textures
-Mesh generateCube(float size, int lod, GLuint shaderProgram, const std::vector<Texture> &textures);
-// Generates quad sphere mesh based on radius, level-of-detail, shader program and textures
-Mesh generateQuadSphere(float radius, int lod, GLuint shaderProgram,
+// Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
+Mesh generateCube(float size, int lod, bool enableCubemap, GLuint shaderProgram,
+                  const std::vector<Texture> &textures);
+// Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
+Mesh generateQuadSphere(float radius, int lod, bool enableCubemap, GLuint shaderProgram,
                         const std::vector<Texture> &textures);
 // Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
 Mesh generateUVSphere(float radius, int lod, GLuint shaderProgram,

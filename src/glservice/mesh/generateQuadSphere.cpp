@@ -1,15 +1,18 @@
 // Header file
 #include "./mesh.hpp"
 
-// Generates quad sphere mesh based on radius, level-of-detail, shader program and textures
-glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shaderProgram,
+// Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
+glservice::Mesh glservice::generateQuadSphere(float radius, int lod, bool enableCubemap,
+                                              GLuint                      shaderProgram,
                                               const std::vector<Texture> &textures) {
   // Level-Of-Details (count of quads along one side)
-  const float xyQuadSize = 1.0f / static_cast<float>(lod);         // discrete quad's side xy size
-  const float uQuadSize  = 1.0f / 4.0f / static_cast<float>(lod);  // discrete quad's side u size
-  const float vQuadSize  = 1.0f / 3.0f / static_cast<float>(lod);  // discrete quad's side v size
-  const float halfSize   = 1.0f / 2.0f;                            // half of the size
-  const int   quadLOD    = lod * lod;                              // LOD^2
+  const float xyQuadSize = 1.0f / static_cast<float>(lod);  // discrete quad's side xy size
+  const float uQuadSize  = 1.0f / (enableCubemap ? 4.0f : 1.0f) /
+                          static_cast<float>(lod);  // discrete quad's side u size
+  const float vQuadSize = 1.0f / (enableCubemap ? 3.0f : 1.0f) /
+                          static_cast<float>(lod);  // discrete quad's side v size
+  const float halfSize = 1.0f / 2.0f;               // half of the size
+  const int   quadLOD  = lod * lod;                 // LOD^2
 
   const int quadPerSideCount   = quadLOD;                   // discrete quads per side count
   const int vertexPerSideCount = 4 * quadPerSideCount;      // vertices per side count
@@ -70,14 +73,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.x -= halfSize;
           rd.x -= halfSize;
 
-          luUV.x += 0.0f / 4.0f;
-          luUV.y += 1.0f / 3.0f;
-          ruUV.x += 0.0f / 4.0f;
-          ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 0.0f / 4.0f;
-          ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 0.0f / 4.0f;
-          rdUV.y += 1.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 0.0f / 4.0f;
+            luUV.y += 1.0f / 3.0f;
+            ruUV.x += 0.0f / 4.0f;
+            ruUV.y += 1.0f / 3.0f;
+            ldUV.x += 0.0f / 4.0f;
+            ldUV.y += 1.0f / 3.0f;
+            rdUV.x += 0.0f / 4.0f;
+            rdUV.y += 1.0f / 3.0f;
+          }
           break;
         case 1:  // x+
           lu = glm::angleAxis(glm::radians(-90.0f), kUp) * lu;
@@ -92,14 +97,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.x += halfSize;
           rd.x += halfSize;
 
-          luUV.x += 2.0f / 4.0f;
-          luUV.y += 1.0f / 3.0f;
-          ruUV.x += 2.0f / 4.0f;
-          ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 2.0f / 4.0f;
-          ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 2.0f / 4.0f;
-          rdUV.y += 1.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 2.0f / 4.0f;
+            luUV.y += 1.0f / 3.0f;
+            ruUV.x += 2.0f / 4.0f;
+            ruUV.y += 1.0f / 3.0f;
+            ldUV.x += 2.0f / 4.0f;
+            ldUV.y += 1.0f / 3.0f;
+            rdUV.x += 2.0f / 4.0f;
+            rdUV.y += 1.0f / 3.0f;
+          }
           break;
         case 2:  // y-
           lu = glm::angleAxis(glm::radians(-90.0f), kRight) * lu;
@@ -114,14 +121,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.y -= halfSize;
           rd.y -= halfSize;
 
-          luUV.x += 1.0f / 4.0f;
-          luUV.y += 0.0f / 3.0f;
-          ruUV.x += 1.0f / 4.0f;
-          ruUV.y += 0.0f / 3.0f;
-          ldUV.x += 1.0f / 4.0f;
-          ldUV.y += 0.0f / 3.0f;
-          rdUV.x += 1.0f / 4.0f;
-          rdUV.y += 0.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 1.0f / 4.0f;
+            luUV.y += 0.0f / 3.0f;
+            ruUV.x += 1.0f / 4.0f;
+            ruUV.y += 0.0f / 3.0f;
+            ldUV.x += 1.0f / 4.0f;
+            ldUV.y += 0.0f / 3.0f;
+            rdUV.x += 1.0f / 4.0f;
+            rdUV.y += 0.0f / 3.0f;
+          }
           break;
         case 3:  // y+
           lu = glm::angleAxis(glm::radians(90.0f), kRight) * lu;
@@ -136,14 +145,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.y += halfSize;
           rd.y += halfSize;
 
-          luUV.x += 1.0f / 4.0f;
-          luUV.y += 2.0f / 3.0f;
-          ruUV.x += 1.0f / 4.0f;
-          ruUV.y += 2.0f / 3.0f;
-          ldUV.x += 1.0f / 4.0f;
-          ldUV.y += 2.0f / 3.0f;
-          rdUV.x += 1.0f / 4.0f;
-          rdUV.y += 2.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 1.0f / 4.0f;
+            luUV.y += 2.0f / 3.0f;
+            ruUV.x += 1.0f / 4.0f;
+            ruUV.y += 2.0f / 3.0f;
+            ldUV.x += 1.0f / 4.0f;
+            ldUV.y += 2.0f / 3.0f;
+            rdUV.x += 1.0f / 4.0f;
+            rdUV.y += 2.0f / 3.0f;
+          }
           break;
         case 4:  // z-
           lu.z -= halfSize;
@@ -151,14 +162,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.z -= halfSize;
           rd.z -= halfSize;
 
-          luUV.x += 1.0f / 4.0f;
-          luUV.y += 1.0f / 3.0f;
-          ruUV.x += 1.0f / 4.0f;
-          ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 1.0f / 4.0f;
-          ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 1.0f / 4.0f;
-          rdUV.y += 1.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 1.0f / 4.0f;
+            luUV.y += 1.0f / 3.0f;
+            ruUV.x += 1.0f / 4.0f;
+            ruUV.y += 1.0f / 3.0f;
+            ldUV.x += 1.0f / 4.0f;
+            ldUV.y += 1.0f / 3.0f;
+            rdUV.x += 1.0f / 4.0f;
+            rdUV.y += 1.0f / 3.0f;
+          }
           break;
         case 5:  // z+
           lu = glm::angleAxis(glm::radians(180.0f), kUp) * lu;
@@ -173,14 +186,16 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shad
           ld.z += halfSize;
           rd.z += halfSize;
 
-          luUV.x += 3.0f / 4.0f;
-          luUV.y += 1.0f / 3.0f;
-          ruUV.x += 3.0f / 4.0f;
-          ruUV.y += 1.0f / 3.0f;
-          ldUV.x += 3.0f / 4.0f;
-          ldUV.y += 1.0f / 3.0f;
-          rdUV.x += 3.0f / 4.0f;
-          rdUV.y += 1.0f / 3.0f;
+          if (enableCubemap) {
+            luUV.x += 3.0f / 4.0f;
+            luUV.y += 1.0f / 3.0f;
+            ruUV.x += 3.0f / 4.0f;
+            ruUV.y += 1.0f / 3.0f;
+            ldUV.x += 3.0f / 4.0f;
+            ldUV.y += 1.0f / 3.0f;
+            rdUV.x += 3.0f / 4.0f;
+            rdUV.y += 1.0f / 3.0f;
+          }
           break;
       }
 
