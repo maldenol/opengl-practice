@@ -1,22 +1,23 @@
 #version 460 core
 
-uniform vec3  ambLightCol;
-uniform float ambLightInt;
-uniform float ambCoef;
-
-uniform vec3  lightCol;
-uniform float lightInt;
-uniform float diffCoef;
-uniform float specCoef;
-
-uniform vec3  lightPos;
-uniform vec3 cameraPos;
-
+uniform vec3 viewPos;
 uniform mat4 model;
 
-uniform sampler2D texture0;
+uniform vec3 ambLightColor;
+uniform struct {
+  vec3 worldPos;
+  vec3 color;
+} light;
 
-in vec3 fPos;
+uniform struct {
+  float ambCoef;
+  float diffCoef;
+  float specCoef;
+  float glossiness;
+  sampler2D texture;
+} material;
+
+in vec3 fWorldPos;
 in vec3 fNormal;
 in vec3 fColor;
 in vec2 fTexCoords;
@@ -24,17 +25,20 @@ in vec2 fTexCoords;
 out vec4 FragColor;
 
 void main() {
-  vec3 ambient = ambLightCol * ambLightInt * ambCoef;
+  vec3 ambient = ambLightColor * material.ambCoef;
 
-  vec3 normal = mat3(transpose(inverse(model))) * fNormal;
-  vec3 lightDir = normalize(lightPos - fPos);
-  vec3 diffuse = lightCol * lightInt * max(dot(lightDir, normal), 0.0f) * diffCoef;
+  vec3 N = mat3(transpose(inverse(model))) * fNormal;
+  vec3 L = normalize(light.worldPos - fWorldPos);
+  float LdotN = max(dot(L, N), 0.0f);
+  vec3 diffuse = light.color * LdotN * material.diffCoef;
 
-  vec3 reflDir = 2.0f * dot(lightDir, normal) * normal - lightDir;
-  vec3 viewDir = normalize(cameraPos - fPos);
-  vec3 specular = lightCol * lightInt * max(dot(viewDir, reflDir), 0.0f) * specCoef;
+  vec3 R = reflect(-L, N);
+  vec3 V = normalize(viewPos - fWorldPos);
+  float glossExp = exp2(material.glossiness);
+  float VdotR = max(dot(V, R), 0.0f);
+  vec3 specular = light.color * material.glossiness * pow(VdotR, glossExp) * material.specCoef;
 
   vec3 phong = fColor * (ambient + diffuse + specular);
 
-  FragColor = texture(texture0, fTexCoords) * vec4(phong, 1.0f);
+  FragColor = texture(material.texture, fTexCoords) * vec4(phong, 1.0f);
 }

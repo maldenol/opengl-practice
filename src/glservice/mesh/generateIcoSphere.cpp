@@ -4,9 +4,9 @@
 // STD
 #include <cmath>
 
-// Generates icosphere mesh based on radius, textures and shader program
-glservice::Mesh glservice::generateIcoSphere(float radius, const std::vector<GLuint> &textures,
-                                             GLuint shaderProgram) {
+// Generates icosphere mesh based on radius, shader program and textures
+glservice::Mesh glservice::generateIcoSphere(float radius, GLuint shaderProgram,
+                                             const std::vector<Texture> &textures) {
   constexpr int kVertexCount = 12;      // count of vertices
   constexpr int kIndexCount  = 20 * 3;  // 3 indexes for each triangle
 
@@ -99,7 +99,7 @@ glservice::Mesh glservice::generateIcoSphere(float radius, const std::vector<GLu
   // Generating vertex buffer based on vertices, normals and uvs
   std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
 
-  // Generating the mesh
+  // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
   constexpr int             kOffset = 11;
   vboAttributes.push_back(
@@ -111,5 +111,6 @@ glservice::Mesh glservice::generateIcoSphere(float radius, const std::vector<GLu
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(8 * sizeof(float))});
 
-  return generateMesh(vboAttributes, vertexBuffer, indices, textures, shaderProgram);
+  // Generating and returning the mesh
+  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
 }

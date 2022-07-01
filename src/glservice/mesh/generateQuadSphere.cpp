@@ -1,10 +1,9 @@
 // Header file
 #include "./mesh.hpp"
 
-// Generates quad sphere mesh based on radius, level-of-detail, textures and shader program
-glservice::Mesh glservice::generateQuadSphere(float radius, int lod,
-                                              const std::vector<GLuint> &textures,
-                                              GLuint                     shaderProgram) {
+// Generates quad sphere mesh based on radius, level-of-detail, shader program and textures
+glservice::Mesh glservice::generateQuadSphere(float radius, int lod, GLuint shaderProgram,
+                                              const std::vector<Texture> &textures) {
   // Level-Of-Details (count of quads along one side)
   const float xyQuadSize = 1.0f / static_cast<float>(lod);         // discrete quad's side xy size
   const float uQuadSize  = 1.0f / 4.0f / static_cast<float>(lod);  // discrete quad's side u size
@@ -221,7 +220,7 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod,
   // Generating vertex buffer based on vertices, normals and uvs
   std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
 
-  // Generating the mesh
+  // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
   constexpr int             kOffset = 11;
   vboAttributes.push_back(
@@ -233,5 +232,6 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod,
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(8 * sizeof(float))});
 
-  return generateMesh(vboAttributes, vertexBuffer, indices, textures, shaderProgram);
+  // Generating and returning the mesh
+  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
 }

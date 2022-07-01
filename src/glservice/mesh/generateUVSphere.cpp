@@ -4,10 +4,9 @@
 // STD
 #include <cmath>
 
-// Generates UV sphere mesh based on radius, level-of-detail, textures and shader program
-glservice::Mesh glservice::generateUVSphere(float radius, int lod,
-                                            const std::vector<GLuint> &textures,
-                                            GLuint                     shaderProgram) {
+// Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
+glservice::Mesh glservice::generateUVSphere(float radius, int lod, GLuint shaderProgram,
+                                            const std::vector<Texture> &textures) {
   // Incrementing level-of-detail
   ++lod;
 
@@ -95,7 +94,7 @@ glservice::Mesh glservice::generateUVSphere(float radius, int lod,
   // Generating vertex buffer based on vertices, normals and uvs
   std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
 
-  // Generating the mesh
+  // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
   constexpr int             kOffset = 11;
   vboAttributes.push_back(
@@ -107,5 +106,6 @@ glservice::Mesh glservice::generateUVSphere(float radius, int lod,
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(8 * sizeof(float))});
 
-  return generateMesh(vboAttributes, vertexBuffer, indices, textures, shaderProgram);
+  // Generating and returning the mesh
+  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
 }

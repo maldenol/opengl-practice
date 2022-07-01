@@ -13,10 +13,10 @@ void glservice::renderMesh(const Mesh &mesh, const BaseCamera &camera) {
   glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
 
   // For each texture
-  for (size_t i = 0; i < mesh.textures.size(); ++i) {
+  for (size_t i = 0; i < mesh.material.textures.size(); ++i) {
     // Binding texture to texture unit
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, mesh.textures[i]);
+    glActiveTexture(GL_TEXTURE0 + mesh.material.textures[i].index);
+    glBindTexture(GL_TEXTURE_2D, mesh.material.textures[i].texture);
   }
 
   // Calculating mesh model matrix

@@ -1,11 +1,11 @@
 // Header file
 #include "./mesh.hpp"
 
-// Generates mesh based on VBO attributes, vertex buffer, indices, textures and shader program
+// Generates mesh based on VBO attributes, vertex buffer, indices, shader program and textures
 glservice::Mesh glservice::generateMesh(const std::vector<VBOAttribute> &vboAttributes,
                                         const std::vector<float>        &vertexBuffer,
-                                        const std::vector<GLuint>       &indices,
-                                        const std::vector<GLuint> &textures, GLuint shaderProgram) {
+                                        const std::vector<GLuint> &indices, GLuint shaderProgram,
+                                        const std::vector<Texture> &textures) {
   GLuint vao = 0, vbo = 0;
 
   // Creating VAO, VBO and EBO
@@ -39,5 +39,10 @@ glservice::Mesh glservice::generateMesh(const std::vector<VBOAttribute> &vboAttr
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  return Mesh{vao, vbo, static_cast<GLsizei>(indices.size()), textures, shaderProgram};
+  // Configuring mesh material
+  Material material{};
+  material.textures = textures;
+
+  // Creating and returning the mesh
+  return Mesh{vao, vbo, static_cast<GLsizei>(indices.size()), shaderProgram, material};
 }

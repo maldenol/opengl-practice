@@ -114,9 +114,10 @@ int main(int argc, char *argv[]) {
                                         std::cref(sourceShaderFileNames)};
 
   // Loading textures
-  std::vector<std::vector<GLuint>> textures{
-      std::vector<GLuint>{glservice::loadTexture("texture1.png")},
-      std::vector<GLuint>{glservice::loadTexture("texture3.png")},
+  std::vector<std::vector<glservice::Texture>> textures{
+      std::vector<glservice::Texture>{},
+      std::vector<glservice::Texture>{
+          glservice::Texture{0, glservice::loadTexture("texture3.png")}},
   };
 
   // Creating and configuring meshes
@@ -142,17 +143,14 @@ int main(int argc, char *argv[]) {
           0, 1, 2,  // top-left
           1, 3, 2,  // bottom-right
       },
-      textures[0], objectSP));
-  //meshes.push_back(glservice::generatePlane(1.0f, 10, textures[1], objectSP));
-  meshes.push_back(glservice::generateCube(1.0f, 10, textures[1], objectSP));
-  //meshes.push_back(glservice::generateQuadSphere(1.0f, 10, textures[1], objectSP));
-  //meshes.push_back(glservice::generateUVSphere(1.0f, 10, textures[1], objectSP));
-  //meshes.push_back(glservice::generateIcoSphere(1.0f, textures[1], objectSP));
-  meshes.push_back(glservice::generateCube(1.0f, 10, textures[1], sourceSP));
-  meshes[meshes.size() - 2].scale     = glm::vec3{1.0f, 2.0f, 1.0f};
+      objectSP, textures[0]));
+  //meshes.push_back(glservice::generatePlane(1.0f, 10, objectSP, textures[1]));
+  meshes.push_back(glservice::generateCube(1.0f, 10, objectSP, textures[1]));
+  //meshes.push_back(glservice::generateQuadSphere(1.0f, 10, objectSP, textures[1]));
+  //meshes.push_back(glservice::generateUVSphere(1.0f, 10, objectSP, textures[1]));
+  //meshes.push_back(glservice::generateIcoSphere(1.0f, objectSP, textures[1]));
+  meshes.push_back(glservice::generateCube(1.0f, 10, sourceSP, textures[0]));
   meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 5.0f, -5.0f};
-  meshes[meshes.size() - 1].rotate    = glm::vec3{0.0f, 0.0f, 0.0f};
-  meshes[meshes.size() - 1].scale     = glm::vec3{1.0f, 2.0f, 1.0f};
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -198,14 +196,8 @@ int main(int argc, char *argv[]) {
     if (objectShadersAreRecompiled) {
       // Setting uniform values
       glUseProgram(objectSP);
-      glUniform1i(glGetUniformLocation(objectSP, "texture0"), 0);
-      glUniform3f(glGetUniformLocation(objectSP, "ambLightCol"), 1.0f, 1.0f, 1.0f);
-      glUniform1f(glGetUniformLocation(objectSP, "ambLightInt"), 1.0f);
-      glUniform1f(glGetUniformLocation(objectSP, "ambCoef"), 0.1f);
-      glUniform3f(glGetUniformLocation(objectSP, "lightCol"), 1.0f, 1.0f, 1.0f);
-      glUniform1f(glGetUniformLocation(objectSP, "lightInt"), 3.0f);
-      glUniform1f(glGetUniformLocation(objectSP, "diffCoef"), 1.0f);
-      glUniform1f(glGetUniformLocation(objectSP, "specCoef"), 1.0f);
+      glUniform3f(glGetUniformLocation(objectSP, "ambLightColor"), 1.0f, 1.0f, 1.0f);
+      glUniform3f(glGetUniformLocation(objectSP, "light.color"), 1.0f, 1.0f, 1.0f);
       glUseProgram(0);
 
       // Notifying that all routine after object shader recompilation is done
@@ -216,7 +208,7 @@ int main(int argc, char *argv[]) {
     if (sourceShadersAreRecompiled) {
       // Setting uniform values
       glUseProgram(sourceSP);
-      glUniform1i(glGetUniformLocation(sourceSP, "texture0"), 0);
+      // make some stuff
       glUseProgram(0);
 
       // Notifying that all routine after source shader recompilation is done
@@ -225,15 +217,29 @@ int main(int argc, char *argv[]) {
 
     // Updating object shader program uniform values
     glUseProgram(objectSP);
-    glUniform3fv(glGetUniformLocation(objectSP, "lightPos"), 1,
-                 glm::value_ptr(meshes[meshes.size() - 1].translate));
-    glUniform3fv(glGetUniformLocation(objectSP, "cameraPos"), 1,
+    glUniform3fv(glGetUniformLocation(objectSP, "viewPos"), 1,
                  glm::value_ptr(gCamera.getPosition()));
+    glUniform3fv(glGetUniformLocation(objectSP, "light.worldPos"), 1,
+                 glm::value_ptr(meshes[meshes.size() - 1].translate));
     glUseProgram(0);
 
     // Rendering meshes
     for (unsigned int i = 0; i < meshes.size(); ++i) {
-      glservice::renderMesh(meshes[i], gCamera);
+      glservice::Mesh &mesh = meshes[i];
+
+      glUseProgram(mesh.shaderProgram);
+      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.ambCoef"),
+                  mesh.material.ambCoef);
+      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.diffCoef"),
+                  mesh.material.diffCoef);
+      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.specCoef"),
+                  mesh.material.specCoef);
+      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.glossiness"),
+                  mesh.material.glossiness);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.texture"), 0);
+      glUseProgram(0);
+
+      glservice::renderMesh(mesh, gCamera);
     }
 
     // Swapping front and back buffers

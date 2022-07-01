@@ -1,9 +1,9 @@
 // Header file
 #include "./mesh.hpp"
 
-// Generates plane mesh based on size, level-of-detail, textures and shader program
-glservice::Mesh glservice::generatePlane(float size, int lod, const std::vector<GLuint> &textures,
-                                         GLuint shaderProgram) {
+// Generates plane mesh based on size, level-of-detail, shader program and textures
+glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgram,
+                                         const std::vector<Texture> &textures) {
   // Level-Of-Details (count of quads along one side)
   const float xyQuadSize =
       static_cast<float>(size) / static_cast<float>(lod);    // discrete quad's side xy size
@@ -76,7 +76,7 @@ glservice::Mesh glservice::generatePlane(float size, int lod, const std::vector<
   // Generating vertex buffer based on vertices, normals and uvs
   std::vector<float> vertexBuffer = glservice::generateVertexBuffer(vertices, normals, uvs);
 
-  // Generating the mesh
+  // Configuring VBO attributes
   std::vector<VBOAttribute> vboAttributes{};
   constexpr int             kOffset = 11;
   vboAttributes.push_back(
@@ -88,5 +88,6 @@ glservice::Mesh glservice::generatePlane(float size, int lod, const std::vector<
   vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                        reinterpret_cast<void *>(8 * sizeof(float))});
 
-  return generateMesh(vboAttributes, vertexBuffer, indices, textures, shaderProgram);
+  // Generating and returning the mesh
+  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
 }
