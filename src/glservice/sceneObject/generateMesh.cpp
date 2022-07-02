@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // Generates mesh based on VBO attributes, vertex buffer, indices, shader program and textures
 glservice::Mesh glservice::generateMesh(const std::vector<VBOAttribute> &vboAttributes,

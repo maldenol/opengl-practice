@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // STD
 #include <cmath>

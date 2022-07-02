@@ -51,7 +51,7 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY);
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
 
-// Functions for meshes
+// Functions for sceneObjects
 void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
                 const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);

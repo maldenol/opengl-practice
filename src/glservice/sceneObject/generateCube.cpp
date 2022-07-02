@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
 glservice::Mesh glservice::generateCube(float size, int lod, bool enableCubemap,

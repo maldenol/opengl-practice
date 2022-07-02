@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
 glservice::Mesh glservice::generateQuadSphere(float radius, int lod, bool enableCubemap,

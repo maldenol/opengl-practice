@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgram,

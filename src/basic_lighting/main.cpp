@@ -15,6 +15,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// GLM
+#include <glm/gtx/euler_angles.hpp>
+
 // "glservice" internal library
 #include <glservice.hpp>
 
@@ -74,7 +77,7 @@ int main(int argc, char *argv[]) {
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
-  std::vector<GLuint> sourceShaderTypes{
+  std::vector<GLuint> lightShaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
@@ -83,13 +86,13 @@ int main(int argc, char *argv[]) {
       glservice::getAbsolutePathRelativeToExecutable("objectVS.glsl"),
       glservice::getAbsolutePathRelativeToExecutable("objectFS.glsl"),
   };
-  std::vector<QString> sourceShaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("sourceVS.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("sourceFS.glsl"),
+  std::vector<QString> lightShaderFileNames{
+      glservice::getAbsolutePathRelativeToExecutable("lightVS.glsl"),
+      glservice::getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
   // Creating shader programs
   GLuint objectSP = glCreateProgram();
-  GLuint sourceSP = glCreateProgram();
+  GLuint lightSP  = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> objectShaderWatcherIsRunning = true;
@@ -102,16 +105,16 @@ int main(int argc, char *argv[]) {
                                         objectSP,
                                         std::cref(objectShaderTypes),
                                         std::cref(objectShaderFileNames)};
-  std::atomic<bool> sourceShaderWatcherIsRunning = true;
-  std::atomic<bool> sourceShadersAreRecompiled   = false;
-  std::thread       sourceShaderWatcherThread{glservice::shaderWatcher,
-                                        std::cref(sourceShaderWatcherIsRunning),
-                                        std::ref(sourceShadersAreRecompiled),
-                                        window,
-                                        std::ref(glfwContextMutex),
-                                        sourceSP,
-                                        std::cref(sourceShaderTypes),
-                                        std::cref(sourceShaderFileNames)};
+  std::atomic<bool> lightShaderWatcherIsRunning = true;
+  std::atomic<bool> lightShadersAreRecompiled   = false;
+  std::thread       lightShaderWatcherThread{glservice::shaderWatcher,
+                                       std::cref(lightShaderWatcherIsRunning),
+                                       std::ref(lightShadersAreRecompiled),
+                                       window,
+                                       std::ref(glfwContextMutex),
+                                       lightSP,
+                                       std::cref(lightShaderTypes),
+                                       std::cref(lightShaderFileNames)};
 
   // Loading textures
   std::vector<std::vector<glservice::Texture>> textures{
@@ -125,12 +128,70 @@ int main(int argc, char *argv[]) {
       },
   };
 
-  // Creating and configuring meshes
-  std::vector<glservice::Mesh> meshes{};
-  meshes.push_back(glservice::generateCube(1.0f, 10, false, objectSP, textures[1]));
-  meshes[meshes.size() - 1].material.glossiness = 5.0f;
-  meshes.push_back(glservice::generateCube(1.0f, 10, true, sourceSP, textures[0]));
-  meshes[meshes.size() - 1].translate = glm::vec3{3.0f, 2.0f, -2.0f};
+  // Creating and configuring scene objects
+  std::vector<glservice::SceneObject> sceneObjects{};
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{   0.0f, -1.0f, 0.0f},
+      glm::vec3{  90.0f,  0.0f, 0.0f},
+      glm::vec3{  20.0f, 10.0f, 30.0f},
+      std::shared_ptr<glservice::BaseLight>{nullptr      },
+      std::make_shared<glservice::Mesh>(glservice::generatePlane(1.0f, 1, objectSP, textures[1]))
+  });
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{   0.0f,  2.0f, 0.0f},
+      glm::vec3{  90.0f,  0.0f, 0.0f},
+      glm::vec3{  20.0f, 10.0f, 30.0f},
+      std::shared_ptr<glservice::BaseLight>{nullptr      },
+      std::make_shared<glservice::Mesh>(glservice::generatePlane(1.0f, 1, objectSP, textures[1]))
+  });
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{   0.1f,   0.1f, 0.1f},
+      glm::vec3{ 180.0f, 180.0f, 180.0f},
+      glm::vec3{   2.0f,   2.0f, 2.0f},
+      std::shared_ptr<glservice::BaseLight>{nullptr       },
+      std::make_shared<glservice::Mesh>(
+          glservice::generateCube(0.5f, 10, false, objectSP, textures[1]))
+  });
+  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 5.0f;
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{   0.0f, 10.0f, 0.0f},
+      glm::vec3{   0.0f,  0.0f, 0.0f},
+      glm::vec3{   1.0f,  1.0f, 1.0f},
+      std::make_shared<glservice::DirectionalLight>(glm::vec3{   0.1f,  0.0f, 0.0f},
+                                                    glm::vec3{   0.5f, -1.0f, 0.0f}
+      ),
+      std::shared_ptr<glservice::Mesh>{nullptr      }
+  });
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{1.0f, 3.0f, 1.0f},
+      glm::vec3{0.0f, 0.0f, 0.0f},
+      glm::vec3{1.0f, 1.0f, 1.0f},
+      std::make_shared<glservice::PointLight>(glm::vec3{0.5f, 0.5f, 1.0f},
+      0.045f, 0.0075),
+      std::make_shared<glservice::Mesh>(
+          glservice::generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
+  });
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{-0.1f, 0.75f, -0.1f},
+      glm::vec3{ 0.0f, 90.0f,  0.0f},
+      glm::vec3{ 1.0f,  1.0f,  1.0f},
+      std::make_shared<glservice::SpotLight>(
+          glm::vec3{ 0.0f,  1.0f,  0.0f},
+      glm::vec3{ 0.6f, -1.0f,  0.9f},
+      0.045f, 0.0075, 15.0f, 13.0f),
+      std::make_shared<glservice::Mesh>(
+          glservice::generateUVSphere(0.1f, 10, lightSP, textures[0]))
+  });
+  sceneObjects.push_back(glservice::SceneObject{
+      glm::vec3{0.1f,  1.0f, 0.1f},
+      glm::vec3{0.0f,  0.0f, 0.0f},
+      glm::vec3{1.0f,  1.0f, 1.0f},
+      std::make_shared<glservice::SpotLight>(
+          glm::vec3{1.0f,  1.0f, 0.0f},
+      glm::vec3{0.3f, -1.0f, 0.6f},
+      0.045f, 0.0075, 30.0f, 25.0f),
+      std::make_shared<glservice::Mesh>(glservice::generateIcoSphere(0.1f, lightSP, textures[0]))
+  });
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -177,35 +238,140 @@ int main(int argc, char *argv[]) {
       // Setting uniform values
       glUseProgram(objectSP);
       glUniform3f(glGetUniformLocation(objectSP, "ambLightColor"), 1.0f, 1.0f, 1.0f);
-      glUniform3f(glGetUniformLocation(objectSP, "light.color"), 1.0f, 1.0f, 1.0f);
       glUseProgram(0);
 
       // Notifying that all routine after object shader recompilation is done
       objectShadersAreRecompiled = false;
     }
 
-    // If source shaders are recompiled
-    if (sourceShadersAreRecompiled) {
+    // If light shaders are recompiled
+    if (lightShadersAreRecompiled) {
       // Setting uniform values
-      glUseProgram(sourceSP);
+      glUseProgram(lightSP);
       // make some stuff
       glUseProgram(0);
 
-      // Notifying that all routine after source shader recompilation is done
-      sourceShadersAreRecompiled = false;
+      // Notifying that all routine after light shader recompilation is done
+      lightShadersAreRecompiled = false;
+    }
+
+    // Getting light sources
+    std::vector<glservice::SceneObject> directionalLightSceneObjects{};
+    std::vector<glservice::SceneObject> pointLightSceneObjects{};
+    std::vector<glservice::SceneObject> spotLightSceneObjects{};
+    for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
+      if (sceneObjects[i].lightPtr == nullptr) continue;
+
+      glservice::SceneObject &sceneObject = sceneObjects[i];
+      glservice::BaseLight   *lightPtr    = sceneObject.lightPtr.get();
+
+      // If light is directional
+      glservice::DirectionalLight *direcionalLight =
+          dynamic_cast<glservice::DirectionalLight *>(lightPtr);
+      if (direcionalLight != nullptr) {
+        directionalLightSceneObjects.push_back(sceneObject);
+
+        continue;
+      }
+
+      // If light is point
+      glservice::PointLight *pointLight = dynamic_cast<glservice::PointLight *>(lightPtr);
+      if (pointLight != nullptr) {
+        pointLightSceneObjects.push_back(sceneObject);
+
+        continue;
+      }
+
+      // If light is spot
+      glservice::SpotLight *spotLight = dynamic_cast<glservice::SpotLight *>(lightPtr);
+      if (spotLight != nullptr) {
+        spotLightSceneObjects.push_back(sceneObject);
+
+        continue;
+      }
     }
 
     // Updating object shader program uniform values
     glUseProgram(objectSP);
     glUniform3fv(glGetUniformLocation(objectSP, "viewPos"), 1,
                  glm::value_ptr(gCamera.getPosition()));
-    glUniform3fv(glGetUniformLocation(objectSP, "light.worldPos"), 1,
-                 glm::value_ptr(meshes[meshes.size() - 1].translate));
+    for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
+      glservice::SceneObject      &sceneObject = directionalLightSceneObjects[i];
+      glservice::DirectionalLight *direcionalLight =
+          dynamic_cast<glservice::DirectionalLight *>(sceneObject.lightPtr.get());
+
+      glUniform3fv(glGetUniformLocation(
+                       objectSP, ("directionalLights[" + std::to_string(i) + "].color").c_str()),
+                   1, glm::value_ptr(direcionalLight->color));
+      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
+                                                  glm::radians(sceneObject.rotate.y),
+                                                  glm::radians(sceneObject.rotate.z))};
+      glm::vec3   dir{
+          rotateMatrix * glm::vec4{direcionalLight->direction, 0.0f}
+      };
+      glUniform3fv(glGetUniformLocation(
+                       objectSP, ("directionalLights[" + std::to_string(i) + "].dir").c_str()),
+                   1, glm::value_ptr(dir));
+    }
+    for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
+      glservice::SceneObject &sceneObject = pointLightSceneObjects[i];
+      glservice::PointLight  *pointLight =
+          dynamic_cast<glservice::PointLight *>(sceneObject.lightPtr.get());
+
+      glUniform3fv(glGetUniformLocation(
+                       objectSP, ("pointLights[" + std::to_string(i) + "].worldPos").c_str()),
+                   1, glm::value_ptr(sceneObject.translate));
+      glUniform3fv(
+          glGetUniformLocation(objectSP, ("pointLights[" + std::to_string(i) + "].color").c_str()),
+          1, glm::value_ptr(pointLight->color));
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("pointLights[" + std::to_string(i) + "].linAttCoef").c_str()),
+                  pointLight->linAttCoef);
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("pointLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
+                  pointLight->quadAttCoef);
+    }
+    for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
+      glservice::SceneObject &sceneObject = spotLightSceneObjects[i];
+      glservice::SpotLight   *spotLight =
+          dynamic_cast<glservice::SpotLight *>(sceneObject.lightPtr.get());
+
+      glUniform3fv(glGetUniformLocation(objectSP,
+                                        ("spotLights[" + std::to_string(i) + "].worldPos").c_str()),
+                   1, glm::value_ptr(sceneObject.translate));
+      glUniform3fv(
+          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].color").c_str()),
+          1, glm::value_ptr(spotLight->color));
+      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
+                                                  glm::radians(sceneObject.rotate.y),
+                                                  glm::radians(sceneObject.rotate.z))};
+      glm::vec3   dir{
+          rotateMatrix * glm::vec4{spotLight->direction, 0.0f}
+      };
+      glUniform3fv(
+          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].dir").c_str()), 1,
+          glm::value_ptr(dir));
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("spotLights[" + std::to_string(i) + "].linAttCoef").c_str()),
+                  spotLight->linAttCoef);
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("spotLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
+                  spotLight->quadAttCoef);
+      glUniform1f(
+          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].angle").c_str()),
+          glm::radians(spotLight->angle));
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("spotLights[" + std::to_string(i) + "].smoothAngle").c_str()),
+                  glm::radians(spotLight->smoothAngle));
+    }
     glUseProgram(0);
 
-    // Rendering meshes
-    for (unsigned int i = 0; i < meshes.size(); ++i) {
-      glservice::Mesh &mesh = meshes[i];
+    // Rendering scene objects
+    for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
+      if (sceneObjects[i].meshPtr == nullptr) continue;
+
+      glservice::SceneObject &sceneObject = sceneObjects[i];
+      glservice::Mesh        &mesh        = *sceneObject.meshPtr;
 
       glUseProgram(mesh.shaderProgram);
       glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.ambCoef"),
@@ -224,7 +390,7 @@ int main(int argc, char *argv[]) {
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.emissMap"), 5);
       glUseProgram(0);
 
-      glservice::renderMesh(mesh, gCamera);
+      glservice::renderSceneObject(sceneObject, gCamera);
     }
 
     // Swapping front and back buffers
@@ -240,8 +406,8 @@ int main(int argc, char *argv[]) {
   // Waiting for shaderWatchers to stop
   objectShaderWatcherIsRunning = false;
   objectShaderWatcherThread.join();
-  sourceShaderWatcherIsRunning = false;
-  sourceShaderWatcherThread.join();
+  lightShaderWatcherIsRunning = false;
+  lightShaderWatcherThread.join();
 
   // Terminating window with OpenGL context and GLFW
   glservice::terminateWindow(window);

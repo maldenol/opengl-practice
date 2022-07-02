@@ -1,7 +1,8 @@
-#ifndef MESH_MESH_HPP
-#define MESH_MESH_HPP
+#ifndef SCENEOBJECT_SCENEOBJECT_HPP
+#define SCENEOBJECT_SCENEOBJECT_HPP
 
 // STD
+#include <memory>
 #include <vector>
 
 // OpenGL
@@ -21,6 +22,54 @@
 
 namespace glservice {
 
+// Base light struct
+struct BaseLight {
+  glm::vec3 color{};
+
+ protected:
+  BaseLight(const glm::vec3 &color) : color{color} {}
+
+ public:
+  virtual ~BaseLight() noexcept {};
+};
+
+// Directional light struct
+struct DirectionalLight : public BaseLight {
+  glm::vec3 direction{};
+
+  DirectionalLight(const glm::vec3 &color, const glm::vec3 &direction)
+      : BaseLight{color}, direction{direction} {}
+};
+
+// Point light struct
+struct PointLight : public BaseLight {
+  float linAttCoef{};
+  float quadAttCoef{};
+
+  PointLight(const glm::vec3 &color, float linAttCoef, float quadAttCoef)
+      : BaseLight{color}, linAttCoef{linAttCoef}, quadAttCoef{quadAttCoef} {}
+};
+
+// Spot light struct
+struct SpotLight : public BaseLight {
+  glm::vec3 direction{};
+
+  float linAttCoef{};
+  float quadAttCoef{};
+
+  float angle{};
+  float smoothAngle{};
+
+  SpotLight(const glm::vec3 &color, const glm::vec3 &direction, float linAttCoef, float quadAttCoef,
+            float angle, float smoothAngle)
+      : BaseLight{color},
+        direction{direction},
+        linAttCoef{linAttCoef},
+        quadAttCoef{quadAttCoef},
+        angle{angle},
+        smoothAngle{smoothAngle} {}
+};
+
 // Texture struct
 struct Texture {
   int    index{};
@@ -32,7 +81,9 @@ struct Material {
   float ambCoef{0.15f};
   float diffCoef{0.6f};
   float specCoef{0.3f};
+
   float glossiness{1.0f};
+
   float maxHeight{};
 
   std::vector<Texture> textures{};
@@ -46,10 +97,18 @@ struct Mesh {
 
   GLuint   shaderProgram{};
   Material material{};
+};
 
+// Scene object struct
+struct SceneObject {
+  // World orientation
   glm::vec3 translate{};
   glm::vec3 rotate{};
   glm::vec3 scale{1.0f};
+
+  // Unity-like components
+  std::shared_ptr<BaseLight> lightPtr{};
+  std::shared_ptr<Mesh>      meshPtr{};
 };
 
 // VBO attribute struct
@@ -60,6 +119,9 @@ struct VBOAttribute {
   GLsizei     stride{};
   const void *pointer{};
 };
+
+// Loads 2D texture
+GLuint loadTexture(const QString &filename);
 
 // Generates mesh based on VBO attributes, vertex buffer, indices, shader program and textures
 Mesh generateMesh(const std::vector<VBOAttribute> &vboAttributes,
@@ -90,11 +152,10 @@ Mesh generateUVSphere(float radius, int lod, GLuint shaderProgram,
 // Generates icosphere mesh based on radius, shader program and textures
 Mesh generateIcoSphere(float radius, GLuint shaderProgram, const std::vector<Texture> &textures);
 
-// Loads 2D texture
-GLuint loadTexture(const QString &filename);
-
-// Renders mesh
-void renderMesh(const Mesh &mesh, const BaseCamera &camera);
+// Prepares lights of given scene objects for given shader program
+void prepareLights(GLuint shaderProgram, const std::vector<SceneObject> &sceneObjects);
+// Renders scene object
+void renderSceneObject(const SceneObject &sceneObject, const BaseCamera &camera);
 
 }  // namespace glservice
 

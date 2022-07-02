@@ -36,7 +36,7 @@ static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void processUserInput(GLFWwindow *window);
 
-// Functions for meshes
+// Functions for sceneObjects
 void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
                 const std::vector<GLuint> &indices);
 GLuint initTexture(const QString &filename);

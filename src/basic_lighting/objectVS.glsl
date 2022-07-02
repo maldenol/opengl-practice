@@ -39,7 +39,7 @@ void main() {
   //vec3 N = mat3(transpose(inverse(model))) * aNormal;
   vec3 height = material.maxHeight * N * (texture(material.heightMap, aTexCoords).r * 2.0f - 1.0f);
 
-  fWorldPos   = aPos + height;
+  fWorldPos   = vec3(model * vec4(aPos + height, 1.0f));
   fNormal     = aNormal;
   fTangent    = aTangent;
   fTexCoords  = aTexCoords;

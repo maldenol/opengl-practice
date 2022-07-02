@@ -1,11 +1,16 @@
 // Header file
-#include "./mesh.hpp"
+#include "./sceneObject.hpp"
 
 // GLM
 #include <glm/gtx/euler_angles.hpp>
 
-// Renders mesh
-void glservice::renderMesh(const Mesh &mesh, const BaseCamera &camera) {
+// Renders scene object
+void glservice::renderSceneObject(const SceneObject &sceneObject, const BaseCamera &camera) {
+  if (sceneObject.meshPtr == nullptr) return;
+
+  const Mesh     &mesh     = *sceneObject.meshPtr;
+  const Material &material = mesh.material;
+
   // Setting specific shader program to use for render
   glUseProgram(mesh.shaderProgram);
   // Binding VAO with associated EBO and VBO
@@ -13,19 +18,19 @@ void glservice::renderMesh(const Mesh &mesh, const BaseCamera &camera) {
   glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
 
   // For each texture
-  for (size_t i = 0; i < mesh.material.textures.size(); ++i) {
+  for (size_t i = 0; i < material.textures.size(); ++i) {
     // Binding texture to texture unit
-    glActiveTexture(GL_TEXTURE0 + mesh.material.textures[i].index);
-    glBindTexture(GL_TEXTURE_2D, mesh.material.textures[i].texture);
+    glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
+    glBindTexture(GL_TEXTURE_2D, material.textures[i].texture);
   }
 
   // Calculating mesh model matrix
   glm::mat4x4 modelMatrix{1.0f};
-  modelMatrix = glm::translate(modelMatrix, mesh.translate);
-  modelMatrix =
-      modelMatrix * glm::eulerAngleXYZ(glm::radians(mesh.rotate.x), glm::radians(mesh.rotate.y),
-                                       glm::radians(mesh.rotate.z));
-  modelMatrix = glm::scale(modelMatrix, mesh.scale);
+  modelMatrix = glm::translate(modelMatrix, sceneObject.translate);
+  modelMatrix = modelMatrix * glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
+                                                 glm::radians(sceneObject.rotate.y),
+                                                 glm::radians(sceneObject.rotate.z));
+  modelMatrix = glm::scale(modelMatrix, sceneObject.scale);
 
   // Updating shader uniform variables
   glUniformMatrix4fv(glGetUniformLocation(mesh.shaderProgram, "model"), 1, GL_FALSE,
