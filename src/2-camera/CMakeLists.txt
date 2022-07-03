@@ -1,4 +1,4 @@
-SET(TARGET triangle)
+SET(TARGET 2-camera)
 
 FILE(GLOB_RECURSE SRC_FILES "${SRC_DIR}/${TARGET}/*.cpp" "${SRC_DIR}/glservice/*.cpp")
 ADD_EXECUTABLE(${TARGET} ${SRC_FILES})

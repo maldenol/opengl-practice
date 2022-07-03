@@ -11,7 +11,7 @@ uniform struct {
   float glossiness;
   float maxHeight;
 
-  sampler2D texture;
+  sampler2D albedoMap;
   sampler2D normalMap;
   sampler2D heightMap;
   sampler2D ambOccMap;
@@ -26,12 +26,13 @@ layout (location = 3) in vec2 aTexCoords;
 
 out vec3 fWorldPos;
 out vec3 fNormal;
-out vec3 fTangent;
+out mat3 fTBN;
 out vec2 fTexCoords;
 
 void main() {
   vec3 normal    = normalize(vec3(model * vec4(aNormal, 0.0f)));
   vec3 tangent   = normalize(vec3(model * vec4(aTangent, 0.0f)));
+  tangent        = normalize(tangent - normal * dot(normal, tangent));  // Gram-Schmidt orthogonalization
   vec3 bitangent = cross(normal, tangent);
   mat3 TBN       = mat3(tangent, bitangent, normal);
 
@@ -41,7 +42,7 @@ void main() {
 
   fWorldPos   = vec3(model * vec4(aPos + height, 1.0f));
   fNormal     = aNormal;
-  fTangent    = aTangent;
+  fTBN        = TBN;
   fTexCoords  = aTexCoords;
   gl_Position = proj * view * model * vec4(aPos + height, 1.0f);
 }

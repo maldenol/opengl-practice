@@ -20,7 +20,7 @@ using namespace std::chrono_literals;
 static constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
 
 // Compiles shader with source code
-void glservice::compileShader(GLuint shader, const QString &source) {
+void glservice::compileShader(GLuint shader, const QString &source, const QString &filename) {
   // Setting shader's source and compiling it
   std::string shaderSourceString = source.toStdString();
   const char *shaderSourceBuffer = shaderSourceString.c_str();
@@ -39,7 +39,8 @@ void glservice::compileShader(GLuint shader, const QString &source) {
   glGetShaderInfoLog(shader, infoLogLength, nullptr, &infoLog[0]);
   // If compilation have failed
   if (success == GL_FALSE) {
-    std::cout << "error: unable to compile shader #" << shader << "\n";
+    std::cout << "error: unable to compile shader #" << shader << " from " << filename.toStdString()
+              << "\n";
     // If there is an info log
     if (infoLogLength > 0) {
       std::cout << &infoLog[0];
@@ -53,10 +54,11 @@ void glservice::compileShader(GLuint shader, const QString &source) {
 }
 
 // Compiles shader with source code
-void glservice::compileShader(GLuint shader, const std::string &source) {
+void glservice::compileShader(GLuint shader, const std::string &source,
+                              const std::string &filename) {
   // Setting shader's source and compiling it
-  const char *sourceBuffer = source.c_str();
-  glShaderSource(shader, 1, &sourceBuffer, nullptr);
+  const char *shaderSourceBuffer = source.c_str();
+  glShaderSource(shader, 1, &shaderSourceBuffer, nullptr);
   glCompileShader(shader);
 
   // Getting compilation success code
@@ -71,7 +73,7 @@ void glservice::compileShader(GLuint shader, const std::string &source) {
   glGetShaderInfoLog(shader, infoLogLength, nullptr, &infoLog[0]);
   // If compilation have failed
   if (success == GL_FALSE) {
-    std::cout << "error: unable to compile shader #" << shader << "\n";
+    std::cout << "error: unable to compile shader #" << shader << " from " << filename << "\n";
     // If there is an info log
     if (infoLogLength > 0) {
       std::cout << &infoLog[0];
@@ -86,7 +88,8 @@ void glservice::compileShader(GLuint shader, const std::string &source) {
 
 // Creates shader program compiling and linking given shaders
 GLuint glservice::createShaderProgram(const std::vector<GLenum>      &shaderTypes,
-                                      const std::vector<std::string> &shaderSources) {
+                                      const std::vector<std::string> &shaderSources,
+                                      const std::vector<std::string> &shaderFilenames) {
   GLuint shaderProgram = glCreateProgram();
 
   // Getting shader count
@@ -108,7 +111,7 @@ GLuint glservice::createShaderProgram(const std::vector<GLenum>      &shaderType
     // Attaching shader to shader program
     glAttachShader(shaderProgram, shaders[i]);
     // Compiling shader
-    compileShader(shaders[i], shaderSources[i]);
+    compileShader(shaders[i], shaderSources[i], shaderFilenames[i]);
   }
 
   // Linking shader program
@@ -163,12 +166,12 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
                               std::atomic<bool> &shadersAreRecompiled, GLFWwindow *window,
                               std::mutex &glfwContextMutex, GLuint shaderProgram,
                               const std::vector<GLenum>  &shaderTypes,
-                              const std::vector<QString> &shaderFileNames) {
+                              const std::vector<QString> &shaderFilenames) {
   // Getting shader count
   size_t shaderCount = shaderTypes.size();
 
   // If sizes mismatch
-  if (shaderCount != shaderFileNames.size()) return;
+  if (shaderCount != shaderFilenames.size()) return;
 
   // Creating and initializaing a vector of last modification times
   std::vector<qint64> shaderLastModificationTimes{};
@@ -185,9 +188,9 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
 
     // For each shader
     for (size_t i = 0; i < shaderCount; ++i) {
-      QFile shaderFile{shaderFileNames[i]};
+      QFile shaderFile{shaderFilenames[i]};
       if (!shaderFile.open(QFile::ReadOnly | QFile::Text)) {
-        std::cout << "error: unable to find " << shaderFileNames[i].toStdString() << std::endl;
+        std::cout << "error: unable to find " << shaderFilenames[i].toStdString() << std::endl;
         break;
       }
       QFileInfo shaderFileInfo{shaderFile};
@@ -210,9 +213,9 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
           // For each shader
           for (size_t j = 0; j < shaderCount; ++j) {
             // Reading shader source code from file
-            QFile innerShaderFile{shaderFileNames[j]};
+            QFile innerShaderFile{shaderFilenames[j]};
             if (!innerShaderFile.open(QFile::ReadOnly | QFile::Text)) {
-              std::cout << "error: unable to find " << shaderFileNames[j].toStdString()
+              std::cout << "error: unable to find " << shaderFilenames[j].toStdString()
                         << std::endl;
               continue;
             }
@@ -224,7 +227,7 @@ void glservice::shaderWatcher(const std::atomic<bool> &isRunning,
             // Attaching shader to shader program
             glAttachShader(shaderProgram, shaders[j]);
             // Compiling shader
-            glservice::compileShader(shaders[j], shaderSource);
+            glservice::compileShader(shaders[j], shaderSource, shaderFilenames[j]);
           }
 
           // Linking shader program

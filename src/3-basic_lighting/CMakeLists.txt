@@ -1,4 +1,4 @@
-SET(TARGET basic_lighting)
+SET(TARGET 3-basic_lighting)
 
 FILE(GLOB_RECURSE SRC_FILES "${SRC_DIR}/${TARGET}/*.cpp" "${SRC_DIR}/glservice/*.cpp")
 ADD_EXECUTABLE(${TARGET} ${SRC_FILES})

@@ -20,16 +20,23 @@ void glservice::terminateQGuiApplication(QGuiApplication &app) {
   app.quit();
 }
 
-// Initializes GLFW and returns configured window with OpenGL context
-GLFWwindow *glservice::createWindow(int width, int height, const std::string &title,
-                                    int openGLVersionMajor, int openGLVersionMinor) {
-  // Initializing GLFW
+// Initializes GLFW
+int glservice::initGLFW() {
   if (glfwInit() == GLFW_FALSE) {
     std::cout << "error: failed to initialize GLFW" << std::endl;
 
-    return nullptr;
+    return 1;
   }
 
+  return 0;
+}
+
+// Terminates GLFW
+void glservice::terminateGLFW() { glfwTerminate(); }
+
+// Initializes configured window with OpenGL context
+GLFWwindow *glservice::createWindow(int width, int height, const std::string &title,
+                                    int openGLVersionMajor, int openGLVersionMinor) {
   // Setting OpenGL version and profile
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openGLVersionMajor);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openGLVersionMinor);
@@ -63,14 +70,8 @@ GLFWwindow *glservice::createWindow(int width, int height, const std::string &ti
   return window;
 }
 
-// Terminates window with OpenGL context and GLFW
-void glservice::terminateWindow(GLFWwindow *window) {
-  // Closing GLFW window
-  glfwSetWindowShouldClose(window, true);
-
-  // Terminating GLFW
-  glfwTerminate();
-}
+// Terminates window with OpenGL context
+void glservice::terminateWindow(GLFWwindow *window) { glfwSetWindowShouldClose(window, true); }
 
 // Enables fullscreen mode for given window
 void glservice::enableFullscreenMode(GLFWwindow *window) {

@@ -21,6 +21,8 @@
 // "glservice" internal library
 #include <glservice.hpp>
 
+using namespace glservice;
+
 // for "ms"
 using namespace std::chrono_literals;
 
@@ -33,11 +35,11 @@ static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 static constexpr float                 kCameraVelocity      = 1.0f;
 
 // Global variables
-float                           gCurrTime{};
-float                           gDeltaTime{};
-glservice::PerspectiveCamera    gCamera{};
-glservice::Camera6DoFController gCameraController{&gCamera};
-int                             gPolygonMode{};
+float                gCurrTime{};
+float                gDeltaTime{};
+PerspectiveCamera    gCamera{};
+Camera6DoFController gCameraController{&gCamera};
+int                  gPolygonMode{};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -50,11 +52,12 @@ void processUserInput(GLFWwindow *window);
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication app = glservice::initQGuiApplication(argc, argv);
+  QGuiApplication app = initQGuiApplication(argc, argv);
 
   // Initializing GLFW and getting configured window with OpenGL context
-  GLFWwindow *window = glservice::createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor,
-                                               kOpenGLVersionMinor);
+  initGLFW();
+  GLFWwindow *window =
+      createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -82,13 +85,13 @@ int main(int argc, char *argv[]) {
       GL_FRAGMENT_SHADER,
   };
   // Creating arrays of filenames of shaders
-  std::vector<QString> objectShaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("objectVS.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("objectFS.glsl"),
+  std::vector<QString> objectShaderFilenames{
+      getAbsolutePathRelativeToExecutable("objectVS.glsl"),
+      getAbsolutePathRelativeToExecutable("objectFS.glsl"),
   };
-  std::vector<QString> lightShaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("lightVS.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("lightFS.glsl"),
+  std::vector<QString> lightShaderFilenames{
+      getAbsolutePathRelativeToExecutable("lightVS.glsl"),
+      getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
   // Creating shader programs
   GLuint objectSP = glCreateProgram();
@@ -97,100 +100,98 @@ int main(int argc, char *argv[]) {
   std::mutex        glfwContextMutex{};
   std::atomic<bool> objectShaderWatcherIsRunning = true;
   std::atomic<bool> objectShadersAreRecompiled   = false;
-  std::thread       objectShaderWatcherThread{glservice::shaderWatcher,
+  std::thread       objectShaderWatcherThread{shaderWatcher,
                                         std::cref(objectShaderWatcherIsRunning),
                                         std::ref(objectShadersAreRecompiled),
                                         window,
                                         std::ref(glfwContextMutex),
                                         objectSP,
                                         std::cref(objectShaderTypes),
-                                        std::cref(objectShaderFileNames)};
+                                        std::cref(objectShaderFilenames)};
   std::atomic<bool> lightShaderWatcherIsRunning = true;
   std::atomic<bool> lightShadersAreRecompiled   = false;
-  std::thread       lightShaderWatcherThread{glservice::shaderWatcher,
+  std::thread       lightShaderWatcherThread{shaderWatcher,
                                        std::cref(lightShaderWatcherIsRunning),
                                        std::ref(lightShadersAreRecompiled),
                                        window,
                                        std::ref(glfwContextMutex),
                                        lightSP,
                                        std::cref(lightShaderTypes),
-                                       std::cref(lightShaderFileNames)};
+                                       std::cref(lightShaderFilenames)};
 
   // Loading textures
-  std::vector<std::vector<glservice::Texture>> textures{
-      std::vector<glservice::Texture>{                                                                },
-      std::vector<glservice::Texture>{
-                                      glservice::Texture{0, glservice::loadTexture("albedoMap.png")},glservice::Texture{1, glservice::loadTexture("normalMap.png")},
-                                      glservice::Texture{2, glservice::loadTexture("heightMap.png")},
-                                      glservice::Texture{3, glservice::loadTexture("ambientOcclusionMap.png")},
-                                      glservice::Texture{4, glservice::loadTexture("roughnessMap.png")},
-                                      //glservice::Texture{5, glservice::loadTexture("emissionMap.png")},
+  std::vector<std::vector<Texture>> textures{
+      std::vector<Texture>{                                          },
+      std::vector<Texture>{
+                           Texture{0, loadTexture("albedoMap.png")}, Texture{1, loadTexture("normalMap.png")},
+                           Texture{2, loadTexture("heightMap.png")},
+                           Texture{3, loadTexture("ambientOcclusionMap.png")},
+                           Texture{4, loadTexture("roughnessMap.png")},
+                           //Texture{5, loadTexture("emissionMap.png")},
       },
   };
 
   // Creating and configuring scene objects
-  std::vector<glservice::SceneObject> sceneObjects{};
-  sceneObjects.push_back(glservice::SceneObject{
+  std::vector<SceneObject> sceneObjects{};
+  sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, -1.0f, 0.0f},
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<glservice::BaseLight>{nullptr      },
-      std::make_shared<glservice::Mesh>(glservice::generatePlane(1.0f, 1, objectSP, textures[1]))
+      std::shared_ptr<BaseLight>{nullptr      },
+      std::make_shared<Mesh>(generatePlane(1.0f, 1, objectSP, textures[1]))
   });
-  sceneObjects.push_back(glservice::SceneObject{
+  sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  2.0f, 0.0f},
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<glservice::BaseLight>{nullptr      },
-      std::make_shared<glservice::Mesh>(glservice::generatePlane(1.0f, 1, objectSP, textures[1]))
+      std::shared_ptr<BaseLight>{nullptr      },
+      std::make_shared<Mesh>(generatePlane(1.0f, 1, objectSP, textures[1]))
   });
-  sceneObjects.push_back(glservice::SceneObject{
+  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 5.0f;
+  sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
-      std::shared_ptr<glservice::BaseLight>{nullptr       },
-      std::make_shared<glservice::Mesh>(
-          glservice::generateCube(0.5f, 10, false, objectSP, textures[1]))
+      std::shared_ptr<BaseLight>{nullptr       },
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 5.0f;
-  sceneObjects.push_back(glservice::SceneObject{
+  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 10.0f;
+  sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<glservice::DirectionalLight>(glm::vec3{   0.1f,  0.0f, 0.0f},
-                                                    glm::vec3{   0.5f, -1.0f, 0.0f}
+      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
+      glm::vec3{   0.5f, -1.0f, 0.0f}
       ),
-      std::shared_ptr<glservice::Mesh>{nullptr      }
+      std::shared_ptr<Mesh>{nullptr      }
   });
-  sceneObjects.push_back(glservice::SceneObject{
-      glm::vec3{1.0f, 3.0f, 1.0f},
-      glm::vec3{0.0f, 0.0f, 0.0f},
-      glm::vec3{1.0f, 1.0f, 1.0f},
-      std::make_shared<glservice::PointLight>(glm::vec3{0.5f, 0.5f, 1.0f},
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{0.0f, 0.8f, -1.0f},
+      glm::vec3{0.0f, 0.0f,  0.0f},
+      glm::vec3{1.0f, 1.0f,  1.0f},
+      std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
       0.045f, 0.0075),
-      std::make_shared<glservice::Mesh>(
-          glservice::generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
   });
-  sceneObjects.push_back(glservice::SceneObject{
+  sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
       glm::vec3{ 0.0f, 90.0f,  0.0f},
       glm::vec3{ 1.0f,  1.0f,  1.0f},
-      std::make_shared<glservice::SpotLight>(
-          glm::vec3{ 0.0f,  1.0f,  0.0f},
+      std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       glm::vec3{ 0.6f, -1.0f,  0.9f},
-      0.045f, 0.0075, 15.0f, 13.0f),
-      std::make_shared<glservice::Mesh>(
-          glservice::generateUVSphere(0.1f, 10, lightSP, textures[0]))
+      0.045f,
+                                  0.0075, 15.0f, 13.0f),
+      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
   });
-  sceneObjects.push_back(glservice::SceneObject{
+  sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
       glm::vec3{0.0f,  0.0f, 0.0f},
       glm::vec3{1.0f,  1.0f, 1.0f},
-      std::make_shared<glservice::SpotLight>(
-          glm::vec3{1.0f,  1.0f, 0.0f},
+      std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       glm::vec3{0.3f, -1.0f, 0.6f},
-      0.045f, 0.0075, 30.0f, 25.0f),
-      std::make_shared<glservice::Mesh>(glservice::generateIcoSphere(0.1f, lightSP, textures[0]))
+      0.045f,
+                                  0.0075, 30.0f, 25.0f),
+      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
   });
 
   // Releasing OpenGL context
@@ -200,8 +201,8 @@ int main(int argc, char *argv[]) {
   gCamera.setPosition(glm::vec3{0.0f, 0.0f, 1.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
-  glservice::Camera5DoFController *camera5DoFController =
-      dynamic_cast<glservice::Camera5DoFController *>(&gCameraController);
+  Camera5DoFController *camera5DoFController =
+      dynamic_cast<Camera5DoFController *>(&gCameraController);
   if (camera5DoFController != nullptr) {
     camera5DoFController->updateLook();
     camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
@@ -256,18 +257,17 @@ int main(int argc, char *argv[]) {
     }
 
     // Getting light sources
-    std::vector<glservice::SceneObject> directionalLightSceneObjects{};
-    std::vector<glservice::SceneObject> pointLightSceneObjects{};
-    std::vector<glservice::SceneObject> spotLightSceneObjects{};
+    std::vector<SceneObject> directionalLightSceneObjects{};
+    std::vector<SceneObject> pointLightSceneObjects{};
+    std::vector<SceneObject> spotLightSceneObjects{};
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
       if (sceneObjects[i].lightPtr == nullptr) continue;
 
-      glservice::SceneObject &sceneObject = sceneObjects[i];
-      glservice::BaseLight   *lightPtr    = sceneObject.lightPtr.get();
+      SceneObject &sceneObject = sceneObjects[i];
+      BaseLight   *lightPtr    = sceneObject.lightPtr.get();
 
       // If light is directional
-      glservice::DirectionalLight *direcionalLight =
-          dynamic_cast<glservice::DirectionalLight *>(lightPtr);
+      DirectionalLight *direcionalLight = dynamic_cast<DirectionalLight *>(lightPtr);
       if (direcionalLight != nullptr) {
         directionalLightSceneObjects.push_back(sceneObject);
 
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
       }
 
       // If light is point
-      glservice::PointLight *pointLight = dynamic_cast<glservice::PointLight *>(lightPtr);
+      PointLight *pointLight = dynamic_cast<PointLight *>(lightPtr);
       if (pointLight != nullptr) {
         pointLightSceneObjects.push_back(sceneObject);
 
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
       }
 
       // If light is spot
-      glservice::SpotLight *spotLight = dynamic_cast<glservice::SpotLight *>(lightPtr);
+      SpotLight *spotLight = dynamic_cast<SpotLight *>(lightPtr);
       if (spotLight != nullptr) {
         spotLightSceneObjects.push_back(sceneObject);
 
@@ -296,9 +296,9 @@ int main(int argc, char *argv[]) {
     glUniform3fv(glGetUniformLocation(objectSP, "viewPos"), 1,
                  glm::value_ptr(gCamera.getPosition()));
     for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
-      glservice::SceneObject      &sceneObject = directionalLightSceneObjects[i];
-      glservice::DirectionalLight *direcionalLight =
-          dynamic_cast<glservice::DirectionalLight *>(sceneObject.lightPtr.get());
+      SceneObject      &sceneObject = directionalLightSceneObjects[i];
+      DirectionalLight *direcionalLight =
+          dynamic_cast<DirectionalLight *>(sceneObject.lightPtr.get());
 
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("directionalLights[" + std::to_string(i) + "].color").c_str()),
@@ -314,9 +314,8 @@ int main(int argc, char *argv[]) {
                    1, glm::value_ptr(dir));
     }
     for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
-      glservice::SceneObject &sceneObject = pointLightSceneObjects[i];
-      glservice::PointLight  *pointLight =
-          dynamic_cast<glservice::PointLight *>(sceneObject.lightPtr.get());
+      SceneObject &sceneObject = pointLightSceneObjects[i];
+      PointLight  *pointLight  = dynamic_cast<PointLight *>(sceneObject.lightPtr.get());
 
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("pointLights[" + std::to_string(i) + "].worldPos").c_str()),
@@ -332,9 +331,8 @@ int main(int argc, char *argv[]) {
                   pointLight->quadAttCoef);
     }
     for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
-      glservice::SceneObject &sceneObject = spotLightSceneObjects[i];
-      glservice::SpotLight   *spotLight =
-          dynamic_cast<glservice::SpotLight *>(sceneObject.lightPtr.get());
+      SceneObject &sceneObject = spotLightSceneObjects[i];
+      SpotLight   *spotLight   = dynamic_cast<SpotLight *>(sceneObject.lightPtr.get());
 
       glUniform3fv(glGetUniformLocation(objectSP,
                                         ("spotLights[" + std::to_string(i) + "].worldPos").c_str()),
@@ -370,8 +368,8 @@ int main(int argc, char *argv[]) {
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
       if (sceneObjects[i].meshPtr == nullptr) continue;
 
-      glservice::SceneObject &sceneObject = sceneObjects[i];
-      glservice::Mesh        &mesh        = *sceneObject.meshPtr;
+      SceneObject &sceneObject = sceneObjects[i];
+      Mesh        &mesh        = *sceneObject.meshPtr;
 
       glUseProgram(mesh.shaderProgram);
       glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.ambCoef"),
@@ -382,7 +380,7 @@ int main(int argc, char *argv[]) {
                   mesh.material.specCoef);
       glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.glossiness"),
                   mesh.material.glossiness);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.texture"), 0);
+      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.albedoMap"), 0);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.normalMap"), 1);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.heightMap"), 2);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.ambOccMap"), 3);
@@ -390,7 +388,7 @@ int main(int argc, char *argv[]) {
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.emissMap"), 5);
       glUseProgram(0);
 
-      glservice::renderSceneObject(sceneObject, gCamera);
+      renderSceneObject(sceneObject, gCamera);
     }
 
     // Swapping front and back buffers
@@ -410,10 +408,11 @@ int main(int argc, char *argv[]) {
   lightShaderWatcherThread.join();
 
   // Terminating window with OpenGL context and GLFW
-  glservice::terminateWindow(window);
+  terminateWindow(window);
+  terminateGLFW();
 
   // Terminating Qt Gui application
-  glservice::terminateQGuiApplication(app);
+  terminateQGuiApplication(app);
 
   return 0;
 }
@@ -435,16 +434,16 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
   sPrevMousePosY = static_cast<float>(posY);
 
   // If cameraController is Camera5DoFController
-  glservice::Camera5DoFController *camera5DoFController =
-      dynamic_cast<glservice::Camera5DoFController *>(&gCameraController);
+  Camera5DoFController *camera5DoFController =
+      dynamic_cast<Camera5DoFController *>(&gCameraController);
   if (camera5DoFController != nullptr) {
     // Rotating camera
     camera5DoFController->addAngles(glm::radians(offsetX), glm::radians(offsetY));
   }
 
   // If cameraController is Camera6DoFController
-  glservice::Camera6DoFController *camera6DoFController =
-      dynamic_cast<glservice::Camera6DoFController *>(&gCameraController);
+  Camera6DoFController *camera6DoFController =
+      dynamic_cast<Camera6DoFController *>(&gCameraController);
   if (camera6DoFController != nullptr) {
     // Rotating camera
     camera6DoFController->rotateRight(glm::radians(offsetY));
@@ -454,8 +453,7 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
 
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
   // Checking if camera is orthographic
-  glservice::OrthographicCamera *orthoCamera =
-      dynamic_cast<glservice::OrthographicCamera *>(&gCamera);
+  OrthographicCamera *orthoCamera = dynamic_cast<OrthographicCamera *>(&gCamera);
   if (orthoCamera != nullptr) {
     // Getting orthographic projection attributes of camera
     float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{}, farPlane{};
@@ -474,8 +472,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
   }
 
   // Checking if camera is perspective
-  glservice::PerspectiveCamera *perspCamera =
-      dynamic_cast<glservice::PerspectiveCamera *>(&gCamera);
+  PerspectiveCamera *perspCamera = dynamic_cast<PerspectiveCamera *>(&gCamera);
   if (perspCamera != nullptr) {
     // Getting perspective projection attributes of camera
     float verticalVOF{}, aspectRatio{}, nearPlane{}, farPlane{};
@@ -520,8 +517,8 @@ void processUserInput(GLFWwindow *window) {
   }
 
   // If cameraController is Camera6DoFController
-  glservice::Camera6DoFController *camera6DoFController =
-      dynamic_cast<glservice::Camera6DoFController *>(&gCameraController);
+  Camera6DoFController *camera6DoFController =
+      dynamic_cast<Camera6DoFController *>(&gCameraController);
   // Processing movement
   if (camera6DoFController != nullptr) {
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -540,9 +537,9 @@ void processUserInput(GLFWwindow *window) {
 
       static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
       if (glfwGetWindowMonitor(window) == nullptr) {
-        glservice::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+        enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       } else {
-        glservice::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+        disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       }
     }
   }
@@ -576,8 +573,7 @@ void processUserInput(GLFWwindow *window) {
 
   // Terminating window
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    glservice::terminateWindow(window);
-    return;
+    terminateWindow(window);
   }
 
   if (released) {

@@ -15,12 +15,18 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 // STB
 //#define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 // "glservice" internal library
 #include <glservice.hpp>
+
+using namespace glservice;
 
 // for "ms"
 using namespace std::chrono_literals;
@@ -31,9 +37,20 @@ static constexpr unsigned int          kHeight              = 600;
 static constexpr int                   kOpenGLVersionMajor  = 4;
 static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
+static constexpr float                 kCameraVelocity      = 1.0f;
 
-// Functions for GLFW
+// Global variables
+float                gCurrTime{};
+float                gDeltaTime{};
+PerspectiveCamera    gCamera{};
+Camera6DoFController gCameraController{&gCamera};
+
+// GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
+
+// Functions for controls processing
+void cursorPosCallback(GLFWwindow *window, double posX, double posY);
+void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
 
 // Functions for sceneObjects
@@ -46,17 +63,23 @@ void   drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication app = glservice::initQGuiApplication(argc, argv);
+  QGuiApplication app = initQGuiApplication(argc, argv);
 
   // Initializing GLFW and getting configured window with OpenGL context
-  GLFWwindow *window = glservice::createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor,
-                                               kOpenGLVersionMinor);
+  initGLFW();
+  GLFWwindow *window =
+      createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
-  // Setting callback function on window resize
+  // Setting callback functions
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+  glfwSetCursorPosCallback(window, cursorPosCallback);
+  glfwSetScrollCallback(window, scrollCallback);
+
+  // Enabling mouse centering
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Setting OpenGL clear color
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -64,13 +87,13 @@ int main(int argc, char *argv[]) {
   glEnable(GL_DEPTH_TEST);
 
   // Creating arrays of filenames and types of shaders
-  std::vector<GLenum> shaderTypes{
+  std::vector<GLuint> shaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
-  std::vector<QString> shaderFileNames{
-      glservice::getAbsolutePathRelativeToExecutable("triangleVS.glsl"),
-      glservice::getAbsolutePathRelativeToExecutable("triangleFS.glsl"),
+  std::vector<QString> shaderFilenames{
+      getAbsolutePathRelativeToExecutable("cameraVS.glsl"),
+      getAbsolutePathRelativeToExecutable("cameraFS.glsl"),
   };
   // Creating a shader program
   GLuint shaderProgram = glCreateProgram();
@@ -78,15 +101,18 @@ int main(int argc, char *argv[]) {
   std::mutex        glfwContextMutex{};
   std::atomic<bool> shaderWatcherIsRunning = true;
   std::atomic<bool> shadersAreRecompiled   = false;
-  std::thread shaderWatcherThread{glservice::shaderWatcher,       std::cref(shaderWatcherIsRunning),
-                                  std::ref(shadersAreRecompiled), window,
-                                  std::ref(glfwContextMutex),     shaderProgram,
-                                  std::cref(shaderTypes),         std::cref(shaderFileNames)};
+  std::thread       shaderWatcherThread{shaderWatcher,
+                                  std::cref(shaderWatcherIsRunning),
+                                  std::ref(shadersAreRecompiled),
+                                  window,
+                                  std::ref(glfwContextMutex),
+                                  shaderProgram,
+                                  std::cref(shaderTypes),
+                                  std::cref(shaderFilenames)};
 
   // Loading textures
   std::vector<GLuint> textures{
       initTexture("texture1.png"),
-      initTexture("texture2.png"),
   };
 
   // Vertices and their indices to make a mesh from triangles
@@ -107,6 +133,20 @@ int main(int argc, char *argv[]) {
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
 
+  // Configuring camera and cameraControllers
+  gCamera.setPosition(glm::vec3{1.0f, 0.0f, 1.0f});
+  gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+  // If cameraController is Camera5DoFController
+  Camera5DoFController *camera5DoFController =
+      dynamic_cast<Camera5DoFController *>(&gCameraController);
+  if (camera5DoFController != nullptr) {
+    camera5DoFController->updateLook();
+    camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
+  }
+
+  // Starting clock
+  gCurrTime = static_cast<float>(glfwGetTime());
+
   // Render cycle
   while (true) {
     // Capturing mutex and OpenGL context
@@ -119,6 +159,11 @@ int main(int argc, char *argv[]) {
     // Processing window events
     glfwPollEvents();
 
+    // Updating clock
+    float prevTime = gCurrTime;
+    gCurrTime      = static_cast<float>(glfwGetTime());
+    gDeltaTime     = gCurrTime - prevTime;
+
     // Processing user input
     processUserInput(window);
 
@@ -130,7 +175,6 @@ int main(int argc, char *argv[]) {
       // Setting location of textures
       glUseProgram(shaderProgram);
       glUniform1i(glGetUniformLocation(shaderProgram, "texture0"), 0);
-      glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 1);
       glUseProgram(0);
 
       // Notifying that all routine after shader recompilation is done
@@ -155,10 +199,11 @@ int main(int argc, char *argv[]) {
   shaderWatcherThread.join();
 
   // Terminating window with OpenGL context and GLFW
-  glservice::terminateWindow(window);
+  terminateWindow(window);
+  terminateGLFW();
 
   // Terminating Qt Gui application
-  glservice::terminateQGuiApplication(app);
+  terminateQGuiApplication(app);
 
   return 0;
 }
@@ -168,14 +213,111 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
+  // Initializaing static variables
+  static float sPrevMousePosX{static_cast<float>(posX)};
+  static float sPrevMousePosY{static_cast<float>(posY)};
+
+  // Calculating offsets by axies
+  float offsetX  = sPrevMousePosX - static_cast<float>(posX);
+  float offsetY  = sPrevMousePosY - static_cast<float>(posY);
+  sPrevMousePosX = static_cast<float>(posX);
+  sPrevMousePosY = static_cast<float>(posY);
+
+  // If cameraController is Camera5DoFController
+  Camera5DoFController *camera5DoFController =
+      dynamic_cast<Camera5DoFController *>(&gCameraController);
+  if (camera5DoFController != nullptr) {
+    // Rotating camera
+    camera5DoFController->addAngles(glm::radians(offsetX), glm::radians(offsetY));
+  }
+
+  // If cameraController is Camera6DoFController
+  Camera6DoFController *camera6DoFController =
+      dynamic_cast<Camera6DoFController *>(&gCameraController);
+  if (camera6DoFController != nullptr) {
+    // Rotating camera
+    camera6DoFController->rotateRight(glm::radians(offsetY));
+    camera6DoFController->rotateUp(glm::radians(offsetX));
+  }
+}
+
+void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
+  // Checking if camera is orthographic
+  OrthographicCamera *orthoCamera = dynamic_cast<OrthographicCamera *>(&gCamera);
+  if (orthoCamera != nullptr) {
+    // Getting orthographic projection attributes of camera
+    float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{}, farPlane{};
+    orthoCamera->getProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
+                                         nearPlane, farPlane);
+
+    // Updating border attributes
+    leftBorder -= static_cast<float>(glm::radians(offsetY));
+    rightBorder += static_cast<float>(glm::radians(offsetY));
+    bottomBorder -= static_cast<float>(glm::radians(offsetY));
+    topBorder += static_cast<float>(glm::radians(offsetY));
+
+    // Setting orthographic projection attributes of camera
+    orthoCamera->setProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
+                                         nearPlane, farPlane);
+  }
+
+  // Checking if camera is perspective
+  PerspectiveCamera *perspCamera = dynamic_cast<PerspectiveCamera *>(&gCamera);
+  if (perspCamera != nullptr) {
+    // Getting perspective projection attributes of camera
+    float verticalVOF{}, aspectRatio{}, nearPlane{}, farPlane{};
+    perspCamera->getProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+
+    // Updating verticalFOV attribute
+    verticalVOF -= static_cast<float>(glm::radians(offsetY));
+    if (verticalVOF < glm::radians(1.0f)) {
+      verticalVOF = glm::radians(1.0f);
+    } else if (verticalVOF > glm::radians(179.0f)) {
+      verticalVOF = glm::radians(179.0f);
+    }
+
+    // Setting perspective projection attributes of camera
+    perspCamera->setProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+  }
+}
+
 void processUserInput(GLFWwindow *window) {
   static bool sPressed{};
   bool        released{true};
 
-  // Terminating window
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    glservice::terminateWindow(window);
-    return;
+  // Processing movement
+  float distance = kCameraVelocity * gDeltaTime;
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    gCameraController.moveForward(distance);
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    gCameraController.moveForward(-distance);
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    gCameraController.moveRight(distance);
+  }
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    gCameraController.moveRight(-distance);
+  }
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    gCameraController.moveUp(distance);
+  }
+  if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+    gCameraController.moveUp(-distance);
+  }
+
+  // If cameraController is Camera6DoFController
+  Camera6DoFController *camera6DoFController =
+      dynamic_cast<Camera6DoFController *>(&gCameraController);
+  // Processing movement
+  if (camera6DoFController != nullptr) {
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+      camera6DoFController->rotateForward(-distance);
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+      camera6DoFController->rotateForward(distance);
+    }
   }
 
   // Toggling fullscreen mode
@@ -186,20 +328,17 @@ void processUserInput(GLFWwindow *window) {
 
       static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
       if (glfwGetWindowMonitor(window) == nullptr) {
-        glservice::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+        enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       } else {
-        glservice::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+        disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       }
     }
   }
 
-  // Setting polygon mode for both sides to GL_LINE
-  if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  }
-  // Setting polygon mode for both sides to GL_FILL
-  else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // Terminating window
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    terminateWindow(window);
+    return;
   }
 
   if (released) {
@@ -249,8 +388,8 @@ GLuint initTexture(const QString &filename) {
   stbi_set_flip_vertically_on_load(true);
   int            textureWidth{}, textureHeight{}, componentCount{};
   unsigned char *textureImage =
-      stbi_load(glservice::getAbsolutePathRelativeToExecutable(filename).toLocal8Bit().data(),
-                &textureWidth, &textureHeight, &componentCount, 0);
+      stbi_load(getAbsolutePathRelativeToExecutable(filename).toLocal8Bit().data(), &textureWidth,
+                &textureHeight, &componentCount, 0);
   if (textureImage == nullptr) {
     std::cout << "error: failed to load image " << filename.toStdString() << std::endl;
     // Freeing texture image memory
@@ -303,13 +442,15 @@ void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
   }
 
   // Updating shader uniform variables
-  float mixRatio = std::cos(static_cast<float>(glfwGetTime())) / 2.0f + 0.5f;
-  glUniform1f(glGetUniformLocation(shaderProgram, "mixRatio"), mixRatio);
+  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE,
+                     glm::value_ptr(glm::mat4{1.0f}));
+  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE,
+                     glm::value_ptr(gCamera.getViewMatrix()));
+  glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "proj"), 1, GL_FALSE,
+                     glm::value_ptr(gCamera.getProjectionMatrix()));
 
   // Drawing mesh
-  //glDrawArrays(GL_TRIANGLES, 0, 6); // without vertices (EBO) method
-  glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT,
-                 0);  // with indices (EBO) method
+  glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 
   // Unbinding configured VAO and VBO
   glBindVertexArray(0);
