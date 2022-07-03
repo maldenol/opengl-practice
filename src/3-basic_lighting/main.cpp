@@ -1,6 +1,8 @@
 // STD
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <cmath>
 #include <mutex>
@@ -40,7 +42,9 @@ float                gCurrTime{};
 float                gDeltaTime{};
 PerspectiveCamera    gCamera{};
 Camera6DoFController gCameraController{&gCamera};
+SceneObject         *gFlashlightSceneObjectPtr{};
 int                  gPolygonMode{};
+bool                 gEnableSceneObjectsFloating{true};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -49,6 +53,10 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void cursorPosCallback(GLFWwindow *window, double posX, double posY);
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
+
+// Makes scene objects float
+void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
+                       unsigned int count);
 
 // Main function
 int main(int argc, char *argv[]) {
@@ -139,16 +147,18 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 1, objectSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].meshPtr->material.maxHeight = 0.1f;
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  2.0f, 0.0f},
-      glm::vec3{  90.0f,  0.0f, 0.0f},
-      glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 1, objectSP, textures[1]))
+      glm::vec3{   0.0f,   2.0f, 0.0f},
+      glm::vec3{  90.0f, 180.0f, 0.0f},
+      glm::vec3{  20.0f,  10.0f, 30.0f},
+      std::shared_ptr<BaseLight>{nullptr       },
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 5.0f;
+  sceneObjects[sceneObjects.size() - 1].meshPtr->material.maxHeight  = 0.1f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
@@ -172,7 +182,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      1.0f, 0.045f, 0.0075),
+      1.0f, 0.45f, 0.075),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -181,7 +191,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.045f, 0.0075, 15.0f, 13.0f),
+                                  0.45f, 0.075, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -190,9 +200,19 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.045f, 0.0075, 30.0f, 25.0f),
+                                  0.45f, 0.075, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
   });
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
+      1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
+                                  0.45f, 0.075, 20.0f, 18.0f),
+      std::shared_ptr<Mesh>{nullptr     }
+  });
+  gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -257,6 +277,16 @@ int main(int argc, char *argv[]) {
       // Notifying that all routine after light shader recompilation is done
       lightShadersAreRecompiled = false;
     }
+
+    // Making scene objects float
+    if (gEnableSceneObjectsFloating) {
+      floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
+    }
+
+    // Updating flashlight SceneObjcet fields
+    gFlashlightSceneObjectPtr->translate = gCameraController.getCamera()->getPosition();
+    dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->lightPtr.get())->direction =
+        gCameraController.getCamera()->getForwardDirection();
 
     // Getting light sources
     std::vector<SceneObject> directionalLightSceneObjects{};
@@ -542,6 +572,26 @@ void processUserInput(GLFWwindow *window) {
     }
   }
 
+  // Toggling flashlight
+  if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      gFlashlightSceneObjectPtr->lightPtr->intensity *= -1.0f;
+    }
+  }
+
+  // Toggling scene objects floating
+  if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      gEnableSceneObjectsFloating = !gEnableSceneObjectsFloating;
+    }
+  }
+
   // Toggling fullscreen mode
   if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
     released = false;
@@ -591,5 +641,67 @@ void processUserInput(GLFWwindow *window) {
 
   if (released) {
     sPressed = false;
+  }
+}
+
+void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
+                       unsigned int count) {
+  static std::vector<SceneObject *> sSceneObjectPtrs{};
+  static std::vector<glm::vec3>     sInitialTranslations{};
+  static std::vector<float>         sTranslationAmplitudes{};
+  static std::vector<float>         sTranslationFrequencies{};
+  static std::vector<glm::vec3>     sInitialRotations{};
+  static std::vector<float>         sRotationAmplitudes{};
+  static std::vector<float>         sRotationFrequencies{};
+  static std::vector<glm::vec3>     sInitialScalings{};
+  static std::vector<float>         sCalingAmplitudes{};
+  static std::vector<float>         sCalingFrequencies{};
+
+  constexpr float kMaxTranslationAmplitude{0.1f};
+  constexpr float kMaxTranslationFrequency{1.0f};
+  constexpr float kMaxRotationAmplitude{30.0f};
+  constexpr float kMaxRotationFrequency{0.5f};
+  constexpr float kMaxScalingAmplitude{0.02f};
+  constexpr float kMaxScalingFrequency{0.2f};
+
+  // Initializing static variables
+  if (sSceneObjectPtrs.size() == 0) {
+    srand(time(0));
+
+    for (unsigned int i = startIndex; i < startIndex + count; ++i) {
+      sSceneObjectPtrs.push_back(const_cast<SceneObject *>(&sceneObjects[i]));
+      sInitialTranslations.push_back(sceneObjects[i].translate);
+      sInitialRotations.push_back(sceneObjects[i].rotate);
+      sInitialScalings.push_back(sceneObjects[i].scale);
+
+      sTranslationAmplitudes.push_back(kMaxTranslationAmplitude * static_cast<float>(rand()) /
+                                       static_cast<float>(RAND_MAX));
+      sTranslationFrequencies.push_back(kMaxTranslationFrequency * static_cast<float>(rand()) /
+                                        static_cast<float>(RAND_MAX));
+      sRotationAmplitudes.push_back(kMaxRotationAmplitude * static_cast<float>(rand()) /
+                                    static_cast<float>(RAND_MAX));
+      sRotationFrequencies.push_back(kMaxRotationFrequency * static_cast<float>(rand()) /
+                                     static_cast<float>(RAND_MAX));
+      sCalingAmplitudes.push_back(kMaxScalingAmplitude * static_cast<float>(rand()) /
+                                  static_cast<float>(RAND_MAX));
+      sCalingFrequencies.push_back(kMaxScalingFrequency * static_cast<float>(rand()) /
+                                   static_cast<float>(RAND_MAX));
+    }
+  }
+
+  // For each scene object
+  for (unsigned int i = 0; i < sSceneObjectPtrs.size(); ++i) {
+    sSceneObjectPtrs[i]->translate =
+        sInitialTranslations[i] +
+        glm::vec3(0.0f, 1.0f, 0.0f) * sTranslationAmplitudes[i] *
+            std::sin(static_cast<float>(glfwGetTime()) * sTranslationFrequencies[i]);
+    sSceneObjectPtrs[i]->rotate =
+        sInitialRotations[i] +
+        glm::vec3(0.0f, 1.0f, 0.0f) * sRotationAmplitudes[i] *
+            std::sin(static_cast<float>(glfwGetTime()) * sRotationFrequencies[i]);
+    sSceneObjectPtrs[i]->scale =
+        sInitialScalings[i] *
+        (1.0f + sCalingAmplitudes[i] *
+                    std::sin(static_cast<float>(glfwGetTime()) * sCalingFrequencies[i]));
   }
 }
