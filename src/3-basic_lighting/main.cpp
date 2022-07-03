@@ -160,8 +160,9 @@ int main(int argc, char *argv[]) {
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
-      glm::vec3{   0.5f, -1.0f, 0.0f}
+      std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
+      0.2f,
+                                         glm::vec3{   0.5f, -1.0f, 0.0f}
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
@@ -170,7 +171,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      0.045f, 0.0075),
+      1.0f, 0.045f, 0.0075),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -178,9 +179,8 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 0.0f, 90.0f,  0.0f},
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
-      glm::vec3{ 0.6f, -1.0f,  0.9f},
-      0.045f,
-                                  0.0075, 15.0f, 13.0f),
+      1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
+                                  0.045f, 0.0075, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -188,9 +188,8 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f,  0.0f, 0.0f},
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
-      glm::vec3{0.3f, -1.0f, 0.6f},
-      0.045f,
-                                  0.0075, 30.0f, 25.0f),
+      1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
+                                  0.045f, 0.0075, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
   });
 
@@ -238,7 +237,9 @@ int main(int argc, char *argv[]) {
     if (objectShadersAreRecompiled) {
       // Setting uniform values
       glUseProgram(objectSP);
-      glUniform3f(glGetUniformLocation(objectSP, "ambLightColor"), 1.0f, 1.0f, 1.0f);
+      glUniform3fv(glGetUniformLocation(objectSP, "ambLightColor"), 1,
+                   glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
+      glUniform1f(glGetUniformLocation(objectSP, "ambLightIntensity"), 1.0f);
       glUseProgram(0);
 
       // Notifying that all routine after object shader recompilation is done
@@ -297,17 +298,20 @@ int main(int argc, char *argv[]) {
                  glm::value_ptr(gCamera.getPosition()));
     for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
       SceneObject      &sceneObject = directionalLightSceneObjects[i];
-      DirectionalLight *direcionalLight =
+      DirectionalLight *directionalLight =
           dynamic_cast<DirectionalLight *>(sceneObject.lightPtr.get());
 
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("directionalLights[" + std::to_string(i) + "].color").c_str()),
-                   1, glm::value_ptr(direcionalLight->color));
+                   1, glm::value_ptr(directionalLight->color));
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("directionalLights[" + std::to_string(i) + "].intensity").c_str()),
+                  directionalLight->intensity);
       glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
                                                   glm::radians(sceneObject.rotate.y),
                                                   glm::radians(sceneObject.rotate.z))};
       glm::vec3   dir{
-          rotateMatrix * glm::vec4{direcionalLight->direction, 0.0f}
+          rotateMatrix * glm::vec4{directionalLight->direction, 0.0f}
       };
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("directionalLights[" + std::to_string(i) + "].dir").c_str()),
@@ -323,6 +327,9 @@ int main(int argc, char *argv[]) {
       glUniform3fv(
           glGetUniformLocation(objectSP, ("pointLights[" + std::to_string(i) + "].color").c_str()),
           1, glm::value_ptr(pointLight->color));
+      glUniform1f(glGetUniformLocation(
+                      objectSP, ("pointLights[" + std::to_string(i) + "].intensity").c_str()),
+                  pointLight->intensity);
       glUniform1f(glGetUniformLocation(
                       objectSP, ("pointLights[" + std::to_string(i) + "].linAttCoef").c_str()),
                   pointLight->linAttCoef);
@@ -340,6 +347,9 @@ int main(int argc, char *argv[]) {
       glUniform3fv(
           glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].color").c_str()),
           1, glm::value_ptr(spotLight->color));
+      glUniform1f(glGetUniformLocation(objectSP,
+                                       ("spotLights[" + std::to_string(i) + "].intensity").c_str()),
+                  spotLight->intensity);
       glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
                                                   glm::radians(sceneObject.rotate.y),
                                                   glm::radians(sceneObject.rotate.z))};
@@ -380,6 +390,8 @@ int main(int argc, char *argv[]) {
                   mesh.material.specCoef);
       glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.glossiness"),
                   mesh.material.glossiness);
+      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.maxHeight"),
+                  mesh.material.maxHeight);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.albedoMap"), 0);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.normalMap"), 1);
       glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.heightMap"), 2);

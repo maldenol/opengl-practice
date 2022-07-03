@@ -25,9 +25,10 @@ namespace glservice {
 // Base light struct
 struct BaseLight {
   glm::vec3 color{};
+  float     intensity{};
 
  protected:
-  BaseLight(const glm::vec3 &color) : color{color} {}
+  BaseLight(const glm::vec3 &color, float intensity) : color{color}, intensity{intensity} {}
 
  public:
   virtual ~BaseLight() noexcept {};
@@ -37,8 +38,8 @@ struct BaseLight {
 struct DirectionalLight : public BaseLight {
   glm::vec3 direction{};
 
-  DirectionalLight(const glm::vec3 &color, const glm::vec3 &direction)
-      : BaseLight{color}, direction{direction} {}
+  DirectionalLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction)
+      : BaseLight{color, intensity}, direction{direction} {}
 };
 
 // Point light struct
@@ -46,8 +47,8 @@ struct PointLight : public BaseLight {
   float linAttCoef{};
   float quadAttCoef{};
 
-  PointLight(const glm::vec3 &color, float linAttCoef, float quadAttCoef)
-      : BaseLight{color}, linAttCoef{linAttCoef}, quadAttCoef{quadAttCoef} {}
+  PointLight(const glm::vec3 &color, float intensity, float linAttCoef, float quadAttCoef)
+      : BaseLight{color, intensity}, linAttCoef{linAttCoef}, quadAttCoef{quadAttCoef} {}
 };
 
 // Spot light struct
@@ -60,9 +61,9 @@ struct SpotLight : public BaseLight {
   float angle{};
   float smoothAngle{};
 
-  SpotLight(const glm::vec3 &color, const glm::vec3 &direction, float linAttCoef, float quadAttCoef,
-            float angle, float smoothAngle)
-      : BaseLight{color},
+  SpotLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction, float linAttCoef,
+            float quadAttCoef, float angle, float smoothAngle)
+      : BaseLight{color, intensity},
         direction{direction},
         linAttCoef{linAttCoef},
         quadAttCoef{quadAttCoef},

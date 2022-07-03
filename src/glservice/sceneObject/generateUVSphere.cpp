@@ -10,7 +10,7 @@ glservice::Mesh glservice::generateUVSphere(float radius, int lod, GLuint shader
   // Incrementing level-of-detail
   ++lod;
 
-  // Level-Of-Details (count of rectangles per longitude/latitude)
+  // Level-of-detail (count of rectangles per longitude/latitude)
   const int columns = 2 * lod;  // longitude
   const int rows    = lod;      // latitude
 
@@ -34,7 +34,9 @@ glservice::Mesh glservice::generateUVSphere(float radius, int lod, GLuint shader
   uvs.resize(vertexCount);
   indices.resize(indexCount);
 
+  // For each column (longitude)
   for (int c = 0; c < columns; ++c) {
+    // For each row (latitude)
     for (int r = 0; r < rows; ++r) {
       const float luX = static_cast<float>(c) * trapezeXDim;
       const float luY = static_cast<float>(r + 1) * trapezeYDim;
@@ -54,7 +56,7 @@ glservice::Mesh glservice::generateUVSphere(float radius, int lod, GLuint shader
       const float rdU = 1.0f - static_cast<float>(c + 1) * trapezeUDim;
       const float rdV = 1.0f - static_cast<float>(r) * trapezeVDim;
 
-      // Spherical coordinates to Cartesian (formulas from Wikipedia)
+      // Transforming from Spherical coordinates to Cartesian
       glm::vec3 lu{-std::cos(luX) * std::sin(luY), std::cos(luY), std::sin(luX) * std::sin(luY)};
       glm::vec3 ru{-std::cos(ruX) * std::sin(ruY), std::cos(ruY), std::sin(ruX) * std::sin(ruY)};
       glm::vec3 ld{-std::cos(ldX) * std::sin(ldY), std::cos(ldY), std::sin(ldX) * std::sin(ldY)};

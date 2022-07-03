@@ -5,7 +5,7 @@
 glservice::Mesh glservice::generateQuadSphere(float radius, int lod, bool enableCubemap,
                                               GLuint                      shaderProgram,
                                               const std::vector<Texture> &textures) {
-  // Level-Of-Details (count of quads along one side)
+  // Level-of-detail (count of quads along one side)
   const float xyQuadSize = 1.0f / static_cast<float>(lod);  // discrete quad's side xy size
   const float uQuadSize  = 1.0f / (enableCubemap ? 4.0f : 1.0f) /
                           static_cast<float>(lod);  // discrete quad's side u size
@@ -31,8 +31,10 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, bool enable
   uvs.resize(vertexCount);
   indices.resize(indexCount);
 
-  for (int s = 0; s < 6; ++s) {                   // the whole cube
-    for (int v = 0; v < quadPerSideCount; ++v) {  // single side
+  // For each side
+  for (int s = 0; s < 6; ++s) {
+    // For each quad of the side
+    for (int v = 0; v < quadPerSideCount; ++v) {
       const int   row    = v / lod;
       const int   column = v % lod;
       const float leftX  = column * xyQuadSize - halfSize;
@@ -237,7 +239,7 @@ glservice::Mesh glservice::generateQuadSphere(float radius, int lod, bool enable
     }
   }
 
-  // Projecting cube on sphere
+  // Projecting the cube on a sphere
   for (int v = 0; v < vertexCount; ++v) {
     normals[v]  = glm::normalize(vertices[v]);
     vertices[v] = normals[v] * radius;

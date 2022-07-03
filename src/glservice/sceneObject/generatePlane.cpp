@@ -4,7 +4,7 @@
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgram,
                                          const std::vector<Texture> &textures) {
-  // Level-Of-Details (count of quads along one side)
+  // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
       static_cast<float>(size) / static_cast<float>(lod);    // discrete quad's side xy size
   const float uvQuadSize = 1.0f / static_cast<float>(lod);   // discrete quad's side uv size
@@ -26,6 +26,7 @@ glservice::Mesh glservice::generatePlane(float size, int lod, GLuint shaderProgr
   uvs.resize(vertexCount);
   indices.resize(indexCount);
 
+  // For each quad
   for (int v = 0; v < quadCount; ++v) {
     const int row    = v / lod;
     const int column = v % lod;

@@ -29,20 +29,29 @@ out vec3 fNormal;
 out mat3 fTBN;
 out vec2 fTexCoords;
 
+// Vertex shader
 void main() {
+  // Getting TBN matrix to transform normals from normal map from tangent space to world one
   vec3 normal    = normalize(vec3(model * vec4(aNormal, 0.0f)));
   vec3 tangent   = normalize(vec3(model * vec4(aTangent, 0.0f)));
-  tangent        = normalize(tangent - normal * dot(normal, tangent));  // Gram-Schmidt orthogonalization
+  // Gram-Schmidt orthogonalization
+  tangent        = normalize(tangent - normal * dot(normal, tangent));
   vec3 bitangent = cross(normal, tangent);
   mat3 TBN       = mat3(tangent, bitangent, normal);
 
+  // Using normal map and TBN matrix to get world space normal
   vec3 N = normalize(TBN * (vec3(texture(material.normalMap, aTexCoords)) * 2.0f - 1.0f));
   //vec3 N = mat3(transpose(inverse(model))) * aNormal;
+  // Using height map and normal to get world space height vector
   vec3 height = material.maxHeight * N * (texture(material.heightMap, aTexCoords).r * 2.0f - 1.0f);
 
-  fWorldPos   = vec3(model * vec4(aPos + height, 1.0f));
+  // Passing interpolators to rasterizer
+  fWorldPos   = vec3(model * vec4(aPos, 1.0f)) + height;
   fNormal     = aNormal;
   fTBN        = TBN;
   fTexCoords  = aTexCoords;
-  gl_Position = proj * view * model * vec4(aPos + height, 1.0f);
+
+  // Calculating vertex position in clip space by vertex position,
+  // MVP transformation and height vector
+  gl_Position = proj * view * (model * vec4(aPos + height, 1.0f) + vec4(height, 0.0f));
 }

@@ -21,56 +21,75 @@ glservice::Mesh glservice::generateIcoSphere(float radius, GLuint shaderProgram,
   uvs.resize(kVertexCount);
   indices.resize(kIndexCount);
 
-  // Generating an icosahedron
+  // Generating the icosahedron
   float circumferenceRadius = 1.0f / std::sqrt(5.0f);
-  for (int p = 0; p < 2; ++p) {  // 2 poles
+  // For each pole
+  for (int p = 0; p < 2; ++p) {
     constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
 
     const int currPoleOffset = p * 6;
 
-    for (int v = 0; v < 5; ++v) {  // single pole vertices
+    // For each vertex of the hemisphere of appropriate pole except the pole vertex
+    for (int v = 0; v < 5; ++v) {
       const float lerpByIndex     = v / 5.0f;
       const float angle           = 2.0f * M_PI * lerpByIndex;
       const int   currVertexIndex = currPoleOffset + v;
 
+      // Creating a vertex
       vertices[currVertexIndex] =
           glm::vec3{circumferenceRadius * std::cos(angle), -0.5f * (1.0f - circumferenceRadius),
                     circumferenceRadius * std::sin(angle)};
 
-      if (p == 0) {  // upper
+      // Setting UVs of the vertex
+      // If pole is the upper one
+      if (p == 0) {
         uvs[currVertexIndex] = glm::vec2{lerpByIndex, 2.0f / 3.0f};
-      } else {  // lower
+      }
+      // If pole is the lower one
+      else {
         uvs[currVertexIndex] = glm::vec2{1.0f - lerpByIndex, 1.0f / 3.0f};
       }
     }
 
     const int poleIndex = currPoleOffset + 5;
 
-    // Pole vertex
+    // Creating pole vertex
     vertices[poleIndex] = glm::vec3{0.0f, 0.0f, 0.0f};
 
-    if (p == 0) {  // upper
+    // Setting UVs of the pole vertex
+    // If pole is the upper one
+    if (p == 0) {
       uvs[poleIndex] = glm::vec2{0.0f, 1.0f};
-    } else {  // lower
+    }
+    // If pole is the lower one
+    else {
       uvs[poleIndex] = glm::vec2{0.0f, 0.0f};
     }
 
-    for (int v = 0; v < 5; ++v) {  // pole indices
+    // For each vertex of the hemisphere of appropriate pole except the pole vertex
+    for (int v = 0; v < 5; ++v) {
       const int currVertexIndex = currPoleOffset + v;
       const int nextVertexIndex = currPoleOffset + (v + 1) % 5;
       const int indexOffset     = (currPoleOffset - p + v) * 3;
 
+      // Configuring triangles of the hemisphere
       indices[indexOffset]     = currVertexIndex;
       indices[indexOffset + 1] = poleIndex;
       indices[indexOffset + 2] = nextVertexIndex;
     }
 
-    if (p == 0) {  // upper pole transformation
+    // Translating and rotating hemisphere vertices
+    // If pole is the upper one
+    if (p == 0) {
+      // For each vertex of the hemisphere of appropriate pole including the pole vertex
       for (int v = 0; v < 6; ++v) {
         vertices[v].y += 0.5f;
         vertices[v] = glm::angleAxis(glm::radians(-144.0f), kUp) * vertices[v];
       }
-    } else {  // lower pole transformation
+    }
+    // If pole is the lower one
+    else {
+      // For each vertex of the hemisphere of appropriate pole including the pole vertex
       for (int v = 0; v < 6; ++v) {
         vertices[6 + v].y *= -1.0f;
         vertices[6 + v].y -= 0.5f;
@@ -78,6 +97,8 @@ glservice::Mesh glservice::generateIcoSphere(float radius, GLuint shaderProgram,
       }
     }
 
+    // Setting tangents of vertices of the hemisphere of appropriate pole including the pole vertex
+    // For each vertex of the hemisphere of appropriate pole except the pole vertex
     for (int v = 0; v < 5; ++v) {
       const int currVertexIndex = currPoleOffset + v;
       const int nextVertexIndex = currPoleOffset + (v + 1) % 5;
@@ -93,13 +114,15 @@ glservice::Mesh glservice::generateIcoSphere(float radius, GLuint shaderProgram,
         std::vector<glm::vec2>{uvs[poleIndex], uvs[currPoleOffset], uvs[currPoleOffset + 1]});
   }
 
-  for (int v = 0; v < 5; ++v) {  // side indices (in pairs)
+  // For each pair of vertices except pole vertices
+  for (int v = 0; v < 5; ++v) {
     const int currUpperVertexIndex = v;
     const int nextUpperVertexIndex = (v + 1) % 5;
     const int currLowerVertexIndex = 6 + (5 - v) % 5;
     const int nextLowerVertexIndex = 6 + (10 - (v + 1)) % 5;
     const int indexOffset          = 30 + v * 6;
 
+    // Configuring triangles between hemispheres
     indices[indexOffset]     = currUpperVertexIndex;
     indices[indexOffset + 1] = nextUpperVertexIndex;
     indices[indexOffset + 2] = currLowerVertexIndex;
@@ -108,7 +131,7 @@ glservice::Mesh glservice::generateIcoSphere(float radius, GLuint shaderProgram,
     indices[indexOffset + 5] = currLowerVertexIndex;
   }
 
-  // Projecting icosahedron on sphere
+  // Projecting the icosahedron on a sphere
   for (int v = 0; v < kVertexCount; ++v) {
     normals[v]  = glm::normalize(vertices[v]);
     vertices[v] = normals[v] * radius;
