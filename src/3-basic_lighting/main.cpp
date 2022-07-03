@@ -16,12 +16,13 @@
 #include <GLFW/glfw3.h>
 
 // GLM
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-// "glservice" internal library
-#include <glservice.hpp>
+// "glengine" internal library
+#include <glengine.hpp>
 
-using namespace glservice;
+using namespace glengine;
 
 // for "ms"
 using namespace std::chrono_literals;

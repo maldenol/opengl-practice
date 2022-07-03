@@ -23,10 +23,10 @@
 //#define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-// "glservice" internal library
-#include <glservice.hpp>
+// "glengine" internal library
+#include <glengine.hpp>
 
-using namespace glservice;
+using namespace glengine;
 
 // for "ms"
 using namespace std::chrono_literals;
