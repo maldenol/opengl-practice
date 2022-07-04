@@ -1,20 +1,20 @@
 // Header file
-#include "../mesh.hpp"
+#include "../Mesh.hpp"
 
 // GLM
 #include <glm/gtx/quaternion.hpp>
 
-// Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
-glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, GLuint shaderProgram,
-                                      const std::vector<Texture> &textures) {
+// Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
+glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCubemap,
+                                            GLuint shaderProgram,
+                                            const std::vector<Mesh::Material::Texture> &textures) {
   // Level-of-detail (count of quads along one side)
-  const float xyQuadSize =
-      static_cast<float>(size) / static_cast<float>(lod);  // discrete quad's side xy size
-  const float uQuadSize = 1.0f / (enableCubemap ? 4.0f : 1.0f) /
+  const float xyQuadSize = 1.0f / static_cast<float>(lod);  // discrete quad's side xy size
+  const float uQuadSize  = 1.0f / (enableCubemap ? 4.0f : 1.0f) /
                           static_cast<float>(lod);  // discrete quad's side u size
   const float vQuadSize = 1.0f / (enableCubemap ? 3.0f : 1.0f) /
                           static_cast<float>(lod);  // discrete quad's side v size
-  const float halfSize = size / 2.0f;               // half of the SIZE
+  const float halfSize = 1.0f / 2.0f;               // half of the size
   const int   quadLOD  = lod * lod;                 // LOD^2
 
   const int quadPerSideCount   = quadLOD;                   // discrete quads per side count
@@ -242,21 +242,30 @@ glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, G
     }
   }
 
+  // Projecting the cube on a sphere
+  for (int v = 0; v < vertexCount; ++v) {
+    normals[v]  = glm::normalize(vertices[v]);
+    vertices[v] = normals[v] * radius;
+  }
+
   // Generating vertex buffer based on vertices, normals, tangents and uvs
-  std::vector<float> vertexBuffer{glengine::generateVertexBuffer(vertices, normals, tangents, uvs)};
+  std::vector<float> vertexBuffer{generateVertexBuffer(vertices, normals, tangents, uvs)};
 
   // Configuring VBO attributes
-  std::vector<VBOAttribute> vboAttributes{};
-  constexpr int             kOffset = 11;
-  vboAttributes.push_back(
-      VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float), reinterpret_cast<void *>(0)});
-  vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(3 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(6 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(9 * sizeof(float))});
+  std::vector<Mesh::VBOAttribute> vboAttributes{};
+  constexpr int                   kOffset = 11;
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(0)});
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(3 * sizeof(float))});
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(6 * sizeof(float))});
+  vboAttributes.push_back(Mesh::VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(9 * sizeof(float))});
 
-  // Generating and returning the mesh
-  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
+  // Creating and returning the mesh
+  return Mesh{
+      vboAttributes, vertexBuffer, indices, shaderProgram,
+      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+  };
 }

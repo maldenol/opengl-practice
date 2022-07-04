@@ -3,7 +3,7 @@
 
 // All the headers
 #include "./filesystem/filesystem.hpp"
-#include "./scene/scene.hpp"
+#include "./SceneObject/SceneObject.hpp"
 #include "./shader/shader.hpp"
 #include "./gldebug.hpp"
 #include "./glinit.hpp"

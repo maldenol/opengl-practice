@@ -55,7 +55,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY);
 void processUserInput(GLFWwindow *window);
 
 // Makes scene objects float
-void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
+void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
                        unsigned int count);
 
 // Main function
@@ -129,14 +129,14 @@ int main(int argc, char *argv[]) {
                                        std::cref(lightShaderFilenames)};
 
   // Loading textures
-  std::vector<std::vector<Texture>> textures{
-      std::vector<Texture>{                                          },
-      std::vector<Texture>{
-                           Texture{0, loadTexture("albedoMap.png")}, Texture{1, loadTexture("normalMap.png")},
-                           Texture{2, loadTexture("heightMap.png")},
-                           Texture{3, loadTexture("ambientOcclusionMap.png")},
-                           Texture{4, loadTexture("roughnessMap.png")},
-                           //Texture{5, loadTexture("emissionMap.png")},
+  std::vector<std::vector<Mesh::Material::Texture>> textures{
+      std::vector<Mesh::Material::Texture>{                                                          },
+      std::vector<Mesh::Material::Texture>{
+                                           Mesh::Material::Texture{0, loadTexture("albedoMap.png")},Mesh::Material::Texture{1, loadTexture("normalMap.png")},
+                                           Mesh::Material::Texture{2, loadTexture("heightMap.png")},
+                                           Mesh::Material::Texture{3, loadTexture("ambientOcclusionMap.png")},
+                                           Mesh::Material::Texture{4, loadTexture("roughnessMap.png")},
+                                           //Mesh::Material::Texture{5, loadTexture("emissionMap.png")},
       },
   };
 
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].meshPtr->material.maxHeight = 0.1f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.1f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
@@ -157,8 +157,8 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].meshPtr->material.maxHeight  = 0.1f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.1f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].meshPtr->material.glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
@@ -284,22 +284,30 @@ int main(int argc, char *argv[]) {
     }
 
     // Updating flashlight SceneObjcet fields
-    gFlashlightSceneObjectPtr->translate = gCameraController.getCamera()->getPosition();
-    dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->lightPtr.get())->direction =
-        gCameraController.getCamera()->getForwardDirection();
+    gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPosition();
+    dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
+        ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
     // Getting light sources
     std::vector<SceneObject> directionalLightSceneObjects{};
     std::vector<SceneObject> pointLightSceneObjects{};
     std::vector<SceneObject> spotLightSceneObjects{};
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].lightPtr == nullptr) continue;
+      if (sceneObjects[i].getLightPtr() == nullptr) continue;
 
-      SceneObject &sceneObject = sceneObjects[i];
-      BaseLight   *lightPtr    = sceneObject.lightPtr.get();
+      const SceneObject &sceneObject = sceneObjects[i];
+      const BaseLight   *lightPtr    = sceneObject.getLightPtr().get();
+
+      // If light is spot (must be before directional and point light)
+      const SpotLight *spotLight = dynamic_cast<const SpotLight *>(lightPtr);
+      if (spotLight != nullptr) {
+        spotLightSceneObjects.push_back(sceneObject);
+
+        continue;
+      }
 
       // If light is directional
-      DirectionalLight *direcionalLight = dynamic_cast<DirectionalLight *>(lightPtr);
+      const DirectionalLight *direcionalLight = dynamic_cast<const DirectionalLight *>(lightPtr);
       if (direcionalLight != nullptr) {
         directionalLightSceneObjects.push_back(sceneObject);
 
@@ -307,17 +315,9 @@ int main(int argc, char *argv[]) {
       }
 
       // If light is point
-      PointLight *pointLight = dynamic_cast<PointLight *>(lightPtr);
+      const PointLight *pointLight = dynamic_cast<const PointLight *>(lightPtr);
       if (pointLight != nullptr) {
         pointLightSceneObjects.push_back(sceneObject);
-
-        continue;
-      }
-
-      // If light is spot
-      SpotLight *spotLight = dynamic_cast<SpotLight *>(lightPtr);
-      if (spotLight != nullptr) {
-        spotLightSceneObjects.push_back(sceneObject);
 
         continue;
       }
@@ -328,110 +328,112 @@ int main(int argc, char *argv[]) {
     glUniform3fv(glGetUniformLocation(objectSP, "viewPos"), 1,
                  glm::value_ptr(gCamera.getPosition()));
     for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
-      SceneObject      &sceneObject = directionalLightSceneObjects[i];
-      DirectionalLight *directionalLight =
-          dynamic_cast<DirectionalLight *>(sceneObject.lightPtr.get());
+      const SceneObject      &sceneObject = directionalLightSceneObjects[i];
+      const DirectionalLight *directionalLight =
+          dynamic_cast<const DirectionalLight *>(sceneObject.getLightPtr().get());
 
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("directionalLights[" + std::to_string(i) + "].color").c_str()),
-                   1, glm::value_ptr(directionalLight->color));
+                   1, glm::value_ptr(directionalLight->getColor()));
       glUniform1f(glGetUniformLocation(
                       objectSP, ("directionalLights[" + std::to_string(i) + "].intensity").c_str()),
-                  directionalLight->intensity);
-      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
-                                                  glm::radians(sceneObject.rotate.y),
-                                                  glm::radians(sceneObject.rotate.z))};
+                  directionalLight->getIntensity());
+      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                                                  glm::radians(sceneObject.getRotate().y),
+                                                  glm::radians(sceneObject.getRotate().z))};
       glm::vec3   dir{
-          rotateMatrix * glm::vec4{directionalLight->direction, 0.0f}
+          rotateMatrix * glm::vec4{directionalLight->getDirection(), 0.0f}
       };
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("directionalLights[" + std::to_string(i) + "].dir").c_str()),
                    1, glm::value_ptr(dir));
     }
     for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
-      SceneObject &sceneObject = pointLightSceneObjects[i];
-      PointLight  *pointLight  = dynamic_cast<PointLight *>(sceneObject.lightPtr.get());
+      const SceneObject &sceneObject = pointLightSceneObjects[i];
+      const PointLight  *pointLight =
+          dynamic_cast<const PointLight *>(sceneObject.getLightPtr().get());
 
       glUniform3fv(glGetUniformLocation(
                        objectSP, ("pointLights[" + std::to_string(i) + "].worldPos").c_str()),
-                   1, glm::value_ptr(sceneObject.translate));
+                   1, glm::value_ptr(sceneObject.getTranslate()));
       glUniform3fv(
           glGetUniformLocation(objectSP, ("pointLights[" + std::to_string(i) + "].color").c_str()),
-          1, glm::value_ptr(pointLight->color));
+          1, glm::value_ptr(pointLight->getColor()));
       glUniform1f(glGetUniformLocation(
                       objectSP, ("pointLights[" + std::to_string(i) + "].intensity").c_str()),
-                  pointLight->intensity);
+                  pointLight->getIntensity());
       glUniform1f(glGetUniformLocation(
                       objectSP, ("pointLights[" + std::to_string(i) + "].linAttCoef").c_str()),
-                  pointLight->linAttCoef);
+                  pointLight->getLinAttCoef());
       glUniform1f(glGetUniformLocation(
                       objectSP, ("pointLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
-                  pointLight->quadAttCoef);
+                  pointLight->getQuadAttCoef());
     }
     for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
-      SceneObject &sceneObject = spotLightSceneObjects[i];
-      SpotLight   *spotLight   = dynamic_cast<SpotLight *>(sceneObject.lightPtr.get());
+      const SceneObject &sceneObject = spotLightSceneObjects[i];
+      const SpotLight *spotLight = dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
 
       glUniform3fv(glGetUniformLocation(objectSP,
                                         ("spotLights[" + std::to_string(i) + "].worldPos").c_str()),
-                   1, glm::value_ptr(sceneObject.translate));
+                   1, glm::value_ptr(sceneObject.getTranslate()));
       glUniform3fv(
           glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].color").c_str()),
-          1, glm::value_ptr(spotLight->color));
+          1, glm::value_ptr(spotLight->getColor()));
       glUniform1f(glGetUniformLocation(objectSP,
                                        ("spotLights[" + std::to_string(i) + "].intensity").c_str()),
-                  spotLight->intensity);
-      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.rotate.x),
-                                                  glm::radians(sceneObject.rotate.y),
-                                                  glm::radians(sceneObject.rotate.z))};
+                  spotLight->getIntensity());
+      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                                                  glm::radians(sceneObject.getRotate().y),
+                                                  glm::radians(sceneObject.getRotate().z))};
       glm::vec3   dir{
-          rotateMatrix * glm::vec4{spotLight->direction, 0.0f}
+          rotateMatrix * glm::vec4{spotLight->getDirection(), 0.0f}
       };
       glUniform3fv(
           glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].dir").c_str()), 1,
           glm::value_ptr(dir));
       glUniform1f(glGetUniformLocation(
                       objectSP, ("spotLights[" + std::to_string(i) + "].linAttCoef").c_str()),
-                  spotLight->linAttCoef);
+                  spotLight->getLinAttCoef());
       glUniform1f(glGetUniformLocation(
                       objectSP, ("spotLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
-                  spotLight->quadAttCoef);
+                  spotLight->getQuadAttCoef());
       glUniform1f(
           glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].angle").c_str()),
-          glm::radians(spotLight->angle));
+          glm::radians(spotLight->getAngle()));
       glUniform1f(glGetUniformLocation(
                       objectSP, ("spotLights[" + std::to_string(i) + "].smoothAngle").c_str()),
-                  glm::radians(spotLight->smoothAngle));
+                  glm::radians(spotLight->getSmoothAngle()));
     }
     glUseProgram(0);
 
     // Rendering scene objects
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].meshPtr == nullptr) continue;
+      if (sceneObjects[i].getMeshPtr() == nullptr) continue;
 
-      SceneObject &sceneObject = sceneObjects[i];
-      Mesh        &mesh        = *sceneObject.meshPtr;
+      const SceneObject &sceneObject   = sceneObjects[i];
+      const Mesh        &mesh          = *sceneObject.getMeshPtr();
+      const GLuint       shaderProgram = mesh.getShaderProgram();
 
-      glUseProgram(mesh.shaderProgram);
-      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.ambCoef"),
-                  mesh.material.ambCoef);
-      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.diffCoef"),
-                  mesh.material.diffCoef);
-      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.specCoef"),
-                  mesh.material.specCoef);
-      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.glossiness"),
-                  mesh.material.glossiness);
-      glUniform1f(glGetUniformLocation(mesh.shaderProgram, "material.maxHeight"),
-                  mesh.material.maxHeight);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.albedoMap"), 0);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.normalMap"), 1);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.heightMap"), 2);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.ambOccMap"), 3);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.roughMap"), 4);
-      glUniform1i(glGetUniformLocation(mesh.shaderProgram, "material.emissMap"), 5);
+      glUseProgram(shaderProgram);
+      glUniform1f(glGetUniformLocation(shaderProgram, "material.ambCoef"),
+                  mesh.getMaterial().ambCoef);
+      glUniform1f(glGetUniformLocation(shaderProgram, "material.diffCoef"),
+                  mesh.getMaterial().diffCoef);
+      glUniform1f(glGetUniformLocation(shaderProgram, "material.specCoef"),
+                  mesh.getMaterial().specCoef);
+      glUniform1f(glGetUniformLocation(shaderProgram, "material.glossiness"),
+                  mesh.getMaterial().glossiness);
+      glUniform1f(glGetUniformLocation(shaderProgram, "material.maxHeight"),
+                  mesh.getMaterial().maxHeight);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.albedoMap"), 0);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.normalMap"), 1);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.heightMap"), 2);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.ambOccMap"), 3);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.roughMap"), 4);
+      glUniform1i(glGetUniformLocation(shaderProgram, "material.emissMap"), 5);
       glUseProgram(0);
 
-      renderSceneObject(sceneObject, gCamera);
+      sceneObject.render(gCamera);
     }
 
     // Swapping front and back buffers
@@ -578,7 +580,8 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->lightPtr->intensity *= -1.0f;
+      gFlashlightSceneObjectPtr->getLightPtr()->setIntensity(
+          -1.0f * gFlashlightSceneObjectPtr->getLightPtr()->getIntensity());
     }
   }
 
@@ -644,7 +647,7 @@ void processUserInput(GLFWwindow *window) {
   }
 }
 
-void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
+void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int startIndex,
                        unsigned int count) {
   static std::vector<SceneObject *> sSceneObjectPtrs{};
   static std::vector<glm::vec3>     sInitialTranslations{};
@@ -669,10 +672,10 @@ void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned in
     srand(time(0));
 
     for (unsigned int i = startIndex; i < startIndex + count; ++i) {
-      sSceneObjectPtrs.push_back(const_cast<SceneObject *>(&sceneObjects[i]));
-      sInitialTranslations.push_back(sceneObjects[i].translate);
-      sInitialRotations.push_back(sceneObjects[i].rotate);
-      sInitialScalings.push_back(sceneObjects[i].scale);
+      sSceneObjectPtrs.push_back(&sceneObjects[i]);
+      sInitialTranslations.push_back(sceneObjects[i].getTranslate());
+      sInitialRotations.push_back(sceneObjects[i].getRotate());
+      sInitialScalings.push_back(sceneObjects[i].getScale());
 
       sTranslationAmplitudes.push_back(kMaxTranslationAmplitude * static_cast<float>(rand()) /
                                        static_cast<float>(RAND_MAX));
@@ -691,15 +694,15 @@ void floatSceneObjects(const std::vector<SceneObject> &sceneObjects, unsigned in
 
   // For each scene object
   for (unsigned int i = 0; i < sSceneObjectPtrs.size(); ++i) {
-    sSceneObjectPtrs[i]->translate =
+    sSceneObjectPtrs[i]->getTranslate() =
         sInitialTranslations[i] +
         glm::vec3(0.0f, 1.0f, 0.0f) * sTranslationAmplitudes[i] *
             std::sin(static_cast<float>(glfwGetTime()) * sTranslationFrequencies[i]);
-    sSceneObjectPtrs[i]->rotate =
+    sSceneObjectPtrs[i]->getRotate() =
         sInitialRotations[i] +
         glm::vec3(0.0f, 1.0f, 0.0f) * sRotationAmplitudes[i] *
             std::sin(static_cast<float>(glfwGetTime()) * sRotationFrequencies[i]);
-    sSceneObjectPtrs[i]->scale =
+    sSceneObjectPtrs[i]->getScale() =
         sInitialScalings[i] *
         (1.0f + sCalingAmplitudes[i] *
                     std::sin(static_cast<float>(glfwGetTime()) * sCalingFrequencies[i]));

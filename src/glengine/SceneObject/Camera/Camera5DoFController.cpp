@@ -13,29 +13,28 @@ static constexpr float kTwoPi = 6.28318530f;
 
 float angleIntoBounds(float angle, float angleLimitMin, float angleLimitMax);
 
-glengine::Camera5DoFController::Camera5DoFController(BaseCamera *camera) noexcept
+using namespace glengine;
+
+Camera5DoFController::Camera5DoFController(BaseCamera *camera) noexcept
     : Camera3DoFController{camera} {
   updateLook();
 }
 
-glengine::Camera5DoFController::Camera5DoFController(
-    const Camera3DoFController &cameraController) noexcept
-    : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)} {
+Camera5DoFController::Camera5DoFController(const Camera3DoFController &cameraController) noexcept
+    : Camera3DoFController{cameraController} {
   updateLook();
 }
 
-glengine::Camera5DoFController &glengine::Camera5DoFController::operator=(
+Camera5DoFController &Camera5DoFController::operator=(
     const Camera3DoFController &cameraController) noexcept {
-  this->Camera3DoFController::operator=(
-      dynamic_cast<const Camera3DoFController &>(cameraController));
+  this->Camera3DoFController::operator=(cameraController);
 
   updateLook();
 
   return *this;
 }
 
-glengine::Camera5DoFController::Camera5DoFController(
-    const Camera5DoFController &cameraController) noexcept
+Camera5DoFController::Camera5DoFController(const Camera5DoFController &cameraController) noexcept
     : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)},
       _angleUp{cameraController._angleUp},
       _angleRight{cameraController._angleRight},
@@ -45,7 +44,7 @@ glengine::Camera5DoFController::Camera5DoFController(
       _angleRightLimitMax{cameraController._angleRightLimitMax},
       _baseLookDirection{cameraController._baseLookDirection} {}
 
-glengine::Camera5DoFController &glengine::Camera5DoFController::operator=(
+Camera5DoFController &Camera5DoFController::operator=(
     const Camera5DoFController &cameraController) noexcept {
   this->Camera3DoFController::operator=(
       dynamic_cast<const Camera3DoFController &>(cameraController));
@@ -60,8 +59,7 @@ glengine::Camera5DoFController &glengine::Camera5DoFController::operator=(
   return *this;
 }
 
-glengine::Camera5DoFController::Camera5DoFController(
-    Camera5DoFController &&cameraController) noexcept
+Camera5DoFController::Camera5DoFController(Camera5DoFController &&cameraController) noexcept
     : Camera3DoFController{dynamic_cast<Camera3DoFController &&>(cameraController)},
       _angleUp{std::exchange(cameraController._angleUp, 0.0f)},
       _angleRight{std::exchange(cameraController._angleRight, 0.0f)},
@@ -70,7 +68,7 @@ glengine::Camera5DoFController::Camera5DoFController(
       _angleRightLimitMin{std::exchange(cameraController._angleRightLimitMin, 0.0f)},
       _angleRightLimitMax{std::exchange(cameraController._angleRightLimitMax, 0.0f)} {}
 
-glengine::Camera5DoFController &glengine::Camera5DoFController::operator=(
+Camera5DoFController &Camera5DoFController::operator=(
     Camera5DoFController &&cameraController) noexcept {
   this->Camera3DoFController::operator=(dynamic_cast<Camera3DoFController &&>(cameraController));
 
@@ -84,14 +82,14 @@ glengine::Camera5DoFController &glengine::Camera5DoFController::operator=(
   return *this;
 }
 
-glengine::Camera5DoFController::~Camera5DoFController() noexcept {}
+Camera5DoFController::~Camera5DoFController() noexcept {}
 
-void glengine::Camera5DoFController::setCamera(BaseCamera *camera) noexcept {
+void Camera5DoFController::setCamera(BaseCamera *camera) noexcept {
   _camera = camera;
   updateLook();
 }
 
-void glengine::Camera5DoFController::updateLook() noexcept {
+void Camera5DoFController::updateLook() noexcept {
   glm::vec3 look                          = _camera->_forward;
   float     absoluteAngleBetweenLookAndUp = glm::angle(look, _camera->_worldUp);
   float     rotationAngle                 = absoluteAngleBetweenLookAndUp - glm::radians(90.0f);
@@ -101,41 +99,41 @@ void glengine::Camera5DoFController::updateLook() noexcept {
   setAngles(0.0f, -rotationAngle);
 }
 
-void glengine::Camera5DoFController::moveUp(float distance) noexcept {
+void Camera5DoFController::moveUp(float distance) noexcept {
   _camera->_pos += _camera->_worldUp * distance;
 }
 
-void glengine::Camera5DoFController::setAngles(float angleUp, float angleRight) noexcept {
+void Camera5DoFController::setAngles(float angleUp, float angleRight) noexcept {
   _angleUp    = angleUp;
   _angleUp    = angleIntoBounds(_angleUp, _angleUpLimitMin, _angleUpLimitMax);
   _angleRight = angleRight;
   _angleRight = angleIntoBounds(_angleRight, _angleRightLimitMin, _angleRightLimitMax);
 }
 
-void glengine::Camera5DoFController::getAngles(float &angleUp, float &angleRight) const noexcept {
+void Camera5DoFController::getAngles(float &angleUp, float &angleRight) const noexcept {
   angleUp    = _angleUp;
   angleRight = _angleRight;
 }
 
-void glengine::Camera5DoFController::setAngleLimits(float angleUpLimitMin, float angleUpLimitMax,
-                                                    float angleRightLimitMin,
-                                                    float angleRightLimitMax) noexcept {
+void Camera5DoFController::setAngleLimits(float angleUpLimitMin, float angleUpLimitMax,
+                                          float angleRightLimitMin,
+                                          float angleRightLimitMax) noexcept {
   _angleUpLimitMin    = angleUpLimitMin;
   _angleUpLimitMax    = angleUpLimitMax;
   _angleRightLimitMin = angleRightLimitMin;
   _angleRightLimitMax = angleRightLimitMax;
 }
 
-void glengine::Camera5DoFController::getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
-                                                    float &angleRightLimitMin,
-                                                    float &angleRightLimitMax) const noexcept {
+void Camera5DoFController::getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
+                                          float &angleRightLimitMin,
+                                          float &angleRightLimitMax) const noexcept {
   angleUpLimitMin    = _angleUpLimitMin;
   angleUpLimitMax    = _angleUpLimitMax;
   angleRightLimitMin = _angleRightLimitMin;
   angleRightLimitMax = _angleRightLimitMax;
 }
 
-void glengine::Camera5DoFController::addAngles(float angleUp, float angleRight) noexcept {
+void Camera5DoFController::addAngles(float angleUp, float angleRight) noexcept {
   _angleUp += angleUp;
   _angleUp = angleIntoBounds(_angleUp, _angleUpLimitMin, _angleUpLimitMax);
   _angleRight += angleRight;

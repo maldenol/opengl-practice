@@ -12,5 +12,5 @@ QString glengine::getAbsolutePathOfExecutableDirectory() {
 
 // Translates relative to executable path into absolute
 QString glengine::getAbsolutePathRelativeToExecutable(const QString &path) {
-  return glengine::getAbsolutePathOfExecutableDirectory() + QDir::separator() + path;
+  return getAbsolutePathOfExecutableDirectory() + QDir::separator() + path;
 }

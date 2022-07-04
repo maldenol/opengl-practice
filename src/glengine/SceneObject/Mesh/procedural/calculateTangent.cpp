@@ -1,5 +1,5 @@
 // Header file
-#include "../mesh.hpp"
+#include "../Mesh.hpp"
 
 // Calculates tangent by given positions and UVs of 3 points
 glm::vec3 glengine::calculateTangent(const std::vector<glm::vec3> &pointPositions,

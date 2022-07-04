@@ -1,5 +1,5 @@
 // Header file
-#include "./mesh.hpp"
+#include "../Mesh.hpp"
 
 // Generates vertex buffer based on vertices, normals, tangents and uvs
 std::vector<float> glengine::generateVertexBuffer(std::vector<glm::vec3> vertices,

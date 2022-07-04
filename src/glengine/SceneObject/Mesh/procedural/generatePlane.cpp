@@ -1,9 +1,9 @@
 // Header file
-#include "../mesh.hpp"
+#include "../Mesh.hpp"
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 glengine::Mesh glengine::generatePlane(float size, int lod, GLuint shaderProgram,
-                                       const std::vector<Texture> &textures) {
+                                       const std::vector<Mesh::Material::Texture> &textures) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
       static_cast<float>(size) / static_cast<float>(lod);    // discrete quad's side xy size
@@ -98,20 +98,23 @@ glengine::Mesh glengine::generatePlane(float size, int lod, GLuint shaderProgram
   }
 
   // Generating vertex buffer based on vertices, normals, tangents and uvs
-  std::vector<float> vertexBuffer{glengine::generateVertexBuffer(vertices, normals, tangents, uvs)};
+  std::vector<float> vertexBuffer{generateVertexBuffer(vertices, normals, tangents, uvs)};
 
   // Configuring VBO attributes
-  std::vector<VBOAttribute> vboAttributes{};
-  constexpr int             kOffset = 11;
-  vboAttributes.push_back(
-      VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float), reinterpret_cast<void *>(0)});
-  vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(3 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(6 * sizeof(float))});
-  vboAttributes.push_back(VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
-                                       reinterpret_cast<void *>(9 * sizeof(float))});
+  std::vector<Mesh::VBOAttribute> vboAttributes{};
+  constexpr int                   kOffset = 11;
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(0)});
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(3 * sizeof(float))});
+  vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(6 * sizeof(float))});
+  vboAttributes.push_back(Mesh::VBOAttribute{2, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
+                                             reinterpret_cast<void *>(9 * sizeof(float))});
 
-  // Generating and returning the mesh
-  return generateMesh(vboAttributes, vertexBuffer, indices, shaderProgram, textures);
+  // Creating and returning the mesh
+  return Mesh{
+      vboAttributes, vertexBuffer, indices, shaderProgram,
+      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+  };
 }

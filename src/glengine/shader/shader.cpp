@@ -227,7 +227,7 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
             // Attaching shader to shader program
             glAttachShader(shaderProgram, shaders[j]);
             // Compiling shader
-            glengine::compileShader(shaders[j], shaderSource, shaderFilenames[j]);
+            compileShader(shaders[j], shaderSource, shaderFilenames[j]);
           }
 
           // Linking shader program

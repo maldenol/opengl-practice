@@ -1,0 +1,32 @@
+#ifndef GLENGINE_SCENE_LIGHT_DIRECTIONALLIGHT_HPP
+#define GLENGINE_SCENE_LIGHT_DIRECTIONALLIGHT_HPP
+
+// "glengine" internal library
+#include "./BaseLight.hpp"
+
+namespace glengine {
+
+// Directional light class
+class DirectionalLight : virtual public BaseLight {
+ private:
+  glm::vec3 _direction{};
+
+ public:
+  DirectionalLight() noexcept;
+  DirectionalLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction) noexcept;
+  DirectionalLight(const BaseLight &light) noexcept;
+  DirectionalLight &operator=(const BaseLight &light) noexcept;
+  DirectionalLight(const DirectionalLight &light) noexcept;
+  DirectionalLight &operator=(const DirectionalLight &light) noexcept;
+  DirectionalLight(DirectionalLight &&light) noexcept;
+  DirectionalLight &operator=(DirectionalLight &&light) noexcept;
+
+  void setDirection(const glm::vec3 &direction) noexcept;
+
+  const glm::vec3 &getDirection() const noexcept;
+  glm::vec3       &getDirection() noexcept;
+};
+
+}  // namespace glengine
+
+#endif
