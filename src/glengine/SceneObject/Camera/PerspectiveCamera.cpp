@@ -15,6 +15,9 @@ static constexpr float kInitFarPlane    = 100.0f;
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
 PerspectiveCamera::PerspectiveCamera() noexcept
     : BaseCamera{},
       _verticalFOV{kInitVerticalFov},
@@ -22,6 +25,7 @@ PerspectiveCamera::PerspectiveCamera() noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
+// Copy constructor (base class)
 PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept
     : BaseCamera{camera},
       _verticalFOV{kInitVerticalFov},
@@ -29,12 +33,14 @@ PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
+// Copy assignment operator (base class)
 PerspectiveCamera &PerspectiveCamera::operator=(const BaseCamera &camera) noexcept {
   this->BaseCamera::operator=(camera);
 
   return *this;
 }
 
+// Copy constructor
 PerspectiveCamera::PerspectiveCamera(const PerspectiveCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _verticalFOV{camera._verticalFOV},
@@ -42,6 +48,7 @@ PerspectiveCamera::PerspectiveCamera(const PerspectiveCamera &camera) noexcept
       _nearPlane{camera._nearPlane},
       _farPlane{camera._farPlane} {}
 
+// Copy assignment operator
 PerspectiveCamera &PerspectiveCamera::operator=(const PerspectiveCamera &camera) noexcept {
   this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
@@ -53,6 +60,7 @@ PerspectiveCamera &PerspectiveCamera::operator=(const PerspectiveCamera &camera)
   return *this;
 }
 
+// Move constructor
 PerspectiveCamera::PerspectiveCamera(PerspectiveCamera &&camera) noexcept
     : BaseCamera{dynamic_cast<BaseCamera &&>(camera)},
       _verticalFOV{std::exchange(camera._verticalFOV, 0.0f)},
@@ -60,6 +68,7 @@ PerspectiveCamera::PerspectiveCamera(PerspectiveCamera &&camera) noexcept
       _nearPlane{std::exchange(camera._nearPlane, 0.0f)},
       _farPlane{std::exchange(camera._farPlane, 0.0f)} {}
 
+// Move assignment operator
 PerspectiveCamera &PerspectiveCamera::operator=(PerspectiveCamera &&camera) noexcept {
   this->BaseCamera::operator=(dynamic_cast<BaseCamera &&>(camera));
 
@@ -71,7 +80,10 @@ PerspectiveCamera &PerspectiveCamera::operator=(PerspectiveCamera &&camera) noex
   return *this;
 }
 
+// Destructor
 PerspectiveCamera::~PerspectiveCamera() noexcept {}
+
+// Other member functions
 
 void PerspectiveCamera::setProjectionAttributes(float verticalFOV, float aspectRatio,
                                                 float nearPlane, float farPlane) noexcept {

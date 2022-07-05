@@ -6,11 +6,19 @@
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
+Camera3DoFController::Camera3DoFController() noexcept {}
+
+// Parameterized constructor
 Camera3DoFController::Camera3DoFController(BaseCamera *camera) noexcept : _camera{camera} {}
 
+// Copy constructor
 Camera3DoFController::Camera3DoFController(const Camera3DoFController &cameraController) noexcept
     : _camera{cameraController._camera} {}
 
+// Copy assignment operator
 Camera3DoFController &Camera3DoFController::operator=(
     const Camera3DoFController &cameraController) noexcept {
   _camera = cameraController._camera;
@@ -18,9 +26,11 @@ Camera3DoFController &Camera3DoFController::operator=(
   return *this;
 }
 
+// Move constructor
 Camera3DoFController::Camera3DoFController(Camera3DoFController &&cameraController) noexcept
     : _camera{std::exchange(cameraController._camera, nullptr)} {}
 
+// Move assignment operator
 Camera3DoFController &Camera3DoFController::operator=(
     Camera3DoFController &&cameraController) noexcept {
   std::swap(_camera, cameraController._camera);
@@ -28,11 +38,20 @@ Camera3DoFController &Camera3DoFController::operator=(
   return *this;
 }
 
+// Destructor
 Camera3DoFController::~Camera3DoFController() noexcept {}
+
+// Setters
 
 void Camera3DoFController::setCamera(BaseCamera *camera) noexcept { _camera = camera; }
 
+// Getters
+
 const BaseCamera *Camera3DoFController::getCamera() const noexcept { return _camera; }
+
+BaseCamera *Camera3DoFController::getCamera() noexcept { return _camera; }
+
+// Other member functions
 
 void Camera3DoFController::move(const glm::vec3 &deltaPos) noexcept { _camera->_pos += deltaPos; }
 

@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_CAMERA_PERSPECTIVECAMERA_HPP
-#define GLENGINE_SCENE_CAMERA_PERSPECTIVECAMERA_HPP
+#ifndef GLENGINE_SCENEOBJECT_CAMERA_PERSPECTIVECAMERA_HPP
+#define GLENGINE_SCENEOBJECT_CAMERA_PERSPECTIVECAMERA_HPP
 
 // "glengine" internal library
 #include "./BaseCamera.hpp"
@@ -14,6 +14,7 @@ class PerspectiveCamera : public BaseCamera {
   float _farPlane{};
 
  public:
+  // Constructors, assignment operators and destructor
   PerspectiveCamera() noexcept;
   PerspectiveCamera(const BaseCamera &camera) noexcept;
   PerspectiveCamera &operator=(const BaseCamera &camera) noexcept;
@@ -23,6 +24,7 @@ class PerspectiveCamera : public BaseCamera {
   PerspectiveCamera &operator=(PerspectiveCamera &&camera) noexcept;
   virtual ~PerspectiveCamera() noexcept;
 
+  // Other member functions
   void setProjectionAttributes(float verticalFOV, float aspectRatio, float nearPlane,
                                float farPlane) noexcept;
   void getProjectionAttributes(float &verticalFOV, float &aspectRatio, float &nearPlane,

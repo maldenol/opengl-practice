@@ -10,8 +10,12 @@
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
 SceneObject::SceneObject() noexcept {}
 
+// Parameterized constructor
 SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
                          const glm::vec3 &scale, const std::shared_ptr<BaseLight> &lightPtr,
                          const std::shared_ptr<Mesh> &meshPtr) noexcept
@@ -21,6 +25,7 @@ SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
       _lightPtr{lightPtr},
       _meshPtr{meshPtr} {}
 
+// Copy constructor
 SceneObject::SceneObject(const SceneObject &sceneObject) noexcept
     : _translate{sceneObject._translate},
       _rotate{sceneObject._rotate},
@@ -28,6 +33,7 @@ SceneObject::SceneObject(const SceneObject &sceneObject) noexcept
       _lightPtr{sceneObject._lightPtr},
       _meshPtr{sceneObject._meshPtr} {}
 
+// Copy assignment operator
 SceneObject &SceneObject::operator=(const SceneObject &sceneObject) noexcept {
   _translate = sceneObject._translate;
   _rotate    = sceneObject._rotate;
@@ -38,6 +44,7 @@ SceneObject &SceneObject::operator=(const SceneObject &sceneObject) noexcept {
   return *this;
 }
 
+// Move constructor
 SceneObject::SceneObject(SceneObject &&sceneObject) noexcept
     : _translate{std::exchange(sceneObject._translate, glm::vec3{})},
       _rotate{std::exchange(sceneObject._rotate, glm::vec3{})},
@@ -45,6 +52,7 @@ SceneObject::SceneObject(SceneObject &&sceneObject) noexcept
       _lightPtr{std::exchange(sceneObject._lightPtr, std::shared_ptr<BaseLight>{})},
       _meshPtr{std::exchange(sceneObject._meshPtr, std::shared_ptr<Mesh>{})} {}
 
+// Move assignment operator
 SceneObject &SceneObject::operator=(SceneObject &&sceneObject) noexcept {
   std::swap(_translate, sceneObject._translate);
   std::swap(_rotate, sceneObject._rotate);
@@ -55,7 +63,10 @@ SceneObject &SceneObject::operator=(SceneObject &&sceneObject) noexcept {
   return *this;
 }
 
+// Destructor
 SceneObject::~SceneObject() noexcept {}
+
+// Setters
 
 void SceneObject::setTranslate(const glm::vec3 &translate) noexcept { _translate = translate; }
 
@@ -68,6 +79,8 @@ void SceneObject::setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexce
 }
 
 void SceneObject::setMeshPtr(const std::shared_ptr<Mesh> &meshPtr) noexcept { _meshPtr = meshPtr; }
+
+// Getters
 
 const glm::vec3 &SceneObject::getTranslate() const noexcept { return _translate; }
 
@@ -88,6 +101,8 @@ std::shared_ptr<BaseLight> &SceneObject::getLightPtr() noexcept { return _lightP
 const std::shared_ptr<Mesh> &SceneObject::getMeshPtr() const noexcept { return _meshPtr; }
 
 std::shared_ptr<Mesh> &SceneObject::getMeshPtr() noexcept { return _meshPtr; }
+
+// Other member functions
 
 void SceneObject::render(const BaseCamera &camera) const {
   if (_meshPtr == nullptr) return;

@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_CAMERA_ORTHOGRAPHICCAMERA_HPP
-#define GLENGINE_SCENE_CAMERA_ORTHOGRAPHICCAMERA_HPP
+#ifndef GLENGINE_SCENEOBJECT_CAMERA_ORTHOGRAPHICCAMERA_HPP
+#define GLENGINE_SCENEOBJECT_CAMERA_ORTHOGRAPHICCAMERA_HPP
 
 // "glengine" internal library
 #include "./BaseCamera.hpp"
@@ -16,6 +16,7 @@ class OrthographicCamera : public BaseCamera {
   float _farPlane{};
 
  public:
+  // Constructors, assignment operators and destructor
   OrthographicCamera() noexcept;
   OrthographicCamera(const BaseCamera &camera) noexcept;
   OrthographicCamera &operator=(const BaseCamera &camera) noexcept;
@@ -25,6 +26,7 @@ class OrthographicCamera : public BaseCamera {
   OrthographicCamera &operator=(OrthographicCamera &&camera) noexcept;
   virtual ~OrthographicCamera() noexcept;
 
+  // Other member functions
   void setProjectionAttributes(float leftBorder, float rightBorder, float bottomBorder,
                                float topBorder, float nearPlane, float farPlane) noexcept;
   void getProjectionAttributes(float &leftBorder, float &rightBorder, float &bottomBorder,

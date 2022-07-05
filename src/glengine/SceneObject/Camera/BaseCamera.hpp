@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_CAMERA_BASECAMERA_HPP
-#define GLENGINE_SCENE_CAMERA_BASECAMERA_HPP
+#ifndef GLENGINE_SCENEOBJECT_CAMERA_BASECAMERA_HPP
+#define GLENGINE_SCENEOBJECT_CAMERA_BASECAMERA_HPP
 
 // GLM
 #include <glm/glm.hpp>
@@ -15,6 +15,7 @@ class BaseCamera {
   glm::vec3 _up{};
 
  protected:
+  // Constructors, assignment operators and destructor
   BaseCamera() noexcept;
   BaseCamera(const BaseCamera &camera) noexcept;
   BaseCamera &operator=(const BaseCamera &camera) noexcept;
@@ -23,15 +24,25 @@ class BaseCamera {
   virtual ~BaseCamera() noexcept;
 
  public:
-  void             setPosition(const glm::vec3 &pos) noexcept;
-  void             setWorldUp(const glm::vec3 &worldUp) noexcept;
-  void             look(const glm::vec3 &look) noexcept;
-  void             lookAt(const glm::vec3 &lookAt) noexcept;
+  // Setters
+  void setPosition(const glm::vec3 &pos) noexcept;
+  void setWorldUp(const glm::vec3 &worldUp) noexcept;
+
+  // Getters
   const glm::vec3 &getPosition() const noexcept;
+  glm::vec3       &getPosition() noexcept;
   const glm::vec3 &getWorldUpDirection() const noexcept;
+  glm::vec3       &getWorldUpDirection() noexcept;
   const glm::vec3 &getForwardDirection() const noexcept;
+  glm::vec3       &getForwardDirection() noexcept;
   const glm::vec3 &getRightDirection() const noexcept;
+  glm::vec3       &getRightDirection() noexcept;
   const glm::vec3 &getUpDirection() const noexcept;
+  glm::vec3       &getUpDirection() noexcept;
+
+  // Other member functions
+  void look(const glm::vec3 &look) noexcept;
+  void lookAt(const glm::vec3 &lookAt) noexcept;
 
   glm::mat4         getViewMatrix() const noexcept;
   virtual glm::mat4 getProjectionMatrix() const noexcept = 0;

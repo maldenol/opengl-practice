@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_SCENE_HPP
-#define GLENGINE_SCENE_SCENE_HPP
+#ifndef GLENGINE_SCENEOBJECT_SCENEOBJECT_HPP
+#define GLENGINE_SCENEOBJECT_SCENEOBJECT_HPP
 
 // All the headers
 #include "./Camera/camera.hpp"
@@ -28,6 +28,7 @@ class SceneObject {
   std::shared_ptr<Mesh>      _meshPtr{};
 
  public:
+  // Constructors, assignment operators and destructor
   SceneObject() noexcept;
   SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate, const glm::vec3 &scale,
               const std::shared_ptr<BaseLight> &lightPtr,
@@ -38,12 +39,14 @@ class SceneObject {
   SceneObject &operator=(SceneObject &&sceneObject) noexcept;
   ~SceneObject() noexcept;
 
+  // Setters
   void setTranslate(const glm::vec3 &translate) noexcept;
   void setRotate(const glm::vec3 &rotate) noexcept;
   void setScale(const glm::vec3 &scale) noexcept;
   void setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexcept;
   void setMeshPtr(const std::shared_ptr<Mesh> &meshPtr) noexcept;
 
+  // Getters
   const glm::vec3                  &getTranslate() const noexcept;
   glm::vec3                        &getTranslate() noexcept;
   const glm::vec3                  &getRotate() const noexcept;
@@ -55,6 +58,7 @@ class SceneObject {
   const std::shared_ptr<Mesh>      &getMeshPtr() const noexcept;
   std::shared_ptr<Mesh>            &getMeshPtr() noexcept;
 
+  // Other member functions
   void render(const BaseCamera &camera) const;
 };
 

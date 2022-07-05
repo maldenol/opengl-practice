@@ -6,8 +6,12 @@
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
 SpotLight::SpotLight() noexcept {}
 
+// Parameterized constructor
 SpotLight::SpotLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction,
                      float linAttCoef, float quadAttCoef, float angle, float smoothAngle) noexcept
     : BaseLight{color, intensity},
@@ -16,14 +20,39 @@ SpotLight::SpotLight(const glm::vec3 &color, float intensity, const glm::vec3 &d
       _angle{angle},
       _smoothAngle{smoothAngle} {}
 
+// Copy constructor (base class)
 SpotLight::SpotLight(const BaseLight &light) noexcept : BaseLight{light} {}
 
+// Copy assignment operator (base class)
 SpotLight &SpotLight::operator=(const BaseLight &light) noexcept {
   this->BaseLight::operator=(light);
 
   return *this;
 }
 
+// Copy constructor (base class)
+SpotLight::SpotLight(const DirectionalLight &light) noexcept
+    : BaseLight{dynamic_cast<const BaseLight &>(light)} {}
+
+// Copy assignment operator (base class)
+SpotLight &SpotLight::operator=(const DirectionalLight &light) noexcept {
+  this->BaseLight::operator=(dynamic_cast<const BaseLight &>(light));
+
+  return *this;
+}
+
+// Copy constructor (base class)
+SpotLight::SpotLight(const PointLight &light) noexcept
+    : BaseLight{dynamic_cast<const BaseLight &>(light)} {}
+
+// Copy assignment operator (base class)
+SpotLight &SpotLight::operator=(const PointLight &light) noexcept {
+  this->BaseLight::operator=(dynamic_cast<const BaseLight &>(light));
+
+  return *this;
+}
+
+// Copy constructor
 SpotLight::SpotLight(const SpotLight &light) noexcept
     : BaseLight{dynamic_cast<const BaseLight &>(light)},
       DirectionalLight{dynamic_cast<const DirectionalLight &>(light)},
@@ -31,6 +60,7 @@ SpotLight::SpotLight(const SpotLight &light) noexcept
       _angle{light._angle},
       _smoothAngle{light._smoothAngle} {}
 
+// Copy assignment operator
 SpotLight &SpotLight::operator=(const SpotLight &light) noexcept {
   this->BaseLight::       operator=(dynamic_cast<const BaseLight &>(light));
   this->DirectionalLight::operator=(dynamic_cast<const DirectionalLight &>(light));
@@ -42,6 +72,7 @@ SpotLight &SpotLight::operator=(const SpotLight &light) noexcept {
   return *this;
 }
 
+// Move constructor
 SpotLight::SpotLight(SpotLight &&light) noexcept
     : BaseLight{dynamic_cast<BaseLight &&>(light)},
       DirectionalLight{dynamic_cast<DirectionalLight &&>(light)},
@@ -49,6 +80,7 @@ SpotLight::SpotLight(SpotLight &&light) noexcept
       _angle{std::exchange(light._angle, 0.0f)},
       _smoothAngle{std::exchange(light._smoothAngle, 0.0f)} {}
 
+// Move assignment operator
 SpotLight &SpotLight::operator=(SpotLight &&light) noexcept {
   this->BaseLight::       operator=(dynamic_cast<BaseLight &&>(light));
   this->DirectionalLight::operator=(dynamic_cast<DirectionalLight &&>(light));
@@ -60,9 +92,16 @@ SpotLight &SpotLight::operator=(SpotLight &&light) noexcept {
   return *this;
 }
 
+// Destructor
+SpotLight::~SpotLight() noexcept {}
+
+// Setters
+
 void SpotLight::setAngle(float angle) noexcept { _angle = angle; }
 
 void SpotLight::setSmoothAngle(float smoothAngle) noexcept { _smoothAngle = smoothAngle; }
+
+// Getters
 
 float SpotLight::getAngle() const noexcept { return _angle; }
 

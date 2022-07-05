@@ -9,12 +9,20 @@
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
+Camera6DoFController::Camera6DoFController() noexcept {}
+
+// Parameterized constructor
 Camera6DoFController::Camera6DoFController(BaseCamera *camera) noexcept
     : Camera3DoFController{camera} {}
 
+// Copy constructor (base class)
 Camera6DoFController::Camera6DoFController(const Camera3DoFController &cameraController) noexcept
     : Camera3DoFController{cameraController} {}
 
+// Copy assignment operator (base class)
 Camera6DoFController &Camera6DoFController::operator=(
     const Camera3DoFController &cameraController) noexcept {
   this->Camera3DoFController::operator=(cameraController);
@@ -22,9 +30,11 @@ Camera6DoFController &Camera6DoFController::operator=(
   return *this;
 }
 
+// Copy constructor
 Camera6DoFController::Camera6DoFController(const Camera6DoFController &cameraController) noexcept
     : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)} {}
 
+// Copy assignment operator
 Camera6DoFController &Camera6DoFController::operator=(
     const Camera6DoFController &cameraController) noexcept {
   this->Camera3DoFController::operator=(
@@ -33,9 +43,11 @@ Camera6DoFController &Camera6DoFController::operator=(
   return *this;
 }
 
+// Move constructor
 Camera6DoFController::Camera6DoFController(Camera6DoFController &&cameraController) noexcept
     : Camera3DoFController{dynamic_cast<Camera3DoFController &&>(cameraController)} {}
 
+// Move assignment operator
 Camera6DoFController &Camera6DoFController::operator=(
     Camera6DoFController &&cameraController) noexcept {
   this->Camera3DoFController::operator=(dynamic_cast<Camera3DoFController &&>(cameraController));
@@ -43,7 +55,10 @@ Camera6DoFController &Camera6DoFController::operator=(
   return *this;
 }
 
+// Destructor
 Camera6DoFController::~Camera6DoFController() noexcept {}
+
+// Other member functions
 
 void Camera6DoFController::rotateForward(float angle) {
   // Precision dependent method

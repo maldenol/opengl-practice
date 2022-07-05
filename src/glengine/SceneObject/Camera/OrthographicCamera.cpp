@@ -17,6 +17,9 @@ static constexpr float kInitFarPlane     = 100.0f;
 
 using namespace glengine;
 
+// Constructors, assignment operators and destructor
+
+// Default constructor
 OrthographicCamera::OrthographicCamera() noexcept
     : BaseCamera{},
       _leftBorder{kInitLeftBorder},
@@ -26,6 +29,7 @@ OrthographicCamera::OrthographicCamera() noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
+// Copy constructor
 OrthographicCamera::OrthographicCamera(const BaseCamera &camera) noexcept
     : BaseCamera{camera},
       _leftBorder{kInitLeftBorder},
@@ -35,12 +39,14 @@ OrthographicCamera::OrthographicCamera(const BaseCamera &camera) noexcept
       _nearPlane{kInitNearPlane},
       _farPlane{kInitFarPlane} {}
 
+// Copy assignment operator
 OrthographicCamera &OrthographicCamera::operator=(const BaseCamera &camera) noexcept {
   this->BaseCamera::operator=(camera);
 
   return *this;
 }
 
+// Copy constructor
 OrthographicCamera::OrthographicCamera(const OrthographicCamera &camera) noexcept
     : BaseCamera{dynamic_cast<const BaseCamera &>(camera)},
       _leftBorder{camera._leftBorder},
@@ -50,6 +56,7 @@ OrthographicCamera::OrthographicCamera(const OrthographicCamera &camera) noexcep
       _nearPlane{camera._nearPlane},
       _farPlane{camera._farPlane} {}
 
+// Copy assignment operator
 OrthographicCamera &OrthographicCamera::operator=(const OrthographicCamera &camera) noexcept {
   this->BaseCamera::operator=(dynamic_cast<const BaseCamera &>(camera));
 
@@ -63,6 +70,7 @@ OrthographicCamera &OrthographicCamera::operator=(const OrthographicCamera &came
   return *this;
 }
 
+// Move constructor
 OrthographicCamera::OrthographicCamera(OrthographicCamera &&camera) noexcept
     : BaseCamera{dynamic_cast<BaseCamera &&>(camera)},
       _leftBorder{std::exchange(camera._leftBorder, 0.0f)},
@@ -72,6 +80,7 @@ OrthographicCamera::OrthographicCamera(OrthographicCamera &&camera) noexcept
       _nearPlane{std::exchange(camera._nearPlane, 0.0f)},
       _farPlane{std::exchange(camera._farPlane, 0.0f)} {}
 
+// Move assignment operator
 OrthographicCamera &OrthographicCamera::operator=(OrthographicCamera &&camera) noexcept {
   this->BaseCamera::operator=(dynamic_cast<BaseCamera &&>(camera));
 
@@ -85,7 +94,10 @@ OrthographicCamera &OrthographicCamera::operator=(OrthographicCamera &&camera) n
   return *this;
 }
 
+// Destructor
 OrthographicCamera::~OrthographicCamera() noexcept {}
+
+// Other member functions
 
 void OrthographicCamera::setProjectionAttributes(float leftBorder, float rightBorder,
                                                  float bottomBorder, float topBorder,

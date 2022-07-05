@@ -53,5 +53,5 @@ void main() {
 
   // Calculating vertex position in clip space by vertex position,
   // MVP transformation and height vector
-  gl_Position = proj * view * (model * vec4(aPos + height, 1.0f) + vec4(height, 0.0f));
+  gl_Position = proj * view * (model * vec4(aPos, 1.0f) + vec4(height, 0.0f));
 }

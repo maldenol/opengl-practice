@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.1f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.5f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.1f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.5f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPosition(glm::vec3{0.0f, 0.0f, 1.0f});
+  gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
   Camera5DoFController *camera5DoFController =
@@ -580,8 +580,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->getLightPtr()->setIntensity(
-          -1.0f * gFlashlightSceneObjectPtr->getLightPtr()->getIntensity());
+      gFlashlightSceneObjectPtr->getLightPtr()->getIntensity() *= -1.0f;
     }
   }
 

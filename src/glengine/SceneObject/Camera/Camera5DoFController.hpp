@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_CAMERA_CAMERA5DOFCONTROLLER_HPP
-#define GLENGINE_SCENE_CAMERA_CAMERA5DOFCONTROLLER_HPP
+#ifndef GLENGINE_SCENEOBJECT_CAMERA_CAMERA5DOFCONTROLLER_HPP
+#define GLENGINE_SCENEOBJECT_CAMERA_CAMERA5DOFCONTROLLER_HPP
 
 // "glengine" internal library
 #include "./Camera3DoFController.hpp"
@@ -18,6 +18,8 @@ class Camera5DoFController : public Camera3DoFController {
   glm::vec3 _baseLookDirection{};
 
  public:
+  // Constructors, assignment operators and destructor
+  Camera5DoFController() noexcept;
   Camera5DoFController(BaseCamera *camera) noexcept;
   Camera5DoFController(const Camera3DoFController &cameraController) noexcept;
   Camera5DoFController &operator=(const Camera3DoFController &cameraController) noexcept;
@@ -27,7 +29,10 @@ class Camera5DoFController : public Camera3DoFController {
   Camera5DoFController &operator=(Camera5DoFController &&cameraController) noexcept;
   virtual ~Camera5DoFController() noexcept;
 
+  // Setters
   void setCamera(BaseCamera *camera) noexcept override;
+
+  // Other member functions
   void updateLook() noexcept;
 
   void moveUp(float distance) noexcept override;

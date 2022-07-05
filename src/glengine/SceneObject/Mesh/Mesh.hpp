@@ -1,5 +1,5 @@
-#ifndef GLENGINE_SCENE_MESH_MESH_HPP
-#define GLENGINE_SCENE_MESH_MESH_HPP
+#ifndef GLENGINE_SCENEOBJECT_MESH_MESH_HPP
+#define GLENGINE_SCENEOBJECT_MESH_MESH_HPP
 
 // All the headers
 #include "./loadTexture.hpp"
@@ -56,6 +56,7 @@ class Mesh {
   Material _material{};
 
  public:
+  // Constructors, assignment operators and destructor
   Mesh() noexcept;
   Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
        Material material) noexcept;
@@ -67,6 +68,7 @@ class Mesh {
   Mesh &operator=(Mesh &&mesh) noexcept;
   ~Mesh() noexcept;
 
+  // Setters
   void setVAO(GLuint vao) noexcept;
   void setVBO(GLuint vbo) noexcept;
   void setEBO(GLuint ebo) noexcept;
@@ -74,6 +76,7 @@ class Mesh {
   void setShaderProgram(GLuint shaderProgram) noexcept;
   void setMaterial(const Material &material) noexcept;
 
+  // Getters
   GLuint          getVAO() const noexcept;
   GLuint         &getVAO() noexcept;
   GLuint          getVBO() const noexcept;
