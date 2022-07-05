@@ -36,6 +36,7 @@ static constexpr int                   kOpenGLVersionMajor  = 4;
 static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 static constexpr float                 kCameraVelocity      = 1.0f;
+static constexpr float                 kCameraSprintCoef    = 3.0f;
 
 // Global variables
 float                gCurrTime{};
@@ -399,6 +400,9 @@ void processUserInput(GLFWwindow *window) {
 
   // Processing movement
   float distance = kCameraVelocity * gDeltaTime;
+  if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+    distance *= kCameraSprintCoef;
+  }
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     gCameraController.moveForward(distance);
   }
