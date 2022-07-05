@@ -59,7 +59,12 @@ class SceneObject {
   std::shared_ptr<Mesh>            &getMeshPtr() noexcept;
 
   // Other member functions
-  void render(const BaseCamera &camera) const;
+  void render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects) const;
+
+  void updateShaderMVP(const BaseCamera &camera) const noexcept;
+  void updateShaderViewPos(const BaseCamera &camera) const noexcept;
+  void updateShaderLights(const std::vector<SceneObject> &sceneObjects) const noexcept;
+  void updateShaderMaterial() const noexcept;
 };
 
 }  // namespace glengine

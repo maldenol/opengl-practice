@@ -4,17 +4,19 @@ const uint MAX_DIRECTIONAL_LIGHT_COUNT = 8;
 const uint MAX_POINT_LIGHT_COUNT       = 8;
 const uint MAX_SPOT_LIGHT_COUNT        = 8;
 
-uniform vec3 viewPos;
-uniform mat4 model;
+uniform vec3 VIEW_POS;
+uniform mat4 MODEL;
 
-uniform vec3  ambLightColor;
-uniform float ambLightIntensity;
+uniform struct {
+  vec3  color;
+  float intensity;
+} AMBIENT_LIGHT;
 uniform struct {
   vec3  color;
   float intensity;
 
   vec3 dir;
-} directionalLights[MAX_DIRECTIONAL_LIGHT_COUNT];
+} DIRECTIONAL_LIGHTS[MAX_DIRECTIONAL_LIGHT_COUNT];
 uniform struct {
   vec3 worldPos;
 
@@ -23,7 +25,7 @@ uniform struct {
 
   float linAttCoef;
   float quadAttCoef;
-} pointLights[MAX_POINT_LIGHT_COUNT];
+} POINT_LIGHTS[MAX_POINT_LIGHT_COUNT];
 uniform struct {
   vec3 worldPos;
 
@@ -37,7 +39,7 @@ uniform struct {
 
   float angle;
   float smoothAngle;
-} spotLights[MAX_SPOT_LIGHT_COUNT];
+} SPOT_LIGHTS[MAX_SPOT_LIGHT_COUNT];
 
 uniform struct {
   float ambCoef;
@@ -54,7 +56,7 @@ uniform struct {
   sampler2D ambOccMap;
   sampler2D roughMap;
   sampler2D emissMap;
-} material;
+} MATERIAL;
 
 in vec3 fWorldPos;
 in vec3 fNormal;
@@ -71,19 +73,19 @@ void calcPhongLight(out vec3 diffuse,
                     vec3 color) {
   float LdotN = max(dot(L, N), 0.0f);
 
-  diffuse = color * LdotN * material.diffCoef * attenuation;
+  diffuse = color * LdotN * MATERIAL.diffCoef * attenuation;
 
   vec3 R = reflect(-L, N); // 2.0f * dot(L, N) * N - L;
-  vec3 V = normalize(viewPos - fWorldPos);
+  vec3 V = normalize(VIEW_POS - fWorldPos);
 
-  float gloss    = material.glossiness * (1.0f - texture(material.roughMap, fTexCoords).r);
+  float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, fTexCoords).r);
   float glossExp = exp2(gloss);
   float VdotR    = max(dot(V, R), 0.0f);
 
   specular = color
            * gloss * pow(VdotR, glossExp)
            * attenuation
-           * material.specCoef;
+           * MATERIAL.specCoef;
 }
 
 void calcBlinnPhongLight(out vec3 diffuse,
@@ -94,18 +96,18 @@ void calcBlinnPhongLight(out vec3 diffuse,
                          vec3 color) {
   float LdotN = max(dot(L, N), 0.0f);
 
-  diffuse = color * LdotN * material.diffCoef * attenuation;
+  diffuse = color * LdotN * MATERIAL.diffCoef * attenuation;
 
-  float gloss    = material.glossiness * (1.0f - texture(material.roughMap, fTexCoords).r);
+  float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, fTexCoords).r);
   float glossExp = 2.0f * exp2(gloss);
-  vec3  V        = normalize(viewPos - fWorldPos);
+  vec3  V        = normalize(VIEW_POS - fWorldPos);
   vec3  H        = normalize(L + V);
   float HdotN    = max(dot(H, N), 0.0f);
 
   specular = color
            * gloss * pow(HdotN, glossExp) * float(LdotN > 0.0f)
            * attenuation
-           * material.specCoef;
+           * MATERIAL.specCoef;
 }
 
 float calcLightAttenuation(vec3 worldPos, float linAttCoef, float quadAttCoef) {
@@ -115,45 +117,45 @@ float calcLightAttenuation(vec3 worldPos, float linAttCoef, float quadAttCoef) {
 }
 
 void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
-  vec3 L = normalize(-directionalLights[index].dir);
+  vec3 L = normalize(-DIRECTIONAL_LIGHTS[index].dir);
 
   float attenuation = 1.0f;
 
-  vec3 color = normalize(directionalLights[index].color) * directionalLights[index].intensity;
+  vec3 color = normalize(DIRECTIONAL_LIGHTS[index].color) * DIRECTIONAL_LIGHTS[index].intensity;
 
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
 
 void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
-  vec3 L = normalize(pointLights[index].worldPos - fWorldPos);
+  vec3 L = normalize(POINT_LIGHTS[index].worldPos - fWorldPos);
 
   float attenuation = calcLightAttenuation(
-      pointLights[index].worldPos,
-      pointLights[index].linAttCoef,
-      pointLights[index].quadAttCoef
+      POINT_LIGHTS[index].worldPos,
+      POINT_LIGHTS[index].linAttCoef,
+      POINT_LIGHTS[index].quadAttCoef
   );
 
-  vec3 color = normalize(pointLights[index].color) * pointLights[index].intensity;
+  vec3 color = normalize(POINT_LIGHTS[index].color) * POINT_LIGHTS[index].intensity;
 
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
 
 void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
-  vec3 L = normalize(spotLights[index].worldPos - fWorldPos);
+  vec3 L = normalize(SPOT_LIGHTS[index].worldPos - fWorldPos);
 
   float attenuation = calcLightAttenuation(
-      spotLights[index].worldPos,
-      spotLights[index].linAttCoef,
-      spotLights[index].quadAttCoef
+      SPOT_LIGHTS[index].worldPos,
+      SPOT_LIGHTS[index].linAttCoef,
+      SPOT_LIGHTS[index].quadAttCoef
   );
-  float angle        = cos(spotLights[index].angle);
-  vec3  D            = normalize(-spotLights[index].dir);
+  float angle        = cos(SPOT_LIGHTS[index].angle);
+  vec3  D            = normalize(-SPOT_LIGHTS[index].dir);
   float LdotD        = dot(L, D);
-  float smoothAngle  = cos(spotLights[index].smoothAngle);
+  float smoothAngle  = cos(SPOT_LIGHTS[index].smoothAngle);
   //attenuation       *= 1.0f - min((1.0f - LdotD) / (1.0f - angle), 1.0f);
   attenuation       *= 1.0f - min((smoothAngle - LdotD) / (smoothAngle - angle), 1.0f);
 
-  vec3 color = normalize(spotLights[index].color) * spotLights[index].intensity;
+  vec3 color = normalize(SPOT_LIGHTS[index].color) * SPOT_LIGHTS[index].intensity;
 
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
@@ -161,14 +163,14 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 // Fragment shader
 void main() {
   // Initializing Phong/Blinn-Phong light model components
-  vec3 ambient  = ambLightColor * ambLightIntensity
-                * texture(material.ambOccMap, fTexCoords).r
-                * material.ambCoef;
+  vec3 ambient  = AMBIENT_LIGHT.color * AMBIENT_LIGHT.intensity
+                * texture(MATERIAL.ambOccMap, fTexCoords).r
+                * MATERIAL.ambCoef;
   vec3 diffuse  = vec3(0.0f);
   vec3 specular = vec3(0.0f);
 
   // Using normal map and TBN matrix to get world space normal
-  vec3 N = normalize(fTBN * (vec3(texture(material.normalMap, fTexCoords)) * 2.0f - 1.0f));
+  vec3 N = normalize(fTBN * (vec3(texture(MATERIAL.normalMap, fTexCoords)) * 2.0f - 1.0f));
   //vec3 N = mat3(transpose(inverse(model))) * fNormal;
 
   // Adding each directional light contribution
@@ -208,6 +210,6 @@ void main() {
   vec3 light = ambient + diffuse + specular;
 
   // Calculating fragment color by albedo map, color and also emission map
-  FragColor = texture(material.albedoMap, fTexCoords) * vec4(light, 1.0f)
-            + texture(material.emissMap, fTexCoords);
+  FragColor = texture(MATERIAL.albedoMap, fTexCoords) * vec4(light, 1.0f)
+            + texture(MATERIAL.emissMap, fTexCoords);
 }

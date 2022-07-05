@@ -258,9 +258,9 @@ int main(int argc, char *argv[]) {
     if (objectShadersAreRecompiled) {
       // Setting uniform values
       glUseProgram(objectSP);
-      glUniform3fv(glGetUniformLocation(objectSP, "ambLightColor"), 1,
+      glUniform3fv(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.color"), 1,
                    glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-      glUniform1f(glGetUniformLocation(objectSP, "ambLightIntensity"), 1.0f);
+      glUniform1f(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.intensity"), 1.0f);
       glUseProgram(0);
 
       // Notifying that all routine after object shader recompilation is done
@@ -288,152 +288,9 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
-    // Getting light sources
-    std::vector<SceneObject> directionalLightSceneObjects{};
-    std::vector<SceneObject> pointLightSceneObjects{};
-    std::vector<SceneObject> spotLightSceneObjects{};
-    for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].getLightPtr() == nullptr) continue;
-
-      const SceneObject &sceneObject = sceneObjects[i];
-      const BaseLight   *lightPtr    = sceneObject.getLightPtr().get();
-
-      // If light is spot (must be before directional and point light)
-      const SpotLight *spotLight = dynamic_cast<const SpotLight *>(lightPtr);
-      if (spotLight != nullptr) {
-        spotLightSceneObjects.push_back(sceneObject);
-
-        continue;
-      }
-
-      // If light is directional
-      const DirectionalLight *direcionalLight = dynamic_cast<const DirectionalLight *>(lightPtr);
-      if (direcionalLight != nullptr) {
-        directionalLightSceneObjects.push_back(sceneObject);
-
-        continue;
-      }
-
-      // If light is point
-      const PointLight *pointLight = dynamic_cast<const PointLight *>(lightPtr);
-      if (pointLight != nullptr) {
-        pointLightSceneObjects.push_back(sceneObject);
-
-        continue;
-      }
-    }
-
-    // Updating object shader program uniform values
-    glUseProgram(objectSP);
-    glUniform3fv(glGetUniformLocation(objectSP, "viewPos"), 1,
-                 glm::value_ptr(gCamera.getPosition()));
-    for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
-      const SceneObject      &sceneObject = directionalLightSceneObjects[i];
-      const DirectionalLight *directionalLight =
-          dynamic_cast<const DirectionalLight *>(sceneObject.getLightPtr().get());
-
-      glUniform3fv(glGetUniformLocation(
-                       objectSP, ("directionalLights[" + std::to_string(i) + "].color").c_str()),
-                   1, glm::value_ptr(directionalLight->getColor()));
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("directionalLights[" + std::to_string(i) + "].intensity").c_str()),
-                  directionalLight->getIntensity());
-      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                                                  glm::radians(sceneObject.getRotate().y),
-                                                  glm::radians(sceneObject.getRotate().z))};
-      glm::vec3   dir{
-          rotateMatrix * glm::vec4{directionalLight->getDirection(), 0.0f}
-      };
-      glUniform3fv(glGetUniformLocation(
-                       objectSP, ("directionalLights[" + std::to_string(i) + "].dir").c_str()),
-                   1, glm::value_ptr(dir));
-    }
-    for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
-      const SceneObject &sceneObject = pointLightSceneObjects[i];
-      const PointLight  *pointLight =
-          dynamic_cast<const PointLight *>(sceneObject.getLightPtr().get());
-
-      glUniform3fv(glGetUniformLocation(
-                       objectSP, ("pointLights[" + std::to_string(i) + "].worldPos").c_str()),
-                   1, glm::value_ptr(sceneObject.getTranslate()));
-      glUniform3fv(
-          glGetUniformLocation(objectSP, ("pointLights[" + std::to_string(i) + "].color").c_str()),
-          1, glm::value_ptr(pointLight->getColor()));
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("pointLights[" + std::to_string(i) + "].intensity").c_str()),
-                  pointLight->getIntensity());
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("pointLights[" + std::to_string(i) + "].linAttCoef").c_str()),
-                  pointLight->getLinAttCoef());
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("pointLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
-                  pointLight->getQuadAttCoef());
-    }
-    for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
-      const SceneObject &sceneObject = spotLightSceneObjects[i];
-      const SpotLight *spotLight = dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
-
-      glUniform3fv(glGetUniformLocation(objectSP,
-                                        ("spotLights[" + std::to_string(i) + "].worldPos").c_str()),
-                   1, glm::value_ptr(sceneObject.getTranslate()));
-      glUniform3fv(
-          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].color").c_str()),
-          1, glm::value_ptr(spotLight->getColor()));
-      glUniform1f(glGetUniformLocation(objectSP,
-                                       ("spotLights[" + std::to_string(i) + "].intensity").c_str()),
-                  spotLight->getIntensity());
-      glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                                                  glm::radians(sceneObject.getRotate().y),
-                                                  glm::radians(sceneObject.getRotate().z))};
-      glm::vec3   dir{
-          rotateMatrix * glm::vec4{spotLight->getDirection(), 0.0f}
-      };
-      glUniform3fv(
-          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].dir").c_str()), 1,
-          glm::value_ptr(dir));
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("spotLights[" + std::to_string(i) + "].linAttCoef").c_str()),
-                  spotLight->getLinAttCoef());
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("spotLights[" + std::to_string(i) + "].quadAttCoef").c_str()),
-                  spotLight->getQuadAttCoef());
-      glUniform1f(
-          glGetUniformLocation(objectSP, ("spotLights[" + std::to_string(i) + "].angle").c_str()),
-          glm::radians(spotLight->getAngle()));
-      glUniform1f(glGetUniformLocation(
-                      objectSP, ("spotLights[" + std::to_string(i) + "].smoothAngle").c_str()),
-                  glm::radians(spotLight->getSmoothAngle()));
-    }
-    glUseProgram(0);
-
     // Rendering scene objects
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].getMeshPtr() == nullptr) continue;
-
-      const SceneObject &sceneObject   = sceneObjects[i];
-      const Mesh        &mesh          = *sceneObject.getMeshPtr();
-      const GLuint       shaderProgram = mesh.getShaderProgram();
-
-      glUseProgram(shaderProgram);
-      glUniform1f(glGetUniformLocation(shaderProgram, "material.ambCoef"),
-                  mesh.getMaterial().ambCoef);
-      glUniform1f(glGetUniformLocation(shaderProgram, "material.diffCoef"),
-                  mesh.getMaterial().diffCoef);
-      glUniform1f(glGetUniformLocation(shaderProgram, "material.specCoef"),
-                  mesh.getMaterial().specCoef);
-      glUniform1f(glGetUniformLocation(shaderProgram, "material.glossiness"),
-                  mesh.getMaterial().glossiness);
-      glUniform1f(glGetUniformLocation(shaderProgram, "material.maxHeight"),
-                  mesh.getMaterial().maxHeight);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.albedoMap"), 0);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.normalMap"), 1);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.heightMap"), 2);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.ambOccMap"), 3);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.roughMap"), 4);
-      glUniform1i(glGetUniformLocation(shaderProgram, "material.emissMap"), 5);
-      glUseProgram(0);
-
-      sceneObject.render(gCamera);
+      sceneObjects[i].render(gCamera, sceneObjects);
     }
 
     // Swapping front and back buffers
