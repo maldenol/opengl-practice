@@ -5,19 +5,19 @@
 #include <cmath>
 
 // Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
-glengine::Mesh glengine::generateUVSphere(float radius, int lod, GLuint shaderProgram,
+glengine::Mesh glengine::generateUVSphere(float radius, unsigned int lod, GLuint shaderProgram,
                                           const std::vector<Mesh::Material::Texture> &textures) {
   // Incrementing level-of-detail
   ++lod;
 
   // Level-of-detail (count of rectangles per longitude/latitude)
-  const int columns = 2 * lod;  // longitude
-  const int rows    = lod;      // latitude
+  const unsigned int columns = 2 * lod;  // longitude
+  const unsigned int rows    = lod;      // latitude
 
-  const int   trapezeCount = columns * rows;        // count of discrete trapezes
-  const int   vertexCount  = 4 * trapezeCount;      // count of vertices
-  const int   indexCount   = 2 * trapezeCount * 3;  // 3 indexes for each triangle
-  const float trapezeXDim =
+  const unsigned int trapezeCount = columns * rows;        // count of discrete trapezes
+  const unsigned int vertexCount  = 4 * trapezeCount;      // count of vertices
+  const unsigned int indexCount   = 2 * trapezeCount * 3;  // 3 indexes for each triangle
+  const float        trapezeXDim =
       2.0f * M_PI / (float)columns;                 // maximal discrete trapeze's side x dimension
   const float trapezeYDim = M_PI / (float)rows;     // discrete trapeze's side y dimension
   const float trapezeUDim = 1.0f / (float)columns;  // discrete trapeze's side u dimension
@@ -35,9 +35,9 @@ glengine::Mesh glengine::generateUVSphere(float radius, int lod, GLuint shaderPr
   indices.resize(indexCount);
 
   // For each column (longitude)
-  for (int c = 0; c < columns; ++c) {
+  for (unsigned int c = 0; c < columns; ++c) {
     // For each row (latitude)
-    for (int r = 0; r < rows; ++r) {
+    for (unsigned int r = 0; r < rows; ++r) {
       const float luX = static_cast<float>(c) * trapezeXDim;
       const float luY = static_cast<float>(r + 1) * trapezeYDim;
       const float ruX = static_cast<float>(c + 1) * trapezeXDim;
@@ -122,6 +122,7 @@ glengine::Mesh glengine::generateUVSphere(float radius, int lod, GLuint shaderPr
   // Creating and returning the mesh
   return Mesh{
       vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
+                     textures}
   };
 }

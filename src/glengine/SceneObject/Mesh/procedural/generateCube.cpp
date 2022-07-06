@@ -5,7 +5,8 @@
 #include <glm/gtx/quaternion.hpp>
 
 // Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
-glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, GLuint shaderProgram,
+glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableCubemap,
+                                      GLuint                                      shaderProgram,
                                       const std::vector<Mesh::Material::Texture> &textures) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
@@ -14,14 +15,14 @@ glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, G
                           static_cast<float>(lod);  // discrete quad's side u size
   const float vQuadSize = 1.0f / (enableCubemap ? 3.0f : 1.0f) /
                           static_cast<float>(lod);  // discrete quad's side v size
-  const float halfSize = size / 2.0f;               // half of the SIZE
-  const int   quadLOD  = lod * lod;                 // LOD^2
+  const float        halfSize = size / 2.0f;        // half of the SIZE
+  const unsigned int quadLOD  = lod * lod;          // LOD^2
 
-  const int quadPerSideCount   = quadLOD;                   // discrete quads per side count
-  const int vertexPerSideCount = 4 * quadPerSideCount;      // vertices per side count
-  const int vertexCount        = 6 * vertexPerSideCount;    // vertices count
-  const int indexPerSideCount  = 2 * quadPerSideCount * 3;  // 3 indexes for each triangle
-  const int indexCount         = 6 * indexPerSideCount;     // 3 indexes for each triangle
+  const unsigned int quadPerSideCount   = quadLOD;                 // discrete quads per side count
+  const unsigned int vertexPerSideCount = 4 * quadPerSideCount;    // vertices per side count
+  const unsigned int vertexCount        = 6 * vertexPerSideCount;  // vertices count
+  const unsigned int indexPerSideCount  = 2 * quadPerSideCount * 3;  // 3 indexes for each triangle
+  const unsigned int indexCount         = 6 * indexPerSideCount;     // 3 indexes for each triangle
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
@@ -35,9 +36,9 @@ glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, G
   indices.resize(indexCount);
 
   // For each side
-  for (int s = 0; s < 6; ++s) {
+  for (unsigned int s = 0; s < 6; ++s) {
     // For each quad of the side
-    for (int v = 0; v < quadPerSideCount; ++v) {
+    for (unsigned int v = 0; v < quadPerSideCount; ++v) {
       const int   row    = v / lod;
       const int   column = v % lod;
       const float leftX  = column * xyQuadSize - halfSize;
@@ -260,6 +261,7 @@ glengine::Mesh glengine::generateCube(float size, int lod, bool enableCubemap, G
   // Creating and returning the mesh
   return Mesh{
       vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
+                     textures}
   };
 }

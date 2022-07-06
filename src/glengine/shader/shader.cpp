@@ -20,40 +20,6 @@ using namespace std::chrono_literals;
 static constexpr std::chrono::duration kShaderWatcherInterval = 500ms;
 
 // Compiles shader with source code
-void glengine::compileShader(GLuint shader, const QString &source, const QString &filename) {
-  // Setting shader's source and compiling it
-  std::string shaderSourceString = source.toStdString();
-  const char *shaderSourceBuffer = shaderSourceString.c_str();
-  glShaderSource(shader, 1, &shaderSourceBuffer, nullptr);
-  glCompileShader(shader);
-
-  // Getting compilation success code
-  GLint success{};
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-  // Getting info log length
-  GLint infoLogLength{};
-  glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
-  // Getting info log
-  std::vector<char> infoLog{};
-  infoLog.resize(infoLogLength + 1);
-  glGetShaderInfoLog(shader, infoLogLength, nullptr, &infoLog[0]);
-  // If compilation have failed
-  if (success == GL_FALSE) {
-    std::cout << "error: unable to compile shader #" << shader << " from " << filename.toStdString()
-              << "\n";
-    // If there is an info log
-    if (infoLogLength > 0) {
-      std::cout << &infoLog[0];
-    }
-    // If there is no info log
-    else {
-      std::cout << "no error information";
-    }
-    std::cout << std::endl;
-  }
-}
-
-// Compiles shader with source code
 void glengine::compileShader(GLuint shader, const std::string &source,
                              const std::string &filename) {
   // Setting shader's source and compiling it
@@ -227,7 +193,7 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
             // Attaching shader to shader program
             glAttachShader(shaderProgram, shaders[j]);
             // Compiling shader
-            compileShader(shaders[j], shaderSource, shaderFilenames[j]);
+            compileShader(shaders[j], shaderSource.toStdString(), shaderFilenames[j].toStdString());
           }
 
           // Linking shader program

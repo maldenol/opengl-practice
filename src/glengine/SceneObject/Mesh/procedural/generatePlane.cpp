@@ -2,18 +2,18 @@
 #include "../Mesh.hpp"
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
-glengine::Mesh glengine::generatePlane(float size, int lod, GLuint shaderProgram,
+glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shaderProgram,
                                        const std::vector<Mesh::Material::Texture> &textures) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
-      static_cast<float>(size) / static_cast<float>(lod);    // discrete quad's side xy size
-  const float uvQuadSize = 1.0f / static_cast<float>(lod);   // discrete quad's side uv size
-  const float halfSize   = static_cast<float>(size) / 2.0f;  // half of the SIZE
-  const int   quadLOD    = lod * lod;                        // LOD^2
+      static_cast<float>(size) / static_cast<float>(lod);           // discrete quad's side xy size
+  const float        uvQuadSize = 1.0f / static_cast<float>(lod);   // discrete quad's side uv size
+  const float        halfSize   = static_cast<float>(size) / 2.0f;  // half of the SIZE
+  const unsigned int quadLOD    = lod * lod;                        // LOD^2
 
-  const int quadCount   = quadLOD;            // count of discrete quads
-  const int vertexCount = 4 * quadCount;      // count of vertices
-  const int indexCount  = 2 * quadCount * 3;  // 3 indexes for each triangle
+  const unsigned int quadCount   = quadLOD;            // count of discrete quads
+  const unsigned int vertexCount = 4 * quadCount;      // count of vertices
+  const unsigned int indexCount  = 2 * quadCount * 3;  // 3 indexes for each triangle
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
@@ -27,7 +27,7 @@ glengine::Mesh glengine::generatePlane(float size, int lod, GLuint shaderProgram
   indices.resize(indexCount);
 
   // For each quad
-  for (int v = 0; v < quadCount; ++v) {
+  for (unsigned int v = 0; v < quadCount; ++v) {
     const int row    = v / lod;
     const int column = v % lod;
 
@@ -115,6 +115,7 @@ glengine::Mesh glengine::generatePlane(float size, int lod, GLuint shaderProgram
   // Creating and returning the mesh
   return Mesh{
       vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
+                     textures}
   };
 }

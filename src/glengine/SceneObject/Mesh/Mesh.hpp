@@ -15,6 +15,14 @@
 
 namespace glengine {
 
+// Global constants
+
+constexpr float kInitAmbCoef    = 0.15f;
+constexpr float kInitDiffCoef   = 0.6f;
+constexpr float kInitSpecCoef   = 0.3f;
+constexpr float kInitGlossiness = 1.0f;
+constexpr float kInitMaxHeight  = 0.0f;
+
 // Mesh struct
 class Mesh {
  public:
@@ -59,7 +67,7 @@ class Mesh {
   // Constructors, assignment operators and destructor
   Mesh() noexcept;
   Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-       Material material) noexcept;
+       const Material &material) noexcept;
   Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,
        const std::vector<GLuint> &indices, GLuint shaderProgram, const Material &material);
   Mesh(const Mesh &mesh) noexcept;
@@ -102,16 +110,16 @@ glm::vec3 calculateTangent(const std::vector<glm::vec3> &pointPositions,
                            const std::vector<glm::vec2> &pointUVs);
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
-Mesh generatePlane(float size, int lod, GLuint shaderProgram,
+Mesh generatePlane(float size, unsigned int lod, GLuint shaderProgram,
                    const std::vector<Mesh::Material::Texture> &textures);
 // Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
-Mesh generateCube(float size, int lod, bool enableCubemap, GLuint shaderProgram,
+Mesh generateCube(float size, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
                   const std::vector<Mesh::Material::Texture> &textures);
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
-Mesh generateQuadSphere(float radius, int lod, bool enableCubemap, GLuint shaderProgram,
+Mesh generateQuadSphere(float radius, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
                         const std::vector<Mesh::Material::Texture> &textures);
 // Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
-Mesh generateUVSphere(float radius, int lod, GLuint shaderProgram,
+Mesh generateUVSphere(float radius, unsigned int lod, GLuint shaderProgram,
                       const std::vector<Mesh::Material::Texture> &textures);
 // Generates icosphere mesh based on radius, shader program and textures
 Mesh generateIcoSphere(float radius, GLuint shaderProgram,

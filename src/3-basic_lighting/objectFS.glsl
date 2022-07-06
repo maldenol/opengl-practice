@@ -174,7 +174,7 @@ void main() {
   //vec3 N = mat3(transpose(inverse(model))) * fNormal;
 
   // Adding each directional light contribution
-  for (int i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {
+  for (uint i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {
     vec3 deltaDiffuse = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 
@@ -185,7 +185,7 @@ void main() {
   }
 
   // Adding each point light contribution
-  for (int i = 0; i < MAX_POINT_LIGHT_COUNT; ++i) {
+  for (uint i = 0; i < MAX_POINT_LIGHT_COUNT; ++i) {
     vec3 deltaDiffuse = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 
@@ -196,7 +196,7 @@ void main() {
   }
 
   // Adding each spot light contribution
-  for (int i = 0; i < MAX_SPOT_LIGHT_COUNT; ++i) {
+  for (uint i = 0; i < MAX_SPOT_LIGHT_COUNT; ++i) {
     vec3 deltaDiffuse = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 

@@ -17,9 +17,6 @@
 namespace glengine {
 
 // Compiles shader with source code
-void compileShader(GLuint shader, const QString &source, const QString &filename);
-
-// Compiles shader with source code
 void compileShader(GLuint shader, const std::string &source, const std::string &filename);
 
 // Creates shader program compiling and linking given shaders

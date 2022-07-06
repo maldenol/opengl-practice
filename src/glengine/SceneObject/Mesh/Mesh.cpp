@@ -13,13 +13,13 @@ Mesh::Mesh() noexcept {}
 
 // Parameterized constructor
 Mesh::Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-           Material material) noexcept
+           const Material &material) noexcept
     : _vao{vao},
       _vbo{vbo},
       _ebo{ebo},
       _indexCount{indexCount},
       _shaderProgram{shaderProgram},
-      _material{std::move(material)} {}
+      _material{material} {}
 
 // Parameterized constructor
 Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,

@@ -10,8 +10,8 @@
 // Generates icosphere mesh based on radius, shader program and textures
 glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
                                            const std::vector<Mesh::Material::Texture> &textures) {
-  constexpr int kVertexCount = 12;      // count of vertices
-  constexpr int kIndexCount  = 20 * 3;  // 3 indexes for each triangle
+  constexpr unsigned int kVertexCount = 12;      // count of vertices
+  constexpr unsigned int kIndexCount  = 20 * 3;  // 3 indexes for each triangle
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
@@ -135,7 +135,7 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
   }
 
   // Projecting the icosahedron on a sphere
-  for (int v = 0; v < kVertexCount; ++v) {
+  for (unsigned int v = 0; v < kVertexCount; ++v) {
     normals[v]  = glm::normalize(vertices[v]);
     vertices[v] = normals[v] * radius;
   }
@@ -158,6 +158,7 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
   // Creating and returning the mesh
   return Mesh{
       vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
+                     textures}
   };
 }

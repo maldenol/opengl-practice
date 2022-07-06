@@ -5,7 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
-glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCubemap,
+glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool enableCubemap,
                                             GLuint shaderProgram,
                                             const std::vector<Mesh::Material::Texture> &textures) {
   // Level-of-detail (count of quads along one side)
@@ -14,14 +14,14 @@ glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCu
                           static_cast<float>(lod);  // discrete quad's side u size
   const float vQuadSize = 1.0f / (enableCubemap ? 3.0f : 1.0f) /
                           static_cast<float>(lod);  // discrete quad's side v size
-  const float halfSize = 1.0f / 2.0f;               // half of the size
-  const int   quadLOD  = lod * lod;                 // LOD^2
+  const float        halfSize = 1.0f / 2.0f;        // half of the size
+  const unsigned int quadLOD  = lod * lod;          // LOD^2
 
-  const int quadPerSideCount   = quadLOD;                   // discrete quads per side count
-  const int vertexPerSideCount = 4 * quadPerSideCount;      // vertices per side count
-  const int vertexCount        = 6 * vertexPerSideCount;    // vertices count
-  const int indexPerSideCount  = 2 * quadPerSideCount * 3;  // 3 indexes for each triangle
-  const int indexCount         = 6 * indexPerSideCount;     // 3 indexes for each triangle
+  const unsigned int quadPerSideCount   = quadLOD;                 // discrete quads per side count
+  const unsigned int vertexPerSideCount = 4 * quadPerSideCount;    // vertices per side count
+  const unsigned int vertexCount        = 6 * vertexPerSideCount;  // vertices count
+  const unsigned int indexPerSideCount  = 2 * quadPerSideCount * 3;  // 3 indexes for each triangle
+  const unsigned int indexCount         = 6 * indexPerSideCount;     // 3 indexes for each triangle
 
   std::vector<glm::vec3> vertices{};
   std::vector<glm::vec3> normals{};
@@ -35,19 +35,19 @@ glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCu
   indices.resize(indexCount);
 
   // For each side
-  for (int s = 0; s < 6; ++s) {
+  for (unsigned int s = 0; s < 6; ++s) {
     // For each quad of the side
-    for (int v = 0; v < quadPerSideCount; ++v) {
+    for (unsigned int v = 0; v < quadPerSideCount; ++v) {
       const int   row    = v / lod;
       const int   column = v % lod;
-      const float leftX  = column * xyQuadSize - halfSize;
-      const float rightX = (column + 1) * xyQuadSize - halfSize;
-      const float downY  = row * xyQuadSize - halfSize;
-      const float upY    = (row + 1) * xyQuadSize - halfSize;
-      const float leftU  = column * uQuadSize;
-      const float rightU = (column + 1) * uQuadSize;
-      const float downV  = row * vQuadSize;
-      const float upV    = (row + 1) * vQuadSize;
+      const float leftX  = static_cast<float>(column) * xyQuadSize - halfSize;
+      const float rightX = static_cast<float>(column + 1) * xyQuadSize - halfSize;
+      const float downY  = static_cast<float>(row) * xyQuadSize - halfSize;
+      const float upY    = static_cast<float>(row + 1) * xyQuadSize - halfSize;
+      const float leftU  = static_cast<float>(column) * uQuadSize;
+      const float rightU = static_cast<float>(column + 1) * uQuadSize;
+      const float downV  = static_cast<float>(row) * vQuadSize;
+      const float upV    = static_cast<float>(row + 1) * vQuadSize;
 
       constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
       constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
@@ -243,7 +243,7 @@ glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCu
   }
 
   // Projecting the cube on a sphere
-  for (int v = 0; v < vertexCount; ++v) {
+  for (unsigned int v = 0; v < vertexCount; ++v) {
     normals[v]  = glm::normalize(vertices[v]);
     vertices[v] = normals[v] * radius;
   }
@@ -266,6 +266,7 @@ glengine::Mesh glengine::generateQuadSphere(float radius, int lod, bool enableCu
   // Creating and returning the mesh
   return Mesh{
       vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{0.15f, 0.6f, 0.3f, 1.0f, 0.0f, textures}
+      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
+                     textures}
   };
 }
