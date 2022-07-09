@@ -113,7 +113,6 @@ void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject
 
   // Binding VAO with associated EBO and VBO
   glBindVertexArray(_meshPtr->getVAO());
-  glBindBuffer(GL_ARRAY_BUFFER, _meshPtr->getVBO());
 
   // For each texture
   for (size_t i = 0; i < material.textures.size(); ++i) {
@@ -138,9 +137,15 @@ void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject
   // Unbinding shader program
   glUseProgram(0);
 
-  // Unbinding configured VAO and VBO
+  // For each texture
+  for (size_t i = 0; i < material.textures.size(); ++i) {
+    // Unbinding texture from texture unit
+    glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
+
+  // Unbinding VAO
   glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void SceneObject::updateShaderMVP(const BaseCamera &camera) const noexcept {

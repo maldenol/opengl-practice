@@ -2,7 +2,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <cmath>
 #include <mutex>
@@ -38,8 +37,8 @@ static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 static constexpr float                 kCameraVelocity      = 1.0f;
 static constexpr float                 kCameraSprintCoef    = 3.0f;
-static constexpr unsigned int          kOutlineMeshIndex    = 3;
-static constexpr unsigned int          kInstancingMeshIndex = 2;
+static constexpr unsigned int          kOutlineMeshIndex    = 2;
+static constexpr unsigned int          kInstancingMeshIndex = 3;
 static constexpr unsigned int          kInstanceCount       = 1000;
 static constexpr float                 kInstanceMaxDistance = 10.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
@@ -50,6 +49,7 @@ float                gDeltaTime{};
 PerspectiveCamera    gCamera{};
 Camera6DoFController gCameraController{&gCamera};
 SceneObject         *gFlashlightSceneObjectPtr{};
+SceneObject         *gSkyboxSceneObjectPtr{};
 int                  gPolygonMode{};
 bool                 gEnableSceneObjectsFloating{true};
 bool                 gEnablePostprocessing{false};
@@ -69,8 +69,6 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
 
 // Main function
 int main(int argc, char *argv[]) {
-  srand(time(0));
-
   // Initializing Qt Gui application
   QGuiApplication app = initQGuiApplication(argc, argv);
 
@@ -89,6 +87,9 @@ int main(int argc, char *argv[]) {
 
   // Enabling mouse centering
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  // Setting pseudo random generator seed
+  srand(glfwGetTime());
 
   // Creating and binding postprocessing framebuffer
   GLuint postprocessingFBO = 0;
@@ -112,13 +113,20 @@ int main(int argc, char *argv[]) {
                             postprocessingRBO);
   // Checking if postprocessing framebuffer is complete and unbinding it
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &postprocessingFBO);
+    glDeleteTextures(1, &postprocessingTexture);
+    glDeleteRenderbuffers(1, &postprocessingRBO);
 
     std::cout << "Postprocessing framebuffer object is incomplete!" << std::endl;
 
     return -1;
   }
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   // Creating and binding multisampling framebuffer
   GLuint multisamplingFBO = 0;
   glGenFramebuffers(1, &multisamplingFBO);
@@ -139,8 +147,12 @@ int main(int argc, char *argv[]) {
                             multisamplingRBO);
   // Checking if multisampling framebuffer is complete and unbinding it
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &multisamplingFBO);
+    glDeleteTextures(1, &multisamplingTexture);
+    glDeleteRenderbuffers(1, &multisamplingRBO);
 
     std::cout << "Multisampling framebuffer object is incomplete!" << std::endl;
 
@@ -148,35 +160,23 @@ int main(int argc, char *argv[]) {
   }
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  // Creating arrays of types of shaders
-  std::vector<GLuint> objectShaderTypes{
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
+  // Creating vectors of vectors of types of shaders
+  std::vector<std::vector<GLuint>> shaderTypes{
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,                     },
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER,  GL_GEOMETRY_SHADER,               GL_FRAGMENT_SHADER, },
   };
-  std::vector<GLuint> lightShaderTypes{
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-  };
-  std::vector<GLuint> screenShaderTypes{
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-  };
-  std::vector<GLuint> normalShaderTypes{
-      GL_VERTEX_SHADER,
-      GL_GEOMETRY_SHADER,
-      GL_FRAGMENT_SHADER,
-  };
-  // Creating arrays of filenames of shaders
-  std::vector<QString> objectShaderFilenames{
-      getAbsolutePathRelativeToExecutable("objectVS.glsl"),
-      getAbsolutePathRelativeToExecutable("objectFS.glsl"),
+  // Creating vectors of filenames of shaders
+  std::vector<QString> blinnPhongShaderFilenames{
+      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
   std::vector<QString> lightShaderFilenames{
       getAbsolutePathRelativeToExecutable("lightVS.glsl"),
-      getAbsolutePathRelativeToExecutable("depthFS.glsl"),
+      getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
   std::vector<QString> screenShaderFilenames{
       getAbsolutePathRelativeToExecutable("screenVS.glsl"),
@@ -187,23 +187,33 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("normalGS.glsl"),
       getAbsolutePathRelativeToExecutable("normalFS.glsl"),
   };
+  std::vector<QString> instanceShaderFilenames{
+      getAbsolutePathRelativeToExecutable("instanceVS.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+  };
+  std::vector<QString> skyboxShaderFilenames{
+      getAbsolutePathRelativeToExecutable("skyboxVS.glsl"),
+      getAbsolutePathRelativeToExecutable("skyboxFS.glsl"),
+  };
   // Creating shader programs
-  GLuint objectSP = glCreateProgram();
-  GLuint lightSP  = glCreateProgram();
-  GLuint screenSP = glCreateProgram();
-  GLuint normalSP = glCreateProgram();
+  GLuint blinnPhongSP = glCreateProgram();
+  GLuint lightSP      = glCreateProgram();
+  GLuint screenSP     = glCreateProgram();
+  GLuint normalSP     = glCreateProgram();
+  GLuint instanceSP   = glCreateProgram();
+  GLuint skyboxSP     = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
-  std::atomic<bool> objectShaderWatcherIsRunning = true;
-  std::atomic<bool> objectShadersAreRecompiled   = false;
-  std::thread       objectShaderWatcherThread{shaderWatcher,
-                                        std::cref(objectShaderWatcherIsRunning),
-                                        std::ref(objectShadersAreRecompiled),
-                                        window,
-                                        std::ref(glfwContextMutex),
-                                        objectSP,
-                                        std::cref(objectShaderTypes),
-                                        std::cref(objectShaderFilenames)};
+  std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
+  std::atomic<bool> blinnPhongShadersAreRecompiled   = false;
+  std::thread       blinnPhongShaderWatcherThread{shaderWatcher,
+                                            std::cref(blinnPhongShaderWatcherIsRunning),
+                                            std::ref(blinnPhongShadersAreRecompiled),
+                                            window,
+                                            std::ref(glfwContextMutex),
+                                            blinnPhongSP,
+                                            std::cref(shaderTypes[0]),
+                                            std::cref(blinnPhongShaderFilenames)};
   std::atomic<bool> lightShaderWatcherIsRunning = true;
   std::atomic<bool> lightShadersAreRecompiled   = false;
   std::thread       lightShaderWatcherThread{shaderWatcher,
@@ -212,7 +222,7 @@ int main(int argc, char *argv[]) {
                                        window,
                                        std::ref(glfwContextMutex),
                                        lightSP,
-                                       std::cref(lightShaderTypes),
+                                       std::cref(shaderTypes[0]),
                                        std::cref(lightShaderFilenames)};
   std::atomic<bool> screenShaderWatcherIsRunning = true;
   std::atomic<bool> screenShadersAreRecompiled   = false;
@@ -222,7 +232,7 @@ int main(int argc, char *argv[]) {
                                         window,
                                         std::ref(glfwContextMutex),
                                         screenSP,
-                                        std::cref(screenShaderTypes),
+                                        std::cref(shaderTypes[0]),
                                         std::cref(screenShaderFilenames)};
   std::atomic<bool> normalShaderWatcherIsRunning = true;
   std::atomic<bool> normalShadersAreRecompiled   = false;
@@ -232,12 +242,32 @@ int main(int argc, char *argv[]) {
                                         window,
                                         std::ref(glfwContextMutex),
                                         normalSP,
-                                        std::cref(normalShaderTypes),
+                                        std::cref(shaderTypes[1]),
                                         std::cref(normalShaderFilenames)};
+  std::atomic<bool> instanceShaderWatcherIsRunning = true;
+  std::atomic<bool> instanceShadersAreRecompiled   = false;
+  std::thread       instanceShaderWatcherThread{shaderWatcher,
+                                          std::cref(instanceShaderWatcherIsRunning),
+                                          std::ref(instanceShadersAreRecompiled),
+                                          window,
+                                          std::ref(glfwContextMutex),
+                                          instanceSP,
+                                          std::cref(shaderTypes[0]),
+                                          std::cref(instanceShaderFilenames)};
+  std::atomic<bool> skyboxShaderWatcherIsRunning = true;
+  std::atomic<bool> skyboxShadersAreRecompiled   = false;
+  std::thread       skyboxShaderWatcherThread{shaderWatcher,
+                                        std::cref(skyboxShaderWatcherIsRunning),
+                                        std::ref(skyboxShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        skyboxSP,
+                                        std::cref(shaderTypes[0]),
+                                        std::cref(skyboxShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<Mesh::Material::Texture>> textures{
-      std::vector<Mesh::Material::Texture>{                                                          },
+      std::vector<Mesh::Material::Texture>{},
       std::vector<Mesh::Material::Texture>{
                                            Mesh::Material::Texture{0, loadTexture("albedoMap.png")},Mesh::Material::Texture{1, loadTexture("normalMap.png")},
                                            Mesh::Material::Texture{2, loadTexture("heightMap.png")},
@@ -245,43 +275,50 @@ int main(int argc, char *argv[]) {
                                            Mesh::Material::Texture{4, loadTexture("roughnessMap.png")},
                                            //Mesh::Material::Texture{5, loadTexture("emissionMap.png")},
       },
+      std::vector<Mesh::Material::Texture>{
+                                           Mesh::Material::Texture{0, loadTexture("cubemap.png")},}
   };
 
   // Creating and configuring scene objects
   std::vector<SceneObject> sceneObjects{};
+  // Lower plane
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, -1.0f, 0.0f},
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.5f;
+  // Upper plane
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.5f;
+  // Central cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
+  // Instance cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{  -3.0f, 0.0f, 2.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   2.0f, 2.0f, 2.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
+  // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
@@ -292,6 +329,7 @@ int main(int argc, char *argv[]) {
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
+  // Point light (purple)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.0f, 0.8f, -1.0f},
       glm::vec3{0.0f, 0.0f,  0.0f},
@@ -300,6 +338,7 @@ int main(int argc, char *argv[]) {
       1.0f, 0.45f, 0.075),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
   });
+  // Spot light (green)
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
       glm::vec3{ 0.0f, 90.0f,  0.0f},
@@ -309,6 +348,7 @@ int main(int argc, char *argv[]) {
                                   0.45f, 0.075, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
   });
+  // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
       glm::vec3{0.0f,  0.0f, 0.0f},
@@ -318,6 +358,7 @@ int main(int argc, char *argv[]) {
                                   0.45f, 0.075, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
   });
+  // Flashlight
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -328,6 +369,15 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
+  // Skybox
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, textures[2]))
+  });
+  gSkyboxSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
 
   // Creating screen
   float screenVertices[] = {
@@ -455,17 +505,17 @@ int main(int argc, char *argv[]) {
     // Processing user input
     processUserInput(window);
 
-    // If object shaders are recompiled
-    if (objectShadersAreRecompiled) {
+    // If blinnPhong shaders are recompiled
+    if (blinnPhongShadersAreRecompiled) {
       // Setting uniform values
-      glUseProgram(objectSP);
-      glUniform3fv(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.color"), 1,
+      glUseProgram(blinnPhongSP);
+      glUniform3fv(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.color"), 1,
                    glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-      glUniform1f(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.intensity"), 1.0f);
+      glUniform1f(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.intensity"), 1.0f);
       glUseProgram(0);
 
-      // Notifying that all routine after object shader recompilation is done
-      objectShadersAreRecompiled = false;
+      // Notifying that all routine after blinnPhong shader recompilation is done
+      blinnPhongShadersAreRecompiled = false;
     }
 
     // Making scene objects float
@@ -474,10 +524,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Updating flashlight SceneObjcet fields
-    gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPosition();
+    gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
+    // Updating skybox SceneObject fields
+    gSkyboxSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
+
+    // If postprocessing is enabled
     if (gEnablePostprocessing) {
       // Binding multisampling framebuffer
       glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
@@ -498,48 +552,62 @@ int main(int argc, char *argv[]) {
     // Configuring stencil testing
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
+    glStencilMask(0x00);
     // Rendering scene objects
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
+      if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
+        glCullFace(GL_FRONT);
+        glDepthFunc(GL_LEQUAL);
+      }
+
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
-      } else {
-        glStencilMask(0x00);
       }
 
       if (i == kInstancingMeshIndex) {
         sceneObjects[i].render(gCamera, sceneObjects, kInstanceCount);
       } else {
         sceneObjects[i].render(gCamera, sceneObjects);
+
+        if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
+          GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
+          sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
+          sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
+          sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
+        }
       }
 
-      if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
-        GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
-        sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
-        if (i == kInstancingMeshIndex) {
-          sceneObjects[i].render(gCamera, std::vector<SceneObject>{}, kInstanceCount);
-        } else {
-          sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
-        }
-        sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
+      if (i == kOutlineMeshIndex) {
+        glStencilMask(0x00);
+      }
+
+      if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
+        glCullFace(GL_BACK);
+        glDepthFunc(GL_LESS);
       }
     }
-    // Configuring stencil testing
-    glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-    glStencilMask(0x00);
-    // Disabling Z-testing
-    glDisable(GL_DEPTH_TEST);
-    // Preparing the mesh
-    const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-    const GLuint    initShaderProgram{
-        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
-    sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
-    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
-    // Drawing outline
-    sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
-    // Reverting mesh changes
-    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
-    sceneObjects[kOutlineMeshIndex].setScale(initScale);
 
+    // Drawing outline
+    {
+      // Configuring stencil testing
+      glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+      glStencilMask(0x00);
+      // Disabling Z-testing
+      glDisable(GL_DEPTH_TEST);
+      // Preparing the mesh
+      const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
+      const GLuint    initShaderProgram{
+          sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
+      sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
+      sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
+      // Drawing outline
+      sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
+      // Reverting mesh changes
+      sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
+      sceneObjects[kOutlineMeshIndex].setScale(initScale);
+    }
+
+    // If postprocessing is enabled
     if (gEnablePostprocessing) {
       // Converting multisampling FBO data to postprocessing one
       glBindFramebuffer(GL_READ_FRAMEBUFFER, multisamplingFBO);
@@ -556,7 +624,6 @@ int main(int argc, char *argv[]) {
       glDisable(GL_STENCIL_TEST);
       glDisable(GL_DEPTH_TEST);
       glBindVertexArray(screenVAO);
-      glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
       glUseProgram(screenSP);
@@ -564,7 +631,6 @@ int main(int argc, char *argv[]) {
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
       glUseProgram(0);
       glBindTexture(GL_TEXTURE_2D, 0);
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0);
     }
 
@@ -579,8 +645,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Waiting for shaderWatchers to stop
-  objectShaderWatcherIsRunning = false;
-  objectShaderWatcherThread.join();
+  blinnPhongShaderWatcherIsRunning = false;
+  blinnPhongShaderWatcherThread.join();
   lightShaderWatcherIsRunning = false;
   lightShaderWatcherThread.join();
 

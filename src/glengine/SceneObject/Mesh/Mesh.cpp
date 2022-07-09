@@ -47,10 +47,10 @@ Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<flo
 
   // Configuring and enabling VBO's attributes
   for (unsigned int i = 0; i < vboAttributes.size(); ++i) {
+    glEnableVertexAttribArray(i);
     glVertexAttribPointer(i, vboAttributes[i].size, vboAttributes[i].type,
                           vboAttributes[i].normalized, vboAttributes[i].stride,
                           vboAttributes[i].pointer);
-    glEnableVertexAttribArray(i);
   }
 
   // Unbinding configured VAO and VBO

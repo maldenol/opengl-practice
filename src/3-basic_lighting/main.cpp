@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   glEnable(GL_DEPTH_TEST);
 
   // Creating arrays of types of shaders
-  std::vector<GLuint> objectShaderTypes{
+  std::vector<GLuint> blinnPhongShaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
@@ -95,29 +95,29 @@ int main(int argc, char *argv[]) {
       GL_FRAGMENT_SHADER,
   };
   // Creating arrays of filenames of shaders
-  std::vector<QString> objectShaderFilenames{
-      getAbsolutePathRelativeToExecutable("objectVS.glsl"),
-      getAbsolutePathRelativeToExecutable("objectFS.glsl"),
+  std::vector<QString> blinnPhongShaderFilenames{
+      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
   std::vector<QString> lightShaderFilenames{
       getAbsolutePathRelativeToExecutable("lightVS.glsl"),
       getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
   // Creating shader programs
-  GLuint objectSP = glCreateProgram();
-  GLuint lightSP  = glCreateProgram();
+  GLuint blinnPhongSP = glCreateProgram();
+  GLuint lightSP      = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
-  std::atomic<bool> objectShaderWatcherIsRunning = true;
-  std::atomic<bool> objectShadersAreRecompiled   = false;
-  std::thread       objectShaderWatcherThread{shaderWatcher,
-                                        std::cref(objectShaderWatcherIsRunning),
-                                        std::ref(objectShadersAreRecompiled),
-                                        window,
-                                        std::ref(glfwContextMutex),
-                                        objectSP,
-                                        std::cref(objectShaderTypes),
-                                        std::cref(objectShaderFilenames)};
+  std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
+  std::atomic<bool> blinnPhongShadersAreRecompiled   = false;
+  std::thread       blinnPhongShaderWatcherThread{shaderWatcher,
+                                            std::cref(blinnPhongShaderWatcherIsRunning),
+                                            std::ref(blinnPhongShadersAreRecompiled),
+                                            window,
+                                            std::ref(glfwContextMutex),
+                                            blinnPhongSP,
+                                            std::cref(blinnPhongShaderTypes),
+                                            std::cref(blinnPhongShaderFilenames)};
   std::atomic<bool> lightShaderWatcherIsRunning = true;
   std::atomic<bool> lightShadersAreRecompiled   = false;
   std::thread       lightShaderWatcherThread{shaderWatcher,
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.5f;
   sceneObjects.push_back(SceneObject{
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, objectSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.5f;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
   sceneObjects.push_back(SceneObject{
@@ -255,28 +255,17 @@ int main(int argc, char *argv[]) {
     // Clearing color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // If object shaders are recompiled
-    if (objectShadersAreRecompiled) {
+    // If blinnPhong shaders are recompiled
+    if (blinnPhongShadersAreRecompiled) {
       // Setting uniform values
-      glUseProgram(objectSP);
-      glUniform3fv(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.color"), 1,
+      glUseProgram(blinnPhongSP);
+      glUniform3fv(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.color"), 1,
                    glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-      glUniform1f(glGetUniformLocation(objectSP, "AMBIENT_LIGHT.intensity"), 1.0f);
+      glUniform1f(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.intensity"), 1.0f);
       glUseProgram(0);
 
-      // Notifying that all routine after object shader recompilation is done
-      objectShadersAreRecompiled = false;
-    }
-
-    // If light shaders are recompiled
-    if (lightShadersAreRecompiled) {
-      // Setting uniform values
-      glUseProgram(lightSP);
-      // make some stuff
-      glUseProgram(0);
-
-      // Notifying that all routine after light shader recompilation is done
-      lightShadersAreRecompiled = false;
+      // Notifying that all routine after blinnPhong shader recompilation is done
+      blinnPhongShadersAreRecompiled = false;
     }
 
     // Making scene objects float
@@ -305,8 +294,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Waiting for shaderWatchers to stop
-  objectShaderWatcherIsRunning = false;
-  objectShaderWatcherThread.join();
+  blinnPhongShaderWatcherIsRunning = false;
+  blinnPhongShaderWatcherThread.join();
   lightShaderWatcherIsRunning = false;
   lightShaderWatcherThread.join();
 

@@ -1,6 +1,8 @@
 #version 460 core
 
 uniform mat4 MODEL;
+uniform mat4 VIEW;
+uniform mat4 PROJ;
 
 uniform struct {
   float ambCoef;
@@ -53,5 +55,5 @@ void main() {
 
   // Calculating vertex position in clip space by vertex position,
   // MVP transformation and height vector
-  gl_Position = MODEL * vec4(aPos, 1.0f) + vec4(height, 0.0f);
+  gl_Position = PROJ * VIEW * (MODEL * vec4(aPos, 1.0f) + vec4(height, 0.0f));
 }

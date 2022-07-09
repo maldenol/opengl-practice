@@ -3,5 +3,5 @@
 out vec4 FragColor;
 
 void main() {
-  FragColor = vec4(gl_FragCoord.zzz, 0.1f);
+  FragColor = vec4(gl_FragCoord.zzz, 0.5f);
 }
