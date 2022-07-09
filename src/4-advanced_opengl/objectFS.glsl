@@ -5,7 +5,6 @@ const uint MAX_POINT_LIGHT_COUNT       = 8;
 const uint MAX_SPOT_LIGHT_COUNT        = 8;
 
 uniform vec3 VIEW_POS;
-uniform mat4 MODEL;
 
 uniform struct {
   vec3  color;

@@ -104,8 +104,8 @@ std::shared_ptr<Mesh> &SceneObject::getMeshPtr() noexcept { return _meshPtr; }
 
 // Other member functions
 
-void SceneObject::render(const BaseCamera               &camera,
-                         const std::vector<SceneObject> &sceneObjects) const {
+void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
+                         unsigned int instanceCount) const {
   if (_meshPtr == nullptr) return;
 
   const Mesh::Material &material      = _meshPtr->getMaterial();
@@ -132,7 +132,8 @@ void SceneObject::render(const BaseCamera               &camera,
   glUseProgram(shaderProgram);
 
   // Drawing mesh
-  glDrawElements(GL_TRIANGLES, _meshPtr->getIndexCount(), GL_UNSIGNED_INT, 0);
+  glDrawElementsInstanced(GL_TRIANGLES, _meshPtr->getIndexCount(), GL_UNSIGNED_INT, nullptr,
+                          instanceCount);
 
   // Unbinding shader program
   glUseProgram(0);

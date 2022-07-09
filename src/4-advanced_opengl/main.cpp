@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h>
 
 // GLM
+#include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
@@ -37,6 +38,11 @@ static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 static constexpr float                 kCameraVelocity      = 1.0f;
 static constexpr float                 kCameraSprintCoef    = 3.0f;
+static constexpr unsigned int          kOutlineMeshIndex    = 3;
+static constexpr unsigned int          kInstancingMeshIndex = 2;
+static constexpr unsigned int          kInstanceCount       = 1000;
+static constexpr float                 kInstanceMaxDistance = 10.0f;
+static constexpr float                 kInstanceMaxScale    = 5.0f;
 
 // Global variables
 float                gCurrTime{};
@@ -63,6 +69,8 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
 
 // Main function
 int main(int argc, char *argv[]) {
+  srand(time(0));
+
   // Initializing Qt Gui application
   QGuiApplication app = initQGuiApplication(argc, argv);
 
@@ -177,23 +185,23 @@ int main(int argc, char *argv[]) {
   std::atomic<bool> screenShaderWatcherIsRunning = true;
   std::atomic<bool> screenShadersAreRecompiled   = false;
   std::thread       screenShaderWatcherThread{shaderWatcher,
-                                       std::cref(screenShaderWatcherIsRunning),
-                                       std::ref(screenShadersAreRecompiled),
-                                       window,
-                                       std::ref(glfwContextMutex),
-                                       screenSP,
-                                       std::cref(screenShaderTypes),
-                                       std::cref(screenShaderFilenames)};
+                                        std::cref(screenShaderWatcherIsRunning),
+                                        std::ref(screenShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        screenSP,
+                                        std::cref(screenShaderTypes),
+                                        std::cref(screenShaderFilenames)};
   std::atomic<bool> normalShaderWatcherIsRunning = true;
   std::atomic<bool> normalShadersAreRecompiled   = false;
   std::thread       normalShaderWatcherThread{shaderWatcher,
-                                       std::cref(normalShaderWatcherIsRunning),
-                                       std::ref(normalShadersAreRecompiled),
-                                       window,
-                                       std::ref(glfwContextMutex),
-                                       normalSP,
-                                       std::cref(normalShaderTypes),
-                                       std::cref(normalShaderFilenames)};
+                                        std::cref(normalShaderWatcherIsRunning),
+                                        std::ref(normalShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        normalSP,
+                                        std::cref(normalShaderTypes),
+                                        std::cref(normalShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<Mesh::Material::Texture>> textures{
@@ -235,10 +243,10 @@ int main(int argc, char *argv[]) {
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   -3.0f,   0.0f, 2.0f},
-      glm::vec3{ 0.0f, 0.0f, 0.0f},
-      glm::vec3{   2.0f,   2.0f, 2.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
+      glm::vec3{  -3.0f, 0.0f, 2.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   2.0f, 2.0f, 2.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, objectSP, textures[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
@@ -291,14 +299,11 @@ int main(int argc, char *argv[]) {
 
   // Creating screen
   float screenVertices[] = {
-      -1.0f,  1.0f,  0.0f, 1.0f,
-      1.0f,  1.0f,  1.0f, 1.0f,
-      -1.0f, -1.0f,  0.0f, 0.0f,
-      1.0f, -1.0f,  1.0f, 0.0f,
+      -1.0f, 1.0f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+      -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f,
   };
   GLuint screenIndices[] = {
-    0, 2, 1,
-    1, 2, 3,
+      0, 2, 1, 1, 2, 3,
   };
   GLuint screenVAO = 0, screenVBO = 0, screenEBO = 0;
   glGenVertexArrays(1, &screenVAO);
@@ -308,11 +313,50 @@ int main(int argc, char *argv[]) {
   glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(screenVertices), &screenVertices, GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void *>(0));
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        reinterpret_cast<void *>(2 * sizeof(float)));
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, screenEBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(screenIndices), &screenIndices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
+  // Generating instancing model matrices
+  glm::mat4 modelMatrices[kInstanceCount];
+  for (unsigned int i = 0; i < kInstanceCount; ++i) {
+    modelMatrices[i] = glm::mat4{1.0f};
+
+    modelMatrices[i] = glm::translate(modelMatrices[i], glm::sphericalRand(kInstanceMaxDistance));
+    modelMatrices[i] = glm::rotate(
+        modelMatrices[i],
+        glm::radians(360.0f * static_cast<float>(rand()) / static_cast<float>(RAND_MAX)),
+        glm::sphericalRand(1.0f));
+    modelMatrices[i] = glm::scale(
+        modelMatrices[i],
+        kInstanceMaxScale * glm::vec3{static_cast<float>(rand()) / static_cast<float>(RAND_MAX)});
+  }
+  GLuint instanceVBO;
+  glGenBuffers(1, &instanceVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(modelMatrices), &modelMatrices[0], GL_STATIC_DRAW);
+  glBindVertexArray(sceneObjects[kInstancingMeshIndex].getMeshPtr()->getVAO());
+  glEnableVertexAttribArray(4);
+  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                        reinterpret_cast<void *>(0 * sizeof(float)));
+  glVertexAttribDivisor(4, 1);
+  glEnableVertexAttribArray(5);
+  glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                        reinterpret_cast<void *>(4 * sizeof(float)));
+  glVertexAttribDivisor(5, 1);
+  glEnableVertexAttribArray(6);
+  glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                        reinterpret_cast<void *>(8 * sizeof(float)));
+  glVertexAttribDivisor(6, 1);
+  glEnableVertexAttribArray(7);
+  glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                        reinterpret_cast<void *>(12 * sizeof(float)));
+  glVertexAttribDivisor(7, 1);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
@@ -414,8 +458,6 @@ int main(int argc, char *argv[]) {
     glStencilMask(0xff);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    // Mesh to outline
-    constexpr unsigned int kOutlineMeshIndex = 2;
     // Configuring stencil testing
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
@@ -427,7 +469,11 @@ int main(int argc, char *argv[]) {
         glStencilMask(0x00);
       }
 
-      sceneObjects[i].render(gCamera, sceneObjects);
+      if (i == kInstancingMeshIndex) {
+        sceneObjects[i].render(gCamera, sceneObjects, kInstanceCount);
+      } else {
+        sceneObjects[i].render(gCamera, sceneObjects);
+      }
 
       if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
         GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
@@ -443,7 +489,8 @@ int main(int argc, char *argv[]) {
     glDisable(GL_DEPTH_TEST);
     // Preparing the mesh
     const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-    const GLuint initShaderProgram{sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
+    const GLuint    initShaderProgram{
+        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
     sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
     // Drawing outline
@@ -722,8 +769,6 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
 
   // Initializing static variables
   if (sSceneObjectPtrs.size() == 0) {
-    srand(time(0));
-
     for (unsigned int i = startIndex; i < startIndex + count; ++i) {
       sSceneObjectPtrs.push_back(&sceneObjects[i]);
       sInitialTranslations.push_back(sceneObjects[i].getTranslate());
