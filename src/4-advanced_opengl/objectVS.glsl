@@ -34,6 +34,7 @@ out Interpolators {
 
 // Vertex shader
 void main() {
+  // Getting correct model matrix (0'th instanced is ignored)
   mat4 model = MODEL * float(gl_InstanceID <= 0) + aModel * float(gl_InstanceID > 0);
 
   // Getting TBN matrix to transform normals from normal map from tangent space to world one

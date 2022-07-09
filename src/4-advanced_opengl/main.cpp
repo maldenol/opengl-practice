@@ -90,33 +90,65 @@ int main(int argc, char *argv[]) {
   // Enabling mouse centering
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  // Creating and binding own framebuffer
-  GLuint fbo = 0;
-  glGenFramebuffers(1, &fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  // Creating and binding texture for own framebuffer
-  GLuint texture = 0;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  // Creating and binding postprocessing framebuffer
+  GLuint postprocessingFBO = 0;
+  glGenFramebuffers(1, &postprocessingFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFBO);
+  // Creating and binding texture for postprocessing framebuffer
+  GLuint postprocessingTexture = 0;
+  glGenTextures(1, &postprocessingTexture);
+  glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, kWidth, kHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-  // Creating and binding renderbuffer for own framebuffer
-  GLuint rbo = 0;
-  glGenRenderbuffers(1, &rbo);
-  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocessingTexture,
+                         0);
+  // Creating and binding renderbuffer for postprocessing framebuffer
+  GLuint postprocessingRBO = 0;
+  glGenRenderbuffers(1, &postprocessingRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, postprocessingRBO);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kWidth, kHeight);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-  // Checking if own framebuffer is complete and unbinding it
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                            postprocessingRBO);
+  // Checking if postprocessing framebuffer is complete and unbinding it
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &fbo);
+    glDeleteFramebuffers(1, &postprocessingFBO);
 
-    std::cout << "Framebuffer object is incomplete!" << std::endl;
+    std::cout << "Postprocessing framebuffer object is incomplete!" << std::endl;
 
     return -1;
   }
+  // Creating and binding multisampling framebuffer
+  GLuint multisamplingFBO = 0;
+  glGenFramebuffers(1, &multisamplingFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
+  // Creating and binding texture for multisampling framebuffer
+  GLuint multisamplingTexture = 0;
+  glGenTextures(1, &multisamplingTexture);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisamplingTexture);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, kWidth, kHeight, GL_TRUE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE,
+                         multisamplingTexture, 0);
+  // Creating and binding renderbuffer for multisampling framebuffer
+  GLuint multisamplingRBO = 0;
+  glGenRenderbuffers(1, &multisamplingRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, multisamplingRBO);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, kWidth, kHeight);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                            multisamplingRBO);
+  // Checking if multisampling framebuffer is complete and unbinding it
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &multisamplingFBO);
+
+    std::cout << "Multisampling framebuffer object is incomplete!" << std::endl;
+
+    return -1;
+  }
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Creating arrays of types of shaders
@@ -364,6 +396,8 @@ int main(int argc, char *argv[]) {
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
   // Enabling culling
   glEnable(GL_CULL_FACE);
+  // Enabling MSAA
+  glEnable(GL_MULTISAMPLE);
 
   // Enabling point size functionality
   glEnable(GL_PROGRAM_POINT_SIZE);
@@ -394,10 +428,13 @@ int main(int argc, char *argv[]) {
 
     // If window should close
     if (glfwWindowShouldClose(window)) {
-      // Deleting own framebuffer
-      glDeleteFramebuffers(1, &fbo);
-      glDeleteTextures(1, &texture);
-      glDeleteRenderbuffers(1, &rbo);
+      // Deleting postprocessing and multisampling framebuffers
+      glDeleteFramebuffers(1, &postprocessingFBO);
+      glDeleteTextures(1, &postprocessingTexture);
+      glDeleteRenderbuffers(1, &postprocessingRBO);
+      glDeleteFramebuffers(1, &multisamplingFBO);
+      glDeleteTextures(1, &multisamplingTexture);
+      glDeleteRenderbuffers(1, &multisamplingRBO);
 
       // Releasing OpenGL context and mutex
       glfwMakeContextCurrent(nullptr);
@@ -442,8 +479,8 @@ int main(int argc, char *argv[]) {
         ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
     if (gEnablePostprocessing) {
-      // Bind own framebuffer
-      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+      // Binding multisampling framebuffer
+      glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
     }
 
     // Enabling Z- and stencil testing
@@ -478,7 +515,11 @@ int main(int argc, char *argv[]) {
       if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
         GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
         sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
-        sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
+        if (i == kInstancingMeshIndex) {
+          sceneObjects[i].render(gCamera, std::vector<SceneObject>{}, kInstanceCount);
+        } else {
+          sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
+        }
         sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
       }
     }
@@ -500,6 +541,13 @@ int main(int argc, char *argv[]) {
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
 
     if (gEnablePostprocessing) {
+      // Converting multisampling FBO data to postprocessing one
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, multisamplingFBO);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, postprocessingFBO);
+      glBlitFramebuffer(0, 0, kWidth, kHeight, 0, 0, kWidth, kHeight, GL_COLOR_BUFFER_BIT,
+                        GL_LINEAR);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       // Binding default framebuffer
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       // Clearing color buffer
@@ -510,7 +558,7 @@ int main(int argc, char *argv[]) {
       glBindVertexArray(screenVAO);
       glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture);
+      glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
       glUseProgram(screenSP);
       glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

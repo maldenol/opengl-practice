@@ -41,6 +41,7 @@ GLFWwindow *glengine::createWindow(int width, int height, const std::string &tit
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openGLVersionMajor);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openGLVersionMinor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_SAMPLES, 4);
 
   // Creating GLFW window
   GLFWwindow *window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);

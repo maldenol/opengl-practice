@@ -41,6 +41,7 @@ void generateNormal(uint index) {
   EndPrimitive();
 }
 
+// Geometry shader
 void main() {
   for (uint i = 0; i < 3; ++i) {
     generateNormal(i);
