@@ -46,6 +46,8 @@ Camera6DoFController gCameraController{&gCamera};
 SceneObject         *gFlashlightSceneObjectPtr{};
 int                  gPolygonMode{};
 bool                 gEnableSceneObjectsFloating{true};
+bool                 gEnablePostprocessing{false};
+bool                 gEnableNormals{false};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -122,6 +124,11 @@ int main(int argc, char *argv[]) {
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
+  std::vector<GLuint> normalShaderTypes{
+      GL_VERTEX_SHADER,
+      GL_GEOMETRY_SHADER,
+      GL_FRAGMENT_SHADER,
+  };
   // Creating arrays of filenames of shaders
   std::vector<QString> objectShaderFilenames{
       getAbsolutePathRelativeToExecutable("objectVS.glsl"),
@@ -135,10 +142,16 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("screenVS.glsl"),
       getAbsolutePathRelativeToExecutable("screenFS.glsl"),
   };
+  std::vector<QString> normalShaderFilenames{
+      getAbsolutePathRelativeToExecutable("normalVS.glsl"),
+      getAbsolutePathRelativeToExecutable("normalGS.glsl"),
+      getAbsolutePathRelativeToExecutable("normalFS.glsl"),
+  };
   // Creating shader programs
   GLuint objectSP = glCreateProgram();
   GLuint lightSP  = glCreateProgram();
   GLuint screenSP = glCreateProgram();
+  GLuint normalSP = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> objectShaderWatcherIsRunning = true;
@@ -171,6 +184,16 @@ int main(int argc, char *argv[]) {
                                        screenSP,
                                        std::cref(screenShaderTypes),
                                        std::cref(screenShaderFilenames)};
+  std::atomic<bool> normalShaderWatcherIsRunning = true;
+  std::atomic<bool> normalShadersAreRecompiled   = false;
+  std::thread       normalShaderWatcherThread{shaderWatcher,
+                                       std::cref(normalShaderWatcherIsRunning),
+                                       std::ref(normalShadersAreRecompiled),
+                                       window,
+                                       std::ref(glfwContextMutex),
+                                       normalSP,
+                                       std::cref(normalShaderTypes),
+                                       std::cref(normalShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<Mesh::Material::Texture>> textures{
@@ -364,17 +387,6 @@ int main(int argc, char *argv[]) {
       objectShadersAreRecompiled = false;
     }
 
-    // If light shaders are recompiled
-    if (lightShadersAreRecompiled) {
-      // Setting uniform values
-      glUseProgram(lightSP);
-      // make some stuff
-      glUseProgram(0);
-
-      // Notifying that all routine after light shader recompilation is done
-      lightShadersAreRecompiled = false;
-    }
-
     // Making scene objects float
     if (gEnableSceneObjectsFloating) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
@@ -385,8 +397,10 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
-    // // Bind own framebuffer
-    // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    if (gEnablePostprocessing) {
+      // Bind own framebuffer
+      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    }
 
     // Enabling Z- and stencil testing
     glEnable(GL_DEPTH_TEST);
@@ -414,6 +428,13 @@ int main(int argc, char *argv[]) {
       }
 
       sceneObjects[i].render(gCamera, sceneObjects);
+
+      if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
+        GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
+        sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
+        sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
+        sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
+      }
     }
     // Configuring stencil testing
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
@@ -431,24 +452,26 @@ int main(int argc, char *argv[]) {
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
 
-    // // Binding default framebuffer
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // // Clearing color buffer
-    // glClear(GL_COLOR_BUFFER_BIT);
-    // // Rendering screen
-    // glDisable(GL_STENCIL_TEST);
-    // glDisable(GL_DEPTH_TEST);
-    // glBindVertexArray(screenVAO);
-    // glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, texture);
-    // glUseProgram(screenSP);
-    // glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
-    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    // glUseProgram(0);
-    // glBindTexture(GL_TEXTURE_2D, 0);
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glBindVertexArray(0);
+    if (gEnablePostprocessing) {
+      // Binding default framebuffer
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      // Clearing color buffer
+      glClear(GL_COLOR_BUFFER_BIT);
+      // Rendering screen
+      glDisable(GL_STENCIL_TEST);
+      glDisable(GL_DEPTH_TEST);
+      glBindVertexArray(screenVAO);
+      glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture);
+      glUseProgram(screenSP);
+      glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+      glUseProgram(0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindVertexArray(0);
+    }
 
     // Swapping front and back buffers
     glfwSwapBuffers(window);
@@ -608,6 +631,26 @@ void processUserInput(GLFWwindow *window) {
       sPressed = true;
 
       gEnableSceneObjectsFloating = !gEnableSceneObjectsFloating;
+    }
+  }
+
+  // Toggling postprocessing
+  if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      gEnablePostprocessing = !gEnablePostprocessing;
+    }
+  }
+
+  // Toggling normals rendering
+  if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      gEnableNormals = !gEnableNormals;
     }
   }
 
