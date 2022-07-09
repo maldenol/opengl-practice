@@ -298,6 +298,10 @@ int main(int argc, char *argv[]) {
   // Enabling culling
   glEnable(GL_CULL_FACE);
 
+  // Enabling point size functionality
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  glPointSize(10.0f);
+
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
 
@@ -322,7 +326,19 @@ int main(int argc, char *argv[]) {
     glfwMakeContextCurrent(window);
 
     // If window should close
-    if (glfwWindowShouldClose(window)) break;
+    if (glfwWindowShouldClose(window)) {
+      // Deleting own framebuffer
+      glDeleteFramebuffers(1, &fbo);
+      glDeleteTextures(1, &texture);
+      glDeleteRenderbuffers(1, &rbo);
+
+      // Releasing OpenGL context and mutex
+      glfwMakeContextCurrent(nullptr);
+      glfwContextLock.unlock();
+
+      // Breaking render cycle
+      break;
+    }
 
     // Processing window events
     glfwPollEvents();
@@ -369,8 +385,8 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForwardDirection());
 
-    // Bind own framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    // // Bind own framebuffer
+    // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     // Enabling Z- and stencil testing
     glEnable(GL_DEPTH_TEST);
@@ -415,24 +431,24 @@ int main(int argc, char *argv[]) {
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
 
-    // Binding default framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // Clearing color buffer
-    glClear(GL_COLOR_BUFFER_BIT);
-    // Rendering screen
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_DEPTH_TEST);
-    glBindVertexArray(screenVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glUseProgram(screenSP);
-    glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    glUseProgram(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    // // Binding default framebuffer
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // // Clearing color buffer
+    // glClear(GL_COLOR_BUFFER_BIT);
+    // // Rendering screen
+    // glDisable(GL_STENCIL_TEST);
+    // glDisable(GL_DEPTH_TEST);
+    // glBindVertexArray(screenVAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, texture);
+    // glUseProgram(screenSP);
+    // glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    // glUseProgram(0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindVertexArray(0);
 
     // Swapping front and back buffers
     glfwSwapBuffers(window);
@@ -443,13 +459,6 @@ int main(int argc, char *argv[]) {
 
     std::this_thread::sleep_for(kRenderCycleInterval);
   }
-
-  // Deleting own framebuffer
-  glfwMakeContextCurrent(window);
-  glDeleteFramebuffers(1, &fbo);
-  glDeleteTextures(1, &texture);
-  glDeleteRenderbuffers(1, &rbo);
-  glfwMakeContextCurrent(nullptr);
 
   // Waiting for shaderWatchers to stop
   objectShaderWatcherIsRunning = false;
@@ -627,18 +636,12 @@ void processUserInput(GLFWwindow *window) {
       switch (gPolygonMode) {
         case 0:
           glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-          glDisable(GL_PROGRAM_POINT_SIZE);
-          glPointSize(1);
           break;
         case 1:
           glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-          glDisable(GL_PROGRAM_POINT_SIZE);
-          glPointSize(1);
           break;
         case 2:
           glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-          glEnable(GL_PROGRAM_POINT_SIZE);
-          glPointSize(10);
           break;
       }
     }

@@ -24,10 +24,12 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aTangent;
 layout (location = 3) in vec2 aTexCoords;
 
-out vec3 fWorldPos;
-out vec3 fNormal;
-out mat3 fTBN;
-out vec2 fTexCoords;
+out Interpolators {
+  vec3 worldPos;
+  vec3 normal;
+  mat3 TBN;
+  vec2 texCoords;
+} o;
 
 // Vertex shader
 void main() {
@@ -46,10 +48,10 @@ void main() {
   vec3 height = MATERIAL.maxHeight * N * (texture(MATERIAL.heightMap, aTexCoords).r * 2.0f - 1.0f);
 
   // Passing interpolators to rasterizer
-  fWorldPos   = vec3(MODEL * vec4(aPos, 1.0f)) + height;
-  fNormal     = aNormal;
-  fTBN        = TBN;
-  fTexCoords  = aTexCoords;
+  o.worldPos   = vec3(MODEL * vec4(aPos, 1.0f)) + height;
+  o.normal     = aNormal;
+  o.TBN        = TBN;
+  o.texCoords  = aTexCoords;
 
   // Calculating vertex position in clip space by vertex position,
   // MVP transformation and height vector
