@@ -11,9 +11,14 @@ using namespace glengine;
 
 // Constructors, assignment operators and destructor
 
+// Default constructor
+BaseCamera::BaseCamera() noexcept {}
+
 // Parameterized constructor
-BaseCamera::BaseCamera() noexcept : _pos{glm::vec3{0.0f}}, _worldUp{glm::vec3{0.0f, 1.0f, 0.0f}} {
-  this->look(glm::vec3{0.0f, 0.0f, -1.0f});
+BaseCamera::BaseCamera(const glm::vec3 &pos, const glm::vec3 &worldUp,
+                       const glm::vec3 &lookDir) noexcept
+    : _pos{pos}, _worldUp{worldUp} {
+  look(lookDir);
 }
 
 // Copy constructor
@@ -59,33 +64,39 @@ BaseCamera::~BaseCamera() noexcept {}
 
 // Setters
 
-void BaseCamera::setPosition(const glm::vec3 &pos) noexcept { _pos = pos; }
+void BaseCamera::setPos(const glm::vec3 &pos) noexcept { _pos = pos; }
 
 void BaseCamera::setWorldUp(const glm::vec3 &worldUp) noexcept {
   _worldUp = glm::normalize(worldUp);
 }
 
+void BaseCamera::setForward(const glm::vec3 &forward) noexcept { _forward = forward; }
+
+void BaseCamera::setRight(const glm::vec3 &right) noexcept { _right = right; }
+
+void BaseCamera::setUp(const glm::vec3 &up) noexcept { _up = up; }
+
 // Getters
 
-const glm::vec3 &BaseCamera::getPosition() const noexcept { return _pos; }
+const glm::vec3 &BaseCamera::getPos() const noexcept { return _pos; }
 
-glm::vec3 &BaseCamera::getPosition() noexcept { return _pos; }
+glm::vec3 &BaseCamera::getPos() noexcept { return _pos; }
 
-const glm::vec3 &BaseCamera::getWorldUpDirection() const noexcept { return _worldUp; }
+const glm::vec3 &BaseCamera::getWorldUp() const noexcept { return _worldUp; }
 
-glm::vec3 &BaseCamera::getWorldUpDirection() noexcept { return _worldUp; }
+glm::vec3 &BaseCamera::getWorldUp() noexcept { return _worldUp; }
 
-const glm::vec3 &BaseCamera::getForwardDirection() const noexcept { return _forward; }
+const glm::vec3 &BaseCamera::getForward() const noexcept { return _forward; }
 
-glm::vec3 &BaseCamera::getForwardDirection() noexcept { return _forward; }
+glm::vec3 &BaseCamera::getForward() noexcept { return _forward; }
 
-const glm::vec3 &BaseCamera::getRightDirection() const noexcept { return _right; }
+const glm::vec3 &BaseCamera::getRight() const noexcept { return _right; }
 
-glm::vec3 &BaseCamera::getRightDirection() noexcept { return _right; }
+glm::vec3 &BaseCamera::getRight() noexcept { return _right; }
 
-const glm::vec3 &BaseCamera::getUpDirection() const noexcept { return _up; }
+const glm::vec3 &BaseCamera::getUp() const noexcept { return _up; }
 
-glm::vec3 &BaseCamera::getUpDirection() noexcept { return _up; }
+glm::vec3 &BaseCamera::getUp() noexcept { return _up; }
 
 // Other member functions
 

@@ -8,8 +8,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 // Generates icosphere mesh based on radius, shader program and textures
-glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
-                                           const std::vector<Mesh::Material::Texture> &textures) {
+glengine::Mesh glengine::generateIcoSphere(
+    float radius, GLuint shaderProgram,
+    const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs) {
   constexpr unsigned int kVertexCount = 12;      // count of vertices
   constexpr unsigned int kIndexCount  = 20 * 3;  // 3 indexes for each triangle
 
@@ -30,13 +31,13 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
   for (int p = 0; p < 2; ++p) {
     constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
 
-    const int currPoleOffset = p * 6;
+    const unsigned int currPoleOffset = p * 6;
 
     // For each vertex of the hemisphere of appropriate pole except the pole vertex
     for (int v = 0; v < 5; ++v) {
-      const float lerpByIndex     = v / 5.0f;
-      const float angle           = 2.0f * M_PI * lerpByIndex;
-      const int   currVertexIndex = currPoleOffset + v;
+      const float        lerpByIndex     = v / 5.0f;
+      const float        angle           = 2.0f * M_PI * lerpByIndex;
+      const unsigned int currVertexIndex = currPoleOffset + v;
 
       // Creating a vertex
       vertices[currVertexIndex] =
@@ -54,7 +55,7 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
       }
     }
 
-    const int poleIndex = currPoleOffset + 5;
+    const unsigned int poleIndex = currPoleOffset + 5;
 
     // Creating pole vertex
     vertices[poleIndex] = glm::vec3{0.0f, 0.0f, 0.0f};
@@ -71,9 +72,9 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
 
     // For each vertex of the hemisphere of appropriate pole except the pole vertex
     for (int v = 0; v < 5; ++v) {
-      const int currVertexIndex = currPoleOffset + v;
-      const int nextVertexIndex = currPoleOffset + (v + 1) % 5;
-      const int indexOffset     = (currPoleOffset - p + v) * 3;
+      const unsigned int currVertexIndex = currPoleOffset + v;
+      const unsigned int nextVertexIndex = currPoleOffset + (v + 1) % 5;
+      const unsigned int indexOffset     = (currPoleOffset - p + v) * 3;
 
       // Configuring triangles of the hemisphere
       indices[indexOffset]     = currVertexIndex;
@@ -103,8 +104,8 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
     // Setting tangents of vertices of the hemisphere of appropriate pole including the pole vertex
     // For each vertex of the hemisphere of appropriate pole except the pole vertex
     for (int v = 0; v < 5; ++v) {
-      const int currVertexIndex = currPoleOffset + v;
-      const int nextVertexIndex = currPoleOffset + (v + 1) % 5;
+      const unsigned int currVertexIndex = currPoleOffset + v;
+      const unsigned int nextVertexIndex = currPoleOffset + (v + 1) % 5;
 
       tangents[currVertexIndex] = calculateTangent(
           std::vector<glm::vec3>{vertices[poleIndex], vertices[currVertexIndex],
@@ -119,11 +120,11 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
 
   // For each pair of vertices except pole vertices
   for (int v = 0; v < 5; ++v) {
-    const int currUpperVertexIndex = v;
-    const int nextUpperVertexIndex = (v + 1) % 5;
-    const int currLowerVertexIndex = 6 + (5 - v) % 5;
-    const int nextLowerVertexIndex = 6 + (10 - (v + 1)) % 5;
-    const int indexOffset          = 30 + v * 6;
+    const unsigned int currUpperVertexIndex = v;
+    const unsigned int nextUpperVertexIndex = (v + 1) % 5;
+    const unsigned int currLowerVertexIndex = 6 + (5 - v) % 5;
+    const unsigned int nextLowerVertexIndex = 6 + (10 - (v + 1)) % 5;
+    const unsigned int indexOffset          = 30 + v * 6;
 
     // Configuring triangles between hemispheres
     indices[indexOffset]     = currUpperVertexIndex;
@@ -145,7 +146,7 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
 
   // Configuring VBO attributes
   std::vector<Mesh::VBOAttribute> vboAttributes{};
-  constexpr int                   kOffset = 11;
+  constexpr unsigned int          kOffset = 11;
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                              reinterpret_cast<void *>(0)});
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
@@ -156,9 +157,8 @@ glengine::Mesh glengine::generateIcoSphere(float radius, GLuint shaderProgram,
                                              reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Creating and returning the mesh
-  return Mesh{
-      vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
-                     textures}
-  };
+  return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
+              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
+                                                              kInitSpecCoef, kInitGlossiness,
+                                                              kInitMaxHeight, texturePtrs})};
 }

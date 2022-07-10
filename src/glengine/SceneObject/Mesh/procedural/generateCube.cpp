@@ -5,9 +5,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 // Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
-glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableCubemap,
-                                      GLuint                                      shaderProgram,
-                                      const std::vector<Mesh::Material::Texture> &textures) {
+glengine::Mesh glengine::generateCube(
+    float size, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
+    const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
       static_cast<float>(size) / static_cast<float>(lod);  // discrete quad's side xy size
@@ -39,16 +39,16 @@ glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableC
   for (unsigned int s = 0; s < 6; ++s) {
     // For each quad of the side
     for (unsigned int v = 0; v < quadPerSideCount; ++v) {
-      const int   row    = v / lod;
-      const int   column = v % lod;
-      const float leftX  = column * xyQuadSize - halfSize;
-      const float rightX = (column + 1) * xyQuadSize - halfSize;
-      const float downY  = row * xyQuadSize - halfSize;
-      const float upY    = (row + 1) * xyQuadSize - halfSize;
-      const float leftU  = column * uQuadSize;
-      const float rightU = (column + 1) * uQuadSize;
-      const float downV  = row * vQuadSize;
-      const float upV    = (row + 1) * vQuadSize;
+      const unsigned int row    = v / lod;
+      const unsigned int column = v % lod;
+      const float        leftX  = column * xyQuadSize - halfSize;
+      const float        rightX = (column + 1) * xyQuadSize - halfSize;
+      const float        downY  = row * xyQuadSize - halfSize;
+      const float        upY    = (row + 1) * xyQuadSize - halfSize;
+      const float        leftU  = column * uQuadSize;
+      const float        rightU = (column + 1) * uQuadSize;
+      const float        downV  = row * vQuadSize;
+      const float        upV    = (row + 1) * vQuadSize;
 
       constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
       constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
@@ -207,8 +207,8 @@ glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableC
           break;
       }
 
-      const int vertexOffset = s * vertexPerSideCount + v * 4;
-      const int indexOffset  = s * quadLOD * 6 + v * 6;
+      const unsigned int vertexOffset = s * vertexPerSideCount + v * 4;
+      const unsigned int indexOffset  = s * quadLOD * 6 + v * 6;
 
       vertices[vertexOffset]     = lu;
       vertices[vertexOffset + 1] = ru;
@@ -248,7 +248,7 @@ glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableC
 
   // Configuring VBO attributes
   std::vector<Mesh::VBOAttribute> vboAttributes{};
-  constexpr int                   kOffset = 11;
+  constexpr unsigned int          kOffset = 11;
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                              reinterpret_cast<void *>(0)});
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
@@ -259,9 +259,8 @@ glengine::Mesh glengine::generateCube(float size, unsigned int lod, bool enableC
                                              reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Creating and returning the mesh
-  return Mesh{
-      vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
-                     textures}
-  };
+  return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
+              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
+                                                              kInitSpecCoef, kInitGlossiness,
+                                                              kInitMaxHeight, texturePtrs})};
 }

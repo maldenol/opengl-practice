@@ -105,25 +105,8 @@ std::shared_ptr<Mesh> &SceneObject::getMeshPtr() noexcept { return _meshPtr; }
 // Other member functions
 
 void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
-                         unsigned int instanceCount) const {
-  if (_meshPtr == nullptr) return;
-
-  const Mesh::Material &material      = _meshPtr->getMaterial();
-  const GLuint          shaderProgram = _meshPtr->getShaderProgram();
-
-  // Binding VAO with associated EBO and VBO
-  glBindVertexArray(_meshPtr->getVAO());
-
-  // For each texture
-  for (size_t i = 0; i < material.textures.size(); ++i) {
-    // Binding texture to texture unit
-    glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
-    if (material.textures[i].isCubemap) {
-      glBindTexture(GL_TEXTURE_CUBE_MAP, material.textures[i].texture);
-    } else {
-      glBindTexture(GL_TEXTURE_2D, material.textures[i].texture);
-    }
-  }
+                         unsigned int instanceCount) const noexcept {
+  if (_meshPtr == nullptr || !_meshPtr->isComplete()) return;
 
   // Updating shader uniform variables
   updateShaderMVP(camera);
@@ -131,29 +114,8 @@ void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject
   updateShaderLights(sceneObjects);
   updateShaderMaterial();
 
-  // Setting specific shader program to use for render
-  glUseProgram(shaderProgram);
-
-  // Drawing mesh
-  glDrawElementsInstanced(GL_TRIANGLES, _meshPtr->getIndexCount(), GL_UNSIGNED_INT, nullptr,
-                          instanceCount);
-
-  // Unbinding shader program
-  glUseProgram(0);
-
-  // For each texture
-  for (size_t i = 0; i < material.textures.size(); ++i) {
-    // Unbinding texture from texture unit
-    glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
-    if (material.textures[i].isCubemap) {
-      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-    } else {
-      glBindTexture(GL_TEXTURE_2D, 0);
-    }
-  }
-
-  // Unbinding VAO
-  glBindVertexArray(0);
+  // Rendering mesh
+  _meshPtr->render(instanceCount);
 }
 
 void SceneObject::updateShaderMVP(const BaseCamera &camera) const noexcept {
@@ -183,8 +145,7 @@ void SceneObject::updateShaderViewPos(const BaseCamera &camera) const noexcept {
   const GLuint shaderProgram = _meshPtr->getShaderProgram();
   glUseProgram(shaderProgram);
 
-  glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1,
-               glm::value_ptr(camera.getPosition()));
+  glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1, glm::value_ptr(camera.getPos()));
 
   glUseProgram(0);
 }
@@ -194,7 +155,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   std::vector<SceneObject> directionalLightSceneObjects{};
   std::vector<SceneObject> pointLightSceneObjects{};
   std::vector<SceneObject> spotLightSceneObjects{};
-  for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
+  for (size_t i = 0; i < sceneObjects.size(); ++i) {
     if (sceneObjects[i].getLightPtr() == nullptr) continue;
 
     const SceneObject &sceneObject = sceneObjects[i];
@@ -238,7 +199,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
 
   // Directional lights
-  for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
+  for (size_t i = 0; i < directionalLightSceneObjects.size(); ++i) {
     const SceneObject      &sceneObject = directionalLightSceneObjects[i];
     const DirectionalLight *directionalLight =
         dynamic_cast<const DirectionalLight *>(sceneObject.getLightPtr().get());
@@ -263,7 +224,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   }
 
   // Point lights
-  for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
+  for (size_t i = 0; i < pointLightSceneObjects.size(); ++i) {
     const SceneObject &sceneObject = pointLightSceneObjects[i];
     const PointLight  *pointLight =
         dynamic_cast<const PointLight *>(sceneObject.getLightPtr().get());
@@ -286,7 +247,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   }
 
   // Spot lights
-  for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
+  for (size_t i = 0; i < spotLightSceneObjects.size(); ++i) {
     const SceneObject &sceneObject = spotLightSceneObjects[i];
     const SpotLight   *spotLight = dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
 
@@ -331,15 +292,15 @@ void SceneObject::updateShaderMaterial() const noexcept {
   glUseProgram(shaderProgram);
 
   glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.ambCoef"),
-              _meshPtr->getMaterial().ambCoef);
+              _meshPtr->getMaterialPtr()->ambCoef);
   glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.diffCoef"),
-              _meshPtr->getMaterial().diffCoef);
+              _meshPtr->getMaterialPtr()->diffCoef);
   glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.specCoef"),
-              _meshPtr->getMaterial().specCoef);
+              _meshPtr->getMaterialPtr()->specCoef);
   glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.glossiness"),
-              _meshPtr->getMaterial().glossiness);
+              _meshPtr->getMaterialPtr()->glossiness);
   glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.maxHeight"),
-              _meshPtr->getMaterial().maxHeight);
+              _meshPtr->getMaterialPtr()->maxHeight);
   glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.albedoMap"), 0);
   glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.normalMap"), 1);
   glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.heightMap"), 2);

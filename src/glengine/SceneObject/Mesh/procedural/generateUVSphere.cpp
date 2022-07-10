@@ -5,8 +5,9 @@
 #include <cmath>
 
 // Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
-glengine::Mesh glengine::generateUVSphere(float radius, unsigned int lod, GLuint shaderProgram,
-                                          const std::vector<Mesh::Material::Texture> &textures) {
+glengine::Mesh glengine::generateUVSphere(
+    float radius, unsigned int lod, GLuint shaderProgram,
+    const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs) {
   // Incrementing level-of-detail
   ++lod;
 
@@ -67,9 +68,9 @@ glengine::Mesh glengine::generateUVSphere(float radius, unsigned int lod, GLuint
       glm::vec2 ldUV{ldU, ldV};
       glm::vec2 rdUV{rdU, rdV};
 
-      const int index        = c * rows + r;
-      const int vertexOffset = index * 4;
-      const int indexOffset  = index * 6;
+      const unsigned int index        = c * rows + r;
+      const unsigned int vertexOffset = index * 4;
+      const unsigned int indexOffset  = index * 6;
 
       vertices[vertexOffset]     = lu * radius;
       vertices[vertexOffset + 1] = ru * radius;
@@ -109,7 +110,7 @@ glengine::Mesh glengine::generateUVSphere(float radius, unsigned int lod, GLuint
 
   // Configuring VBO attributes
   std::vector<Mesh::VBOAttribute> vboAttributes{};
-  constexpr int                   kOffset = 11;
+  constexpr unsigned int          kOffset = 11;
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                              reinterpret_cast<void *>(0)});
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
@@ -120,9 +121,8 @@ glengine::Mesh glengine::generateUVSphere(float radius, unsigned int lod, GLuint
                                              reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Creating and returning the mesh
-  return Mesh{
-      vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
-                     textures}
-  };
+  return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
+              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
+                                                              kInitSpecCoef, kInitGlossiness,
+                                                              kInitMaxHeight, texturePtrs})};
 }

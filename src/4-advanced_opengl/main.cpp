@@ -49,7 +49,6 @@ float                gDeltaTime{};
 PerspectiveCamera    gCamera{};
 Camera6DoFController gCameraController{&gCamera};
 SceneObject         *gFlashlightSceneObjectPtr{};
-SceneObject         *gSkyboxSceneObjectPtr{};
 int                  gPolygonMode{};
 bool                 gEnableSceneObjectsFloating{true};
 bool                 gEnablePostprocessing{false};
@@ -296,26 +295,33 @@ int main(int argc, char *argv[]) {
                                        std::cref(lenseShaderFilenames)};
 
   // Loading textures
-  std::vector<std::vector<Mesh::Material::Texture>> textures{
-      std::vector<Mesh::Material::Texture>{},
-      std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false},Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false},
-                                           Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false},
-                                           Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false},
-                                           Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false},
-                                           //Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false},
-          Mesh::Material::Texture{loadCubemap(std::vector<std::string>{
-                                      "cubemapXP.png",
-                                      "cubemapXN.png",
-                                      "cubemapYP.png",
-                                      "cubemapYN.png",
-                                      "cubemapZP.png",
-                                      "cubemapZN.png",
-                                  }),
-                                  6, true},
-                                           },
-      std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{loadTexture("cubemap.png"), 0, false},}
+  std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{},
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false}),std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false}),
+                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false}),
+          std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadCubemap(std::vector<std::string>{
+                                          "cubemapXP.png",
+                                          "cubemapXN.png",
+                                          "cubemapYP.png",
+                                          "cubemapYN.png",
+                                          "cubemapZP.png",
+                                          "cubemapZN.png",
+                                      }),
+                                      6, true}),
+                                                            },
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("cubemap.png"), 0, false}),}
   };
 
   // Creating and configuring scene objects
@@ -326,37 +332,37 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
   // Upper plane
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
   // Central cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
   // Instance cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
@@ -375,7 +381,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
       1.0f, 0.45f, 0.075),
-      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
@@ -385,7 +391,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
                                   0.45f, 0.075, 15.0f, 13.0f),
-      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
@@ -395,7 +401,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
                                   0.45f, 0.075, 30.0f, 25.0f),
-      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   // Flashlight
   sceneObjects.push_back(SceneObject{
@@ -408,23 +414,26 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
+
   // Skybox
-  sceneObjects.push_back(SceneObject{
+  SceneObject skyboxSceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, -1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, textures[2]))
-  });
-  gSkyboxSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
+      std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, texturePtrVectors[2]))
+  };
 
   // Creating screen
   float screenVertices[] = {
-      -1.0f, 1.0f,  0.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-      -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f,
+      -1.0f, 1.0f,  0.0f, 1.0f,  // top-left
+      1.0f,  1.0f,  1.0f, 1.0f,  // top-right
+      -1.0f, -1.0f, 0.0f, 0.0f,  // bottom-left
+      1.0f,  -1.0f, 1.0f, 0.0f,  // bottom-right
   };
   GLuint screenIndices[] = {
-      0, 2, 1, 1, 2, 3,
+      0, 2, 1,  // top-right
+      1, 2, 3,  // bottom-left
   };
   GLuint screenVAO = 0, screenVBO = 0, screenEBO = 0;
   glGenVertexArrays(1, &screenVAO);
@@ -496,7 +505,8 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});
+  gCamera.setPos(glm::vec3{0.0f, 1.0f, 2.0f});
+  gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
   Camera5DoFController *camera5DoFController =
@@ -550,12 +560,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Updating flashlight SceneObjcet fields
-    gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
+    gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPos());
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
-        ->setDirection(gCameraController.getCamera()->getForwardDirection());
-
-    // Updating skybox SceneObject fields
-    gSkyboxSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
+        ->setDirection(gCameraController.getCamera()->getForward());
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
@@ -565,7 +572,10 @@ int main(int argc, char *argv[]) {
 
     // Enabling Z- and stencil testing
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilFunc(GL_ALWAYS, 1, 0xff);
 
     // Enabling blending
     glEnable(GL_BLEND);
@@ -574,18 +584,10 @@ int main(int argc, char *argv[]) {
     // Clearing color, depth and stencil buffers
     glStencilMask(0xff);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    // Configuring stencil testing
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glStencilFunc(GL_ALWAYS, 1, 0xff);
     glStencilMask(0x00);
 
     // Rendering scene objects
-    for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
-      if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
-        glDepthFunc(GL_LEQUAL);
-      }
-
+    for (size_t i = 0; i < sceneObjects.size(); ++i) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
       }
@@ -606,31 +608,28 @@ int main(int argc, char *argv[]) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0x00);
       }
-
-      if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
-        glDepthFunc(GL_LESS);
-      }
     }
 
     // Drawing outline
-    {
-      // Configuring stencil testing
-      glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-      glStencilMask(0x00);
-      // Disabling Z-testing
-      glDisable(GL_DEPTH_TEST);
-      // Preparing the mesh
-      const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-      const GLuint    initShaderProgram{
-          sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
-      sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
-      sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
-      // Drawing outline
-      sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
-      // Reverting mesh changes
-      sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
-      sceneObjects[kOutlineMeshIndex].setScale(initScale);
-    }
+    glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+    const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
+    const GLuint    initShaderProgram{
+        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
+    sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
+    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
+    sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
+    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
+    sceneObjects[kOutlineMeshIndex].setScale(initScale);
+    glEnable(GL_DEPTH_TEST);
+    glStencilFunc(GL_ALWAYS, 1, 0xff);
+
+    // Drawing skybox
+    glDepthFunc(GL_LEQUAL);
+    skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPos());
+    skyboxSceneObject.render(gCamera, std::vector<SceneObject>{});
+    glDepthFunc(GL_LESS);
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
@@ -657,6 +656,8 @@ int main(int argc, char *argv[]) {
       glUseProgram(0);
       glBindTexture(GL_TEXTURE_2D, 0);
       glBindVertexArray(0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_STENCIL_TEST);
     }
 
     // Swapping front and back buffers
@@ -930,7 +931,7 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
   }
 
   // For each scene object
-  for (unsigned int i = 0; i < sSceneObjectPtrs.size(); ++i) {
+  for (size_t i = 0; i < sSceneObjectPtrs.size(); ++i) {
     sSceneObjectPtrs[i]->getTranslate() =
         sInitialTranslations[i] +
         glm::vec3(0.0f, 1.0f, 0.0f) * sTranslationAmplitudes[i] *

@@ -5,6 +5,7 @@
 #include "./loadTexture.hpp"
 
 // STD
+#include <memory>
 #include <vector>
 
 // OpenGL
@@ -23,7 +24,7 @@ constexpr float kInitSpecCoef   = 0.3f;
 constexpr float kInitGlossiness = 1.0f;
 constexpr float kInitMaxHeight  = 0.0f;
 
-// Mesh struct
+// Mesh class
 class Mesh {
  public:
   // VBO attribute struct
@@ -52,7 +53,7 @@ class Mesh {
 
     float maxHeight{};
 
-    std::vector<Texture> textures{};
+    std::vector<std::shared_ptr<Texture>> texturePtrs{};
   };
 
  private:
@@ -61,16 +62,18 @@ class Mesh {
   GLuint  _ebo{};
   GLsizei _indexCount{};
 
-  GLuint   _shaderProgram{};
-  Material _material{};
+  GLuint _shaderProgram{};
+
+  std::shared_ptr<Material> _materialPtr{};
 
  public:
   // Constructors, assignment operators and destructor
   Mesh() noexcept;
   Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-       const Material &material) noexcept;
+       const std::shared_ptr<Material> &materialPtr) noexcept;
   Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,
-       const std::vector<GLuint> &indices, GLuint shaderProgram, const Material &material);
+       const std::vector<GLuint> &indices, GLuint shaderProgram,
+       const std::shared_ptr<Material> &materialPtr);
   Mesh(const Mesh &mesh) noexcept;
   Mesh &operator=(const Mesh &mesh) noexcept;
   Mesh(Mesh &&mesh) noexcept;
@@ -83,21 +86,26 @@ class Mesh {
   void setEBO(GLuint ebo) noexcept;
   void setIndexCount(GLsizei indexCount) noexcept;
   void setShaderProgram(GLuint shaderProgram) noexcept;
-  void setMaterial(const Material &material) noexcept;
+  void setMaterialPtr(const std::shared_ptr<Material> &materialPtr) noexcept;
 
   // Getters
-  GLuint          getVAO() const noexcept;
-  GLuint         &getVAO() noexcept;
-  GLuint          getVBO() const noexcept;
-  GLuint         &getVBO() noexcept;
-  GLuint          getEBO() const noexcept;
-  GLuint         &getEBO() noexcept;
-  GLsizei         getIndexCount() const noexcept;
-  GLsizei        &getIndexCount() noexcept;
-  GLuint          getShaderProgram() const noexcept;
-  GLuint         &getShaderProgram() noexcept;
-  const Material &getMaterial() const noexcept;
-  Material       &getMaterial() noexcept;
+  GLuint                           getVAO() const noexcept;
+  GLuint                          &getVAO() noexcept;
+  GLuint                           getVBO() const noexcept;
+  GLuint                          &getVBO() noexcept;
+  GLuint                           getEBO() const noexcept;
+  GLuint                          &getEBO() noexcept;
+  GLsizei                          getIndexCount() const noexcept;
+  GLsizei                         &getIndexCount() noexcept;
+  GLuint                           getShaderProgram() const noexcept;
+  GLuint                          &getShaderProgram() noexcept;
+  const std::shared_ptr<Material> &getMaterialPtr() const noexcept;
+  std::shared_ptr<Material>       &getMaterialPtr() noexcept;
+
+  // Other member functions
+  void render(unsigned int instanceCount) const noexcept;
+
+  bool isComplete() const noexcept;
 };
 
 // Generates vertex buffer based on vertices, normals, tangents and uvs
@@ -112,19 +120,19 @@ glm::vec3 calculateTangent(const std::vector<glm::vec3> &pointPositions,
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
 Mesh generatePlane(float size, unsigned int lod, GLuint shaderProgram,
-                   const std::vector<Mesh::Material::Texture> &textures);
+                   const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs);
 // Generates cube mesh based on size, level-of-detail, enableCubemap, shader program and textures
 Mesh generateCube(float size, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
-                  const std::vector<Mesh::Material::Texture> &textures);
+                  const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs);
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
 Mesh generateQuadSphere(float radius, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
-                        const std::vector<Mesh::Material::Texture> &textures);
+                        const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs);
 // Generates UV sphere mesh based on radius, level-of-detail, shader program and textures
 Mesh generateUVSphere(float radius, unsigned int lod, GLuint shaderProgram,
-                      const std::vector<Mesh::Material::Texture> &textures);
+                      const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs);
 // Generates icosphere mesh based on radius, shader program and textures
 Mesh generateIcoSphere(float radius, GLuint shaderProgram,
-                       const std::vector<Mesh::Material::Texture> &textures);
+                       const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs);
 
 }  // namespace glengine
 

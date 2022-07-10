@@ -60,7 +60,7 @@ class SceneObject {
 
   // Other member functions
   void render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
-              unsigned int instanceCount = 1) const;
+              unsigned int instanceCount = 1) const noexcept;
 
   void updateShaderMVP(const BaseCamera &camera) const noexcept;
   void updateShaderViewPos(const BaseCamera &camera) const noexcept;

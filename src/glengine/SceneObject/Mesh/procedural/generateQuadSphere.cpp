@@ -5,9 +5,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures
-glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool enableCubemap,
-                                            GLuint shaderProgram,
-                                            const std::vector<Mesh::Material::Texture> &textures) {
+glengine::Mesh glengine::generateQuadSphere(
+    float radius, unsigned int lod, bool enableCubemap, GLuint shaderProgram,
+    const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize = 1.0f / static_cast<float>(lod);  // discrete quad's side xy size
   const float uQuadSize  = 1.0f / (enableCubemap ? 4.0f : 1.0f) /
@@ -38,16 +38,16 @@ glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool
   for (unsigned int s = 0; s < 6; ++s) {
     // For each quad of the side
     for (unsigned int v = 0; v < quadPerSideCount; ++v) {
-      const int   row    = v / lod;
-      const int   column = v % lod;
-      const float leftX  = static_cast<float>(column) * xyQuadSize - halfSize;
-      const float rightX = static_cast<float>(column + 1) * xyQuadSize - halfSize;
-      const float downY  = static_cast<float>(row) * xyQuadSize - halfSize;
-      const float upY    = static_cast<float>(row + 1) * xyQuadSize - halfSize;
-      const float leftU  = static_cast<float>(column) * uQuadSize;
-      const float rightU = static_cast<float>(column + 1) * uQuadSize;
-      const float downV  = static_cast<float>(row) * vQuadSize;
-      const float upV    = static_cast<float>(row + 1) * vQuadSize;
+      const unsigned int row    = v / lod;
+      const unsigned int column = v % lod;
+      const float        leftX  = static_cast<float>(column) * xyQuadSize - halfSize;
+      const float        rightX = static_cast<float>(column + 1) * xyQuadSize - halfSize;
+      const float        downY  = static_cast<float>(row) * xyQuadSize - halfSize;
+      const float        upY    = static_cast<float>(row + 1) * xyQuadSize - halfSize;
+      const float        leftU  = static_cast<float>(column) * uQuadSize;
+      const float        rightU = static_cast<float>(column + 1) * uQuadSize;
+      const float        downV  = static_cast<float>(row) * vQuadSize;
+      const float        upV    = static_cast<float>(row + 1) * vQuadSize;
 
       constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
       constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
@@ -206,8 +206,8 @@ glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool
           break;
       }
 
-      const int vertexOffset = s * vertexPerSideCount + v * 4;
-      const int indexOffset  = s * quadLOD * 6 + v * 6;
+      const unsigned int vertexOffset = s * vertexPerSideCount + v * 4;
+      const unsigned int indexOffset  = s * quadLOD * 6 + v * 6;
 
       vertices[vertexOffset]     = lu;
       vertices[vertexOffset + 1] = ru;
@@ -253,7 +253,7 @@ glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool
 
   // Configuring VBO attributes
   std::vector<Mesh::VBOAttribute> vboAttributes{};
-  constexpr int                   kOffset = 11;
+  constexpr unsigned int          kOffset = 11;
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                              reinterpret_cast<void *>(0)});
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
@@ -264,9 +264,8 @@ glengine::Mesh glengine::generateQuadSphere(float radius, unsigned int lod, bool
                                              reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Creating and returning the mesh
-  return Mesh{
-      vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
-                     textures}
-  };
+  return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
+              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
+                                                              kInitSpecCoef, kInitGlossiness,
+                                                              kInitMaxHeight, texturePtrs})};
 }

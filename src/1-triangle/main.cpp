@@ -298,7 +298,7 @@ void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
               const std::vector<GLuint> &textures) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);
-  // Binding VAO with associated EBO and VBO
+  // Binding VAO with associated VBO and EBO
   glBindVertexArray(vao);
 
   // For each texture

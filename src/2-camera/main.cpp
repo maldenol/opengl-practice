@@ -134,7 +134,8 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPosition(glm::vec3{1.0f, 0.0f, 1.0f});
+  gCamera.setPos(glm::vec3{1.0f, 0.0f, 1.0f});
+  gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
   Camera5DoFController *camera5DoFController =
@@ -429,7 +430,7 @@ void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
               const std::vector<GLuint> &textures) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);
-  // Binding VAO with associated EBO and VBO
+  // Binding VAO with associated VBO and EBO
   glBindVertexArray(vao);
 
   // For each texture

@@ -2,8 +2,9 @@
 #include "../Mesh.hpp"
 
 // Generates plane mesh based on size, level-of-detail, shader program and textures
-glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shaderProgram,
-                                       const std::vector<Mesh::Material::Texture> &textures) {
+glengine::Mesh glengine::generatePlane(
+    float size, unsigned int lod, GLuint shaderProgram,
+    const std::vector<std::shared_ptr<Mesh::Material::Texture>> &texturePtrs) {
   // Level-of-detail (count of quads along one side)
   const float xyQuadSize =
       static_cast<float>(size) / static_cast<float>(lod);           // discrete quad's side xy size
@@ -28,8 +29,8 @@ glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shad
 
   // For each quad
   for (unsigned int v = 0; v < quadCount; ++v) {
-    const int row    = v / lod;
-    const int column = v % lod;
+    const unsigned int row    = v / lod;
+    const unsigned int column = v % lod;
 
     const float lux = column * xyQuadSize - halfSize;
     const float rux = (column + 1) * xyQuadSize - halfSize;
@@ -62,8 +63,8 @@ glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shad
     const glm::vec2 ldUV{ldu, ldv};
     const glm::vec2 rdUV{rdu, rdv};
 
-    const int vertexOffset = v * 4;
-    const int indexOffset  = v * 6;
+    const unsigned int vertexOffset = v * 4;
+    const unsigned int indexOffset  = v * 6;
 
     vertices[vertexOffset]     = lu;  // left-up
     vertices[vertexOffset + 1] = ru;  // right-up
@@ -102,7 +103,7 @@ glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shad
 
   // Configuring VBO attributes
   std::vector<Mesh::VBOAttribute> vboAttributes{};
-  constexpr int                   kOffset = 11;
+  constexpr unsigned int          kOffset = 11;
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
                                              reinterpret_cast<void *>(0)});
   vboAttributes.push_back(Mesh::VBOAttribute{3, GL_FLOAT, GL_FALSE, kOffset * sizeof(float),
@@ -113,9 +114,8 @@ glengine::Mesh glengine::generatePlane(float size, unsigned int lod, GLuint shad
                                              reinterpret_cast<void *>(9 * sizeof(float))});
 
   // Creating and returning the mesh
-  return Mesh{
-      vboAttributes, vertexBuffer, indices, shaderProgram,
-      Mesh::Material{kInitAmbCoef, kInitDiffCoef, kInitSpecCoef, kInitGlossiness, kInitMaxHeight,
-                     textures}
-  };
+  return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
+              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
+                                                              kInitSpecCoef, kInitGlossiness,
+                                                              kInitMaxHeight, texturePtrs})};
 }

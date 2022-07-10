@@ -13,20 +13,21 @@ Mesh::Mesh() noexcept {}
 
 // Parameterized constructor
 Mesh::Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-           const Material &material) noexcept
+           const std::shared_ptr<Material> &materialPtr) noexcept
     : _vao{vao},
       _vbo{vbo},
       _ebo{ebo},
       _indexCount{indexCount},
       _shaderProgram{shaderProgram},
-      _material{material} {}
+      _materialPtr{materialPtr} {}
 
 // Parameterized constructor
 Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,
-           const std::vector<GLuint> &indices, GLuint shaderProgram, const Material &material)
+           const std::vector<GLuint> &indices, GLuint shaderProgram,
+           const std::shared_ptr<Material> &materialPtr)
     : _indexCount{static_cast<GLsizei>(indices.size())},
       _shaderProgram{shaderProgram},
-      _material{material} {
+      _materialPtr{materialPtr} {
   // Creating VAO, VBO and EBO
   glGenVertexArrays(1, &_vao);
   glGenBuffers(1, &_vbo);
@@ -46,7 +47,7 @@ Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<flo
                GL_STATIC_DRAW);
 
   // Configuring and enabling VBO's attributes
-  for (unsigned int i = 0; i < vboAttributes.size(); ++i) {
+  for (size_t i = 0; i < vboAttributes.size(); ++i) {
     glEnableVertexAttribArray(i);
     glVertexAttribPointer(i, vboAttributes[i].size, vboAttributes[i].type,
                           vboAttributes[i].normalized, vboAttributes[i].stride,
@@ -65,7 +66,7 @@ Mesh::Mesh(const Mesh &mesh) noexcept
       _ebo{mesh._ebo},
       _indexCount{mesh._indexCount},
       _shaderProgram{mesh._shaderProgram},
-      _material{mesh._material} {}
+      _materialPtr{mesh._materialPtr} {}
 
 // Copy assignment operator
 Mesh &Mesh::operator=(const Mesh &mesh) noexcept {
@@ -74,7 +75,7 @@ Mesh &Mesh::operator=(const Mesh &mesh) noexcept {
   _ebo           = mesh._ebo;
   _indexCount    = mesh._indexCount;
   _shaderProgram = mesh._shaderProgram;
-  _material      = mesh._material;
+  _materialPtr   = mesh._materialPtr;
 
   return *this;
 }
@@ -86,7 +87,7 @@ Mesh::Mesh(Mesh &&mesh) noexcept
       _ebo{std::exchange(mesh._ebo, 0)},
       _indexCount{std::exchange(mesh._indexCount, 0)},
       _shaderProgram{std::exchange(mesh._shaderProgram, 0)},
-      _material{std::exchange(mesh._material, Material{})} {}
+      _materialPtr{std::exchange(mesh._materialPtr, std::shared_ptr<Material>{})} {}
 
 // Move assignment operator
 Mesh &Mesh::operator=(Mesh &&mesh) noexcept {
@@ -95,16 +96,25 @@ Mesh &Mesh::operator=(Mesh &&mesh) noexcept {
   std::swap(_ebo, mesh._ebo);
   std::swap(_indexCount, mesh._indexCount);
   std::swap(_shaderProgram, mesh._shaderProgram);
-  std::swap(_material, mesh._material);
+  std::swap(_materialPtr, mesh._materialPtr);
 
   return *this;
 }
 
 // Destructor
 Mesh::~Mesh() noexcept {
-  glDeleteVertexArrays(1, &_vao);
-  glDeleteBuffers(1, &_vbo);
-  glDeleteBuffers(1, &_ebo);
+  if (_vao > 0) {
+    glDeleteVertexArrays(1, &_vao);
+  }
+  if (_vbo > 0) {
+    glDeleteBuffers(1, &_vbo);
+  }
+  if (_ebo > 0) {
+    glDeleteBuffers(1, &_ebo);
+  }
+  if (_shaderProgram > 0) {
+    glDeleteProgram(_shaderProgram);
+  }
 }
 
 // Setters
@@ -119,7 +129,9 @@ void Mesh::setIndexCount(GLsizei indexCount) noexcept { _indexCount = indexCount
 
 void Mesh::setShaderProgram(GLuint shaderProgram) noexcept { _shaderProgram = shaderProgram; }
 
-void Mesh::setMaterial(const Material &material) noexcept { _material = material; }
+void Mesh::setMaterialPtr(const std::shared_ptr<Material> &materialPtr) noexcept {
+  _materialPtr = materialPtr;
+}
 
 // Getters
 
@@ -143,6 +155,56 @@ GLuint Mesh::getShaderProgram() const noexcept { return _shaderProgram; }
 
 GLuint &Mesh::getShaderProgram() noexcept { return _shaderProgram; }
 
-const Mesh::Material &Mesh::getMaterial() const noexcept { return _material; }
+const std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() const noexcept {
+  return _materialPtr;
+}
 
-Mesh::Material &Mesh::getMaterial() noexcept { return _material; }
+std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() noexcept { return _materialPtr; }
+
+void Mesh::render(unsigned int instanceCount) const noexcept {
+  if (!isComplete()) return;
+
+  const Mesh::Material &material = *_materialPtr;
+
+  // Binding VAO with associated VBO and EBO
+  glBindVertexArray(_vao);
+
+  // For each texture
+  for (size_t i = 0; i < material.texturePtrs.size(); ++i) {
+    // Binding texture to texture unit
+    glActiveTexture(GL_TEXTURE0 + material.texturePtrs[i]->index);
+    if (material.texturePtrs[i]->isCubemap) {
+      glBindTexture(GL_TEXTURE_CUBE_MAP, material.texturePtrs[i]->texture);
+    } else {
+      glBindTexture(GL_TEXTURE_2D, material.texturePtrs[i]->texture);
+    }
+  }
+
+  // Setting specific shader program to use for render
+  glUseProgram(_shaderProgram);
+
+  // Drawing mesh
+  glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
+
+  // Unbinding shader program
+  glUseProgram(0);
+
+  // For each texture
+  for (size_t i = 0; i < material.texturePtrs.size(); ++i) {
+    // Unbinding texture from texture unit
+    glActiveTexture(GL_TEXTURE0 + material.texturePtrs[i]->index);
+    if (material.texturePtrs[i]->isCubemap) {
+      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    } else {
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
+  }
+
+  // Unbinding VAO
+  glBindVertexArray(0);
+}
+
+bool Mesh::isComplete() const noexcept {
+  return _vao > 0 && _vbo > 0 && _ebo > 0 && _indexCount > 0 && _shaderProgram > 0 &&
+         _materialPtr != nullptr;
+}

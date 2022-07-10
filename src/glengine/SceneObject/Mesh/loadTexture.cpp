@@ -83,7 +83,7 @@ GLuint glengine::loadCubemap(const std::vector<std::string> &filenames) {
 
   stbi_set_flip_vertically_on_load(true);
 
-  for (unsigned int i = 0; i < filenames.size(); ++i) {
+  for (size_t i = 0; i < filenames.size(); ++i) {
     // Loading texture image
     int            textureWidth{}, textureHeight{}, componentCount{};
     unsigned char *textureImage =

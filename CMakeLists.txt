@@ -22,8 +22,8 @@ LIST(FILTER INC_CXX_FILES EXCLUDE REGEX "${INC_DIR}/glm/*")
 LIST(FILTER INC_CXX_FILES EXCLUDE REGEX "${INC_DIR}/khr/*")
 LIST(FILTER INC_CXX_FILES EXCLUDE REGEX "${INC_DIR}/stb/*")
 ADD_CUSTOM_TARGET(checks
-  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_CXX_FILES} ${INC_CXX_FILES}
-  COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_CXX_FILES} ${INC_CXX_FILES}
+  #COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_CXX_FILES} ${INC_CXX_FILES}
+  #COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_CXX_FILES} ${INC_CXX_FILES}
   COMMAND clang-format -i ${SRC_CXX_FILES} ${INC_CXX_FILES}
 )
 

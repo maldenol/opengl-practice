@@ -1,8 +1,8 @@
 #version 460 core
 
-const uint MAX_DIRECTIONAL_LIGHT_COUNT = 8;
-const uint MAX_POINT_LIGHT_COUNT       = 8;
-const uint MAX_SPOT_LIGHT_COUNT        = 8;
+#define MAX_DIRECTIONAL_LIGHT_COUNT 8
+#define MAX_POINT_LIGHT_COUNT       8
+#define MAX_SPOT_LIGHT_COUNT        8
 
 uniform mat4 MODEL;
 

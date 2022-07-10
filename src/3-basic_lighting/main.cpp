@@ -130,14 +130,19 @@ int main(int argc, char *argv[]) {
                                        std::cref(lightShaderFilenames)};
 
   // Loading textures
-  std::vector<std::vector<Mesh::Material::Texture>> textures{
-      std::vector<Mesh::Material::Texture>{                                                                 },
-      std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false},Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false},
-                                           Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false},
-                                           Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false},
-                                           Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false},
-                                           //Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false},
+  std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{                    },
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{
+                                                            std::make_shared<Mesh::Material::Texture>(
+                                                            Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false}),std::make_shared<Mesh::Material::Texture>(
+Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+                                                            Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+                                                            Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false}),
+                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false}),
       },
   };
 
@@ -148,26 +153,26 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f,  0.0f, 0.0f},
       glm::vec3{  20.0f, 10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().maxHeight  = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, textures[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterial().glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
@@ -184,7 +189,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
       1.0f, 0.45f, 0.075),
-      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
@@ -193,7 +198,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
                                   0.45f, 0.075, 15.0f, 13.0f),
-      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
@@ -202,7 +207,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
                                   0.45f, 0.075, 30.0f, 25.0f),
-      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, textures[0]))
+      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -219,7 +224,8 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});
+  gCamera.setPos(glm::vec3{0.0f, 1.0f, 2.0f});
+  gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   // If cameraController is Camera5DoFController
   Camera5DoFController *camera5DoFController =
@@ -261,12 +267,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Updating flashlight SceneObjcet fields
-    gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPosition();
+    gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPos();
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
-        ->setDirection(gCameraController.getCamera()->getForwardDirection());
+        ->setDirection(gCameraController.getCamera()->getForward());
 
     // Rendering scene objects
-    for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
+    for (size_t i = 0; i < sceneObjects.size(); ++i) {
       sceneObjects[i].render(gCamera, sceneObjects);
     }
 
@@ -529,7 +535,7 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
   }
 
   // For each scene object
-  for (unsigned int i = 0; i < sSceneObjectPtrs.size(); ++i) {
+  for (size_t i = 0; i < sSceneObjectPtrs.size(); ++i) {
     sSceneObjectPtrs[i]->getTranslate() =
         sInitialTranslations[i] +
         glm::vec3(0.0f, 1.0f, 0.0f) * sTranslationAmplitudes[i] *

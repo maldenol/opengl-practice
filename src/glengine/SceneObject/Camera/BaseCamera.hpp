@@ -17,6 +17,7 @@ class BaseCamera {
  protected:
   // Constructors, assignment operators and destructor
   BaseCamera() noexcept;
+  BaseCamera(const glm::vec3 &pos, const glm::vec3 &worldUp, const glm::vec3 &lookDir) noexcept;
   BaseCamera(const BaseCamera &camera) noexcept;
   BaseCamera &operator=(const BaseCamera &camera) noexcept;
   BaseCamera(BaseCamera &&camera) noexcept;
@@ -25,20 +26,23 @@ class BaseCamera {
 
  public:
   // Setters
-  void setPosition(const glm::vec3 &pos) noexcept;
+  void setPos(const glm::vec3 &pos) noexcept;
   void setWorldUp(const glm::vec3 &worldUp) noexcept;
+  void setForward(const glm::vec3 &forward) noexcept;
+  void setRight(const glm::vec3 &right) noexcept;
+  void setUp(const glm::vec3 &up) noexcept;
 
   // Getters
-  const glm::vec3 &getPosition() const noexcept;
-  glm::vec3       &getPosition() noexcept;
-  const glm::vec3 &getWorldUpDirection() const noexcept;
-  glm::vec3       &getWorldUpDirection() noexcept;
-  const glm::vec3 &getForwardDirection() const noexcept;
-  glm::vec3       &getForwardDirection() noexcept;
-  const glm::vec3 &getRightDirection() const noexcept;
-  glm::vec3       &getRightDirection() noexcept;
-  const glm::vec3 &getUpDirection() const noexcept;
-  glm::vec3       &getUpDirection() noexcept;
+  const glm::vec3 &getPos() const noexcept;
+  glm::vec3       &getPos() noexcept;
+  const glm::vec3 &getWorldUp() const noexcept;
+  glm::vec3       &getWorldUp() noexcept;
+  const glm::vec3 &getForward() const noexcept;
+  glm::vec3       &getForward() noexcept;
+  const glm::vec3 &getRight() const noexcept;
+  glm::vec3       &getRight() noexcept;
+  const glm::vec3 &getUp() const noexcept;
+  glm::vec3       &getUp() noexcept;
 
   // Other member functions
   void look(const glm::vec3 &look) noexcept;

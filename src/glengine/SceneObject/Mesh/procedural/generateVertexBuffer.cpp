@@ -6,14 +6,14 @@ std::vector<float> glengine::generateVertexBuffer(std::vector<glm::vec3> vertice
                                                   std::vector<glm::vec3> normals,
                                                   std::vector<glm::vec3> tangents,
                                                   std::vector<glm::vec2> uvs) {
-  constexpr int kOffset = 11;
+  constexpr unsigned int kOffset = 11;
 
-  const int vertexCount = vertices.size();
+  const size_t vertexCount = vertices.size();
 
   std::vector<float> vertexBuffer{};
   vertexBuffer.resize(kOffset * vertexCount);
 
-  for (int i = 0; i < vertexCount; ++i) {
+  for (size_t i = 0; i < vertexCount; ++i) {
     vertexBuffer[i * kOffset]     = vertices[i].x;
     vertexBuffer[i * kOffset + 1] = vertices[i].y;
     vertexBuffer[i * kOffset + 2] = vertices[i].z;
