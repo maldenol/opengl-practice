@@ -1,16 +1,16 @@
 #ifndef GLENGINE_FILESYSTEM_FILESYSTEM_HPP
 #define GLENGINE_FILESYSTEM_FILESYSTEM_HPP
 
-// Qt5
-#include <QString>
+// STD
+#include <string>
 
 namespace glengine {
 
 // Gets absolute path of directory where executable is placed
-QString getAbsolutePathOfExecutableDirectory();
+std::string getAbsolutePathOfExecutableDirectory();
 
 // Translates relative to executable path into absolute
-QString getAbsolutePathRelativeToExecutable(const QString &path);
+std::string getAbsolutePathRelativeToExecutable(const std::string &path);
 
 }  // namespace glengine
 

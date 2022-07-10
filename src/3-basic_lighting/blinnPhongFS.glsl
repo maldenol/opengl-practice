@@ -171,7 +171,7 @@ void main() {
 
   // Using normal map and TBN matrix to get world space normal
   vec3 N = normalize(fTBN * (vec3(texture(MATERIAL.normalMap, fTexCoords)) * 2.0f - 1.0f));
-  //vec3 N = mat3(transpose(inverse(model))) * fNormal;
+  //vec3 N = normalize(mat3(transpose(inverse(model))) * fNormal);
 
   // Adding each directional light contribution
   for (uint i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {

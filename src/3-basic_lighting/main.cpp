@@ -6,12 +6,12 @@
 #include <iostream>
 #include <cmath>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
 // Qt5
 #include <QGuiApplication>
-#include <QString>
 
 // OpenGL
 #include <glad/glad.h>
@@ -95,11 +95,11 @@ int main(int argc, char *argv[]) {
       GL_FRAGMENT_SHADER,
   };
   // Creating arrays of filenames of shaders
-  std::vector<QString> blinnPhongShaderFilenames{
+  std::vector<std::string> blinnPhongShaderFilenames{
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
-  std::vector<QString> lightShaderFilenames{
+  std::vector<std::string> lightShaderFilenames{
       getAbsolutePathRelativeToExecutable("lightVS.glsl"),
       getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
@@ -131,13 +131,13 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<Mesh::Material::Texture>> textures{
-      std::vector<Mesh::Material::Texture>{                                                          },
+      std::vector<Mesh::Material::Texture>{                                                                 },
       std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{0, loadTexture("albedoMap.png")},Mesh::Material::Texture{1, loadTexture("normalMap.png")},
-                                           Mesh::Material::Texture{2, loadTexture("heightMap.png")},
-                                           Mesh::Material::Texture{3, loadTexture("ambientOcclusionMap.png")},
-                                           Mesh::Material::Texture{4, loadTexture("roughnessMap.png")},
-                                           //Mesh::Material::Texture{5, loadTexture("emissionMap.png")},
+                                           Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false},Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false},
+                                           Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false},
+                                           Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false},
+                                           Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false},
+                                           //Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false},
       },
   };
 
@@ -254,19 +254,6 @@ int main(int argc, char *argv[]) {
 
     // Clearing color and depth buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // If blinnPhong shaders are recompiled
-    if (blinnPhongShadersAreRecompiled) {
-      // Setting uniform values
-      glUseProgram(blinnPhongSP);
-      glUniform3fv(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.color"), 1,
-                   glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-      glUniform1f(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.intensity"), 1.0f);
-      glUseProgram(0);
-
-      // Notifying that all routine after blinnPhong shader recompilation is done
-      blinnPhongShadersAreRecompiled = false;
-    }
 
     // Making scene objects float
     if (gEnableSceneObjectsFloating) {

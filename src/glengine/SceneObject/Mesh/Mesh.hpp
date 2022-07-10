@@ -39,8 +39,9 @@ class Mesh {
   struct Material {
     // Texture struct
     struct Texture {
-      int    index{};
       GLuint texture{};
+      int    index{};
+      bool   isCubemap{};
     };
 
     float ambCoef{};

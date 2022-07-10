@@ -4,6 +4,8 @@ const uint MAX_DIRECTIONAL_LIGHT_COUNT = 8;
 const uint MAX_POINT_LIGHT_COUNT       = 8;
 const uint MAX_SPOT_LIGHT_COUNT        = 8;
 
+uniform mat4 MODEL;
+
 uniform vec3 VIEW_POS;
 
 uniform struct {
@@ -172,7 +174,7 @@ void main() {
 
   // Using normal map and TBN matrix to get world space normal
   vec3 N = normalize(i.TBN * (vec3(texture(MATERIAL.normalMap, i.texCoords)) * 2.0f - 1.0f));
-  //vec3 N = mat3(transpose(inverse(model))) * i.normal;
+  //vec3 N = normalize(mat3(transpose(inverse(MODEL))) * i.normal);
 
   // Adding each directional light contribution
   for (uint i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {

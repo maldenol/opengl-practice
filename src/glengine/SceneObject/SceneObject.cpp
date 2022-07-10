@@ -118,7 +118,11 @@ void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject
   for (size_t i = 0; i < material.textures.size(); ++i) {
     // Binding texture to texture unit
     glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
-    glBindTexture(GL_TEXTURE_2D, material.textures[i].texture);
+    if (material.textures[i].isCubemap) {
+      glBindTexture(GL_TEXTURE_CUBE_MAP, material.textures[i].texture);
+    } else {
+      glBindTexture(GL_TEXTURE_2D, material.textures[i].texture);
+    }
   }
 
   // Updating shader uniform variables
@@ -141,7 +145,11 @@ void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject
   for (size_t i = 0; i < material.textures.size(); ++i) {
     // Unbinding texture from texture unit
     glActiveTexture(GL_TEXTURE0 + material.textures[i].index);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if (material.textures[i].isCubemap) {
+      glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    } else {
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
   }
 
   // Unbinding VAO
@@ -220,6 +228,15 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   // Updating object shader program uniform values
   const GLuint shaderProgram = _meshPtr->getShaderProgram();
   glUseProgram(shaderProgram);
+
+  // Skybox
+  glUniform1i(glGetUniformLocation(shaderProgram, "SKYBOX"), 6);
+
+  // Ambient light
+  glUniform3fv(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.color"), 1,
+               glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
+  glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
+
   // Directional lights
   for (unsigned int i = 0; i < directionalLightSceneObjects.size(); ++i) {
     const SceneObject      &sceneObject = directionalLightSceneObjects[i];
@@ -244,6 +261,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
                      shaderProgram, ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].dir").c_str()),
                  1, glm::value_ptr(dir));
   }
+
   // Point lights
   for (unsigned int i = 0; i < pointLightSceneObjects.size(); ++i) {
     const SceneObject &sceneObject = pointLightSceneObjects[i];
@@ -266,6 +284,7 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
                     shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].quadAttCoef").c_str()),
                 pointLight->getQuadAttCoef());
   }
+
   // Spot lights
   for (unsigned int i = 0; i < spotLightSceneObjects.size(); ++i) {
     const SceneObject &sceneObject = spotLightSceneObjects[i];

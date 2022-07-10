@@ -5,12 +5,12 @@
 #include <iostream>
 #include <cmath>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
 // Qt5
 #include <QGuiApplication>
-#include <QString>
 
 // OpenGL
 #include <glad/glad.h>
@@ -170,30 +170,38 @@ int main(int argc, char *argv[]) {
                           GL_VERTEX_SHADER,  GL_GEOMETRY_SHADER,               GL_FRAGMENT_SHADER, },
   };
   // Creating vectors of filenames of shaders
-  std::vector<QString> blinnPhongShaderFilenames{
+  std::vector<std::string> blinnPhongShaderFilenames{
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
-  std::vector<QString> lightShaderFilenames{
+  std::vector<std::string> lightShaderFilenames{
       getAbsolutePathRelativeToExecutable("lightVS.glsl"),
       getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
-  std::vector<QString> screenShaderFilenames{
+  std::vector<std::string> screenShaderFilenames{
       getAbsolutePathRelativeToExecutable("screenVS.glsl"),
       getAbsolutePathRelativeToExecutable("screenFS.glsl"),
   };
-  std::vector<QString> normalShaderFilenames{
+  std::vector<std::string> normalShaderFilenames{
       getAbsolutePathRelativeToExecutable("normalVS.glsl"),
       getAbsolutePathRelativeToExecutable("normalGS.glsl"),
       getAbsolutePathRelativeToExecutable("normalFS.glsl"),
   };
-  std::vector<QString> instanceShaderFilenames{
+  std::vector<std::string> instanceShaderFilenames{
       getAbsolutePathRelativeToExecutable("instanceVS.glsl"),
       getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
-  std::vector<QString> skyboxShaderFilenames{
+  std::vector<std::string> skyboxShaderFilenames{
       getAbsolutePathRelativeToExecutable("skyboxVS.glsl"),
       getAbsolutePathRelativeToExecutable("skyboxFS.glsl"),
+  };
+  std::vector<std::string> mirrorShaderFilenames{
+      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("mirrorFS.glsl"),
+  };
+  std::vector<std::string> lenseShaderFilenames{
+      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("lenseFS.glsl"),
   };
   // Creating shader programs
   GLuint blinnPhongSP = glCreateProgram();
@@ -202,6 +210,8 @@ int main(int argc, char *argv[]) {
   GLuint normalSP     = glCreateProgram();
   GLuint instanceSP   = glCreateProgram();
   GLuint skyboxSP     = glCreateProgram();
+  GLuint mirrorSP     = glCreateProgram();
+  GLuint lenseSP      = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -264,19 +274,48 @@ int main(int argc, char *argv[]) {
                                         skyboxSP,
                                         std::cref(shaderTypes[0]),
                                         std::cref(skyboxShaderFilenames)};
+  std::atomic<bool> mirrorShaderWatcherIsRunning = true;
+  std::atomic<bool> mirrorShadersAreRecompiled   = false;
+  std::thread       mirrorShaderWatcherThread{shaderWatcher,
+                                        std::cref(mirrorShaderWatcherIsRunning),
+                                        std::ref(mirrorShadersAreRecompiled),
+                                        window,
+                                        std::ref(glfwContextMutex),
+                                        mirrorSP,
+                                        std::cref(shaderTypes[0]),
+                                        std::cref(mirrorShaderFilenames)};
+  std::atomic<bool> lenseShaderWatcherIsRunning = true;
+  std::atomic<bool> lenseShadersAreRecompiled   = false;
+  std::thread       lenseShaderWatcherThread{shaderWatcher,
+                                       std::cref(lenseShaderWatcherIsRunning),
+                                       std::ref(lenseShadersAreRecompiled),
+                                       window,
+                                       std::ref(glfwContextMutex),
+                                       lenseSP,
+                                       std::cref(shaderTypes[0]),
+                                       std::cref(lenseShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<Mesh::Material::Texture>> textures{
       std::vector<Mesh::Material::Texture>{},
       std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{0, loadTexture("albedoMap.png")},Mesh::Material::Texture{1, loadTexture("normalMap.png")},
-                                           Mesh::Material::Texture{2, loadTexture("heightMap.png")},
-                                           Mesh::Material::Texture{3, loadTexture("ambientOcclusionMap.png")},
-                                           Mesh::Material::Texture{4, loadTexture("roughnessMap.png")},
-                                           //Mesh::Material::Texture{5, loadTexture("emissionMap.png")},
-      },
+                                           Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false},Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false},
+                                           Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false},
+                                           Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false},
+                                           Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false},
+                                           //Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false},
+          Mesh::Material::Texture{loadCubemap(std::vector<std::string>{
+                                      "cubemapXP.png",
+                                      "cubemapXN.png",
+                                      "cubemapYP.png",
+                                      "cubemapYN.png",
+                                      "cubemapZP.png",
+                                      "cubemapZN.png",
+                                  }),
+                                  6, true},
+                                           },
       std::vector<Mesh::Material::Texture>{
-                                           Mesh::Material::Texture{0, loadTexture("cubemap.png")},}
+                                           Mesh::Material::Texture{loadTexture("cubemap.png"), 0, false},}
   };
 
   // Creating and configuring scene objects
@@ -373,7 +412,7 @@ int main(int argc, char *argv[]) {
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
+      glm::vec3{   1.0f, 1.0f, -1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, textures[2]))
   });
@@ -505,19 +544,6 @@ int main(int argc, char *argv[]) {
     // Processing user input
     processUserInput(window);
 
-    // If blinnPhong shaders are recompiled
-    if (blinnPhongShadersAreRecompiled) {
-      // Setting uniform values
-      glUseProgram(blinnPhongSP);
-      glUniform3fv(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.color"), 1,
-                   glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-      glUniform1f(glGetUniformLocation(blinnPhongSP, "AMBIENT_LIGHT.intensity"), 1.0f);
-      glUseProgram(0);
-
-      // Notifying that all routine after blinnPhong shader recompilation is done
-      blinnPhongShadersAreRecompiled = false;
-    }
-
     // Making scene objects float
     if (gEnableSceneObjectsFloating) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
@@ -553,10 +579,10 @@ int main(int argc, char *argv[]) {
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
     glStencilMask(0x00);
+
     // Rendering scene objects
     for (unsigned int i = 0; i < sceneObjects.size(); ++i) {
       if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
-        glCullFace(GL_FRONT);
         glDepthFunc(GL_LEQUAL);
       }
 
@@ -582,7 +608,6 @@ int main(int argc, char *argv[]) {
       }
 
       if (&sceneObjects[i] == gSkyboxSceneObjectPtr) {
-        glCullFace(GL_BACK);
         glDepthFunc(GL_LESS);
       }
     }

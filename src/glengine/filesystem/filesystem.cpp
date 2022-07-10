@@ -6,11 +6,11 @@
 #include <QDir>
 
 // Gets absolute path of directory where executable is placed
-QString glengine::getAbsolutePathOfExecutableDirectory() {
-  return QCoreApplication::applicationDirPath();
+std::string glengine::getAbsolutePathOfExecutableDirectory() {
+  return QCoreApplication::applicationDirPath().toStdString();
 }
 
 // Translates relative to executable path into absolute
-QString glengine::getAbsolutePathRelativeToExecutable(const QString &path) {
-  return getAbsolutePathOfExecutableDirectory() + QDir::separator() + path;
+std::string glengine::getAbsolutePathRelativeToExecutable(const std::string &path) {
+  return getAbsolutePathOfExecutableDirectory() + QDir::separator().toLatin1() + path;
 }

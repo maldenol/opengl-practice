@@ -4,12 +4,12 @@
 #include <iostream>
 #include <cmath>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
 // Qt5
 #include <QGuiApplication>
-#include <QString>
 
 // OpenGL
 #include <glad/glad.h>
@@ -56,7 +56,7 @@ void processUserInput(GLFWwindow *window);
 // Functions for sceneObjects
 void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
                 const std::vector<GLuint> &indices);
-GLuint initTexture(const QString &filename);
+GLuint initTexture(const std::string &filename);
 void   drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
                 const std::vector<GLuint> &textures);
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
-  std::vector<QString> shaderFilenames{
+  std::vector<std::string> shaderFilenames{
       getAbsolutePathRelativeToExecutable("cameraVS.glsl"),
       getAbsolutePathRelativeToExecutable("cameraFS.glsl"),
   };
@@ -383,15 +383,14 @@ void initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
 }
 
 // Initializes 2D texture
-GLuint initTexture(const QString &filename) {
+GLuint initTexture(const std::string &filename) {
   // Loading texture image
   stbi_set_flip_vertically_on_load(true);
   int            textureWidth{}, textureHeight{}, componentCount{};
-  unsigned char *textureImage =
-      stbi_load(getAbsolutePathRelativeToExecutable(filename).toLocal8Bit().data(), &textureWidth,
-                &textureHeight, &componentCount, 0);
+  unsigned char *textureImage = stbi_load(getAbsolutePathRelativeToExecutable(filename).c_str(),
+                                          &textureWidth, &textureHeight, &componentCount, 0);
   if (textureImage == nullptr) {
-    std::cout << "error: failed to load image " << filename.toStdString() << std::endl;
+    std::cout << "error: failed to load image " << filename << std::endl;
     // Freeing texture image memory
     stbi_image_free(textureImage);
     return 0;

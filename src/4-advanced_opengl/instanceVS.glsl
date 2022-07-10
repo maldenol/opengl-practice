@@ -43,7 +43,7 @@ void main() {
 
   // Using normal map and TBN matrix to get world space normal
   vec3 N = normalize(TBN * (vec3(texture(MATERIAL.normalMap, aTexCoords)) * 2.0f - 1.0f));
-  //vec3 N = mat3(transpose(inverse(aModel))) * aNormal;
+  //vec3 N = normalize(mat3(transpose(inverse(aModel))) * aNormal);
   // Using height map and normal to get world space height vector
   vec3 height = MATERIAL.maxHeight * N * (texture(MATERIAL.heightMap, aTexCoords).r * 2.0f - 1.0f);
 

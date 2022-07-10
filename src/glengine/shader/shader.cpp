@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
+#include <QString>
 #include <QTextStream>
 
 // for "ms"
@@ -131,8 +132,8 @@ GLuint glengine::createShaderProgram(const std::vector<GLenum>      &shaderTypes
 void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
                              std::atomic<bool> &shadersAreRecompiled, GLFWwindow *window,
                              std::mutex &glfwContextMutex, GLuint shaderProgram,
-                             const std::vector<GLenum>  &shaderTypes,
-                             const std::vector<QString> &shaderFilenames) {
+                             const std::vector<GLenum>      &shaderTypes,
+                             const std::vector<std::string> &shaderFilenames) {
   // Getting shader count
   size_t shaderCount = shaderTypes.size();
 
@@ -154,9 +155,9 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
 
     // For each shader
     for (size_t i = 0; i < shaderCount; ++i) {
-      QFile shaderFile{shaderFilenames[i]};
+      QFile shaderFile{QString{shaderFilenames[i].c_str()}};
       if (!shaderFile.open(QFile::ReadOnly | QFile::Text)) {
-        std::cout << "error: unable to find " << shaderFilenames[i].toStdString() << std::endl;
+        std::cout << "error: unable to find " << shaderFilenames[i] << std::endl;
         break;
       }
       QFileInfo shaderFileInfo{shaderFile};
@@ -179,10 +180,9 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
           // For each shader
           for (size_t j = 0; j < shaderCount; ++j) {
             // Reading shader source code from file
-            QFile innerShaderFile{shaderFilenames[j]};
+            QFile innerShaderFile{QString{shaderFilenames[j].c_str()}};
             if (!innerShaderFile.open(QFile::ReadOnly | QFile::Text)) {
-              std::cout << "error: unable to find " << shaderFilenames[j].toStdString()
-                        << std::endl;
+              std::cout << "error: unable to find " << shaderFilenames[j] << std::endl;
               continue;
             }
             QTextStream innerShaderFileTextStream{&innerShaderFile};
@@ -193,7 +193,7 @@ void glengine::shaderWatcher(const std::atomic<bool> &isRunning,
             // Attaching shader to shader program
             glAttachShader(shaderProgram, shaders[j]);
             // Compiling shader
-            compileShader(shaders[j], shaderSource.toStdString(), shaderFilenames[j].toStdString());
+            compileShader(shaders[j], shaderSource.toStdString(), shaderFilenames[j]);
           }
 
           // Linking shader program
