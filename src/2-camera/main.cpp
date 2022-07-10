@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
   GLFWwindow *window =
-      createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
+      createWindow(kWidth, kHeight, "2-camera", kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);

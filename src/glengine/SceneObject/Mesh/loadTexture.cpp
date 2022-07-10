@@ -12,7 +12,7 @@
 #include "../../filesystem/filesystem.hpp"
 
 // Loads 2D texture
-GLuint glengine::loadTexture(const std::string &filename) {
+GLuint glengine::loadTexture(const std::string &filename, bool sRGB) {
   // Creating texture
   GLuint texture{};
   glGenTextures(1, &texture);
@@ -35,22 +35,23 @@ GLuint glengine::loadTexture(const std::string &filename) {
   }
 
   // Filling texture with image data and generating mip-maps
-  GLenum format = 0;
+  GLenum iformat = (sRGB ? GL_SRGB_ALPHA : GL_RGBA);
+  GLenum oformat = 0;
   switch (componentCount) {
     case 1:
-      format = GL_RED;
+      oformat = GL_RED;
       break;
     case 2:
-      format = GL_RG;
+      oformat = GL_RG;
       break;
     case 3:
-      format = GL_RGB;
+      oformat = GL_RGB;
       break;
     case 4:
-      format = GL_RGBA;
+      oformat = GL_RGBA;
       break;
   }
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, format, GL_UNSIGNED_BYTE,
+  glTexImage2D(GL_TEXTURE_2D, 0, iformat, textureWidth, textureHeight, 0, oformat, GL_UNSIGNED_BYTE,
                textureImage);
   // Freeing texture image memory
   stbi_image_free(textureImage);
@@ -69,7 +70,7 @@ GLuint glengine::loadTexture(const std::string &filename) {
 }
 
 // Loads cubemap
-GLuint glengine::loadCubemap(const std::vector<std::string> &filenames) {
+GLuint glengine::loadCubemap(const std::vector<std::string> &filenames, bool sRGB) {
   if (filenames.size() != 6) {
     return 0;
   }
@@ -97,23 +98,24 @@ GLuint glengine::loadCubemap(const std::vector<std::string> &filenames) {
     }
 
     // Filling texture with image data
-    GLenum format = 0;
+    GLenum iformat = (sRGB ? GL_SRGB_ALPHA : GL_RGBA);
+    GLenum oformat = 0;
     switch (componentCount) {
       case 1:
-        format = GL_RED;
+        oformat = GL_RED;
         break;
       case 2:
-        format = GL_RG;
+        oformat = GL_RG;
         break;
       case 3:
-        format = GL_RGB;
+        oformat = GL_RGB;
         break;
       case 4:
-        format = GL_RGBA;
+        oformat = GL_RGBA;
         break;
     }
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, textureWidth, textureHeight, 0,
-                 format, GL_UNSIGNED_BYTE, textureImage);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, iformat, textureWidth, textureHeight, 0,
+                 oformat, GL_UNSIGNED_BYTE, textureImage);
     // Freeing texture image memory
     stbi_image_free(textureImage);
   }

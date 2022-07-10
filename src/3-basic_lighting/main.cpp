@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
   GLFWwindow *window =
-      createWindow(kWidth, kHeight, "triangle", kOpenGLVersionMajor, kOpenGLVersionMinor);
+      createWindow(kWidth, kHeight, "3-basic_lighting", kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -131,18 +131,18 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
-      std::vector<std::shared_ptr<Mesh::Material::Texture>>{                    },
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{                           },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("albedoMap.png"), 0, false}),std::make_shared<Mesh::Material::Texture>(
-Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
+                                                            Mesh::Material::Texture{loadTexture("albedoMap.png", false), 0, false}),std::make_shared<Mesh::Material::Texture>(
+Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
                                                             std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("heightMap.png"), 2, false}),
+                                                            Mesh::Material::Texture{loadTexture("heightMap.png", false), 2, false}),
                                                             std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png"), 3, false}),
+                                                            Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png", false), 3, false}),
                                                             std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("roughnessMap.png"), 4, false}),
-                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png"), 5, false}),
+              Mesh::Material::Texture{loadTexture("roughnessMap.png", false), 4, false}),
+                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png", false), 5, false}),
       },
   };
 
@@ -188,7 +188,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      1.0f, 0.45f, 0.075),
+      1.0f, 0.45f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -197,7 +197,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.45f, 0.075, 15.0f, 13.0f),
+                                  0.45f, 0.075f, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -206,7 +206,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.45f, 0.075, 30.0f, 25.0f),
+                                  0.45f, 0.075f, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   sceneObjects.push_back(SceneObject{
@@ -215,7 +215,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png"), 1, false}),
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
       1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.45f, 0.075, 20.0f, 18.0f),
+                                  0.45f, 0.075f, 20.0f, 18.0f),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];

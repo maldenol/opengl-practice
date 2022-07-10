@@ -51,7 +51,7 @@ Camera6DoFController gCameraController{&gCamera};
 SceneObject         *gFlashlightSceneObjectPtr{};
 int                  gPolygonMode{};
 bool                 gEnableSceneObjectsFloating{true};
-bool                 gEnablePostprocessing{false};
+bool                 gEnablePostprocessing{true};
 bool                 gEnableNormals{false};
 
 // GLFW callbacks
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
 
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
-  GLFWwindow *window =
-      createWindow(kWidth, kHeight, "4-advanced_opengl", kOpenGLVersionMajor, kOpenGLVersionMinor);
+  GLFWwindow *window = createWindow(kWidth, kHeight, "5-advanced_lighting", kOpenGLVersionMajor,
+                                    kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{},
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("albedoMap.png", false), 0, false}),std::make_shared<Mesh::Material::Texture>(
+              Mesh::Material::Texture{loadTexture("albedoMap.png", true), 0, false}),std::make_shared<Mesh::Material::Texture>(
               Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
                                                             std::make_shared<Mesh::Material::Texture>(
               Mesh::Material::Texture{loadTexture("heightMap.png", false), 2, false}),
@@ -307,7 +307,7 @@ int main(int argc, char *argv[]) {
               Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png", false), 3, false}),
                                                             std::make_shared<Mesh::Material::Texture>(
               Mesh::Material::Texture{loadTexture("roughnessMap.png", false), 4, false}),
-                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png", false), 5, false}),
+                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png", true), 5, false}),
           std::make_shared<Mesh::Material::Texture>(
               Mesh::Material::Texture{loadCubemap(
                                           std::vector<std::string>{
@@ -318,12 +318,12 @@ int main(int argc, char *argv[]) {
                                               "cubemapZP.png",
                                               "cubemapZN.png",
                                           },
-                                          false),
+                                          true),
                                       6, true}),
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("cubemap.png", false), 0, false}),}
+              Mesh::Material::Texture{loadTexture("cubemap.png", true), 0, false}),}
   };
 
   // Creating and configuring scene objects
@@ -336,6 +336,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef   = 0.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
   // Upper plane
   sceneObjects.push_back(SceneObject{
@@ -345,6 +346,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
   // Central cube
@@ -355,6 +357,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
   // Instance cube
   sceneObjects.push_back(SceneObject{
@@ -364,6 +367,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 15.0f;
   // Mirror cube
   sceneObjects.push_back(SceneObject{
@@ -373,6 +377,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
   // Lense cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   3.0f, 0.0f, -10.0f},
@@ -381,6 +386,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, lenseSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
@@ -398,9 +404,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
       std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      1.0f, 0.45f, 0.075f),
+      1.0f, 0.0f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
@@ -408,9 +415,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.45f, 0.075f, 15.0f, 13.0f),
+                                  0.0f, 0.075f, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
@@ -418,9 +426,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.45f, 0.075f, 30.0f, 25.0f),
+                                  0.0f, 0.075f, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
   // Flashlight
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -428,7 +437,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
       1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.45f, 0.075f, 20.0f, 18.0f),
+                                  0.0f, 0.075f, 20.0f, 18.0f),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
@@ -514,6 +523,8 @@ int main(int argc, char *argv[]) {
   glEnable(GL_CULL_FACE);
   // Enabling MSAA
   glEnable(GL_MULTISAMPLE);
+  // Disabling gamma correction
+  //glDisable(GL_FRAMEBUFFER_SRGB);
 
   // Enabling point size functionality
   glEnable(GL_PROGRAM_POINT_SIZE);
@@ -665,6 +676,7 @@ int main(int argc, char *argv[]) {
       // Rendering screen
       glDisable(GL_STENCIL_TEST);
       glDisable(GL_DEPTH_TEST);
+      //glEnable(GL_FRAMEBUFFER_SRGB);
       glBindVertexArray(screenVAO);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
@@ -674,6 +686,7 @@ int main(int argc, char *argv[]) {
       glUseProgram(0);
       glBindTexture(GL_TEXTURE_2D, 0);
       glBindVertexArray(0);
+      //glDisable(GL_FRAMEBUFFER_SRGB);
       glEnable(GL_DEPTH_TEST);
       glEnable(GL_STENCIL_TEST);
     }

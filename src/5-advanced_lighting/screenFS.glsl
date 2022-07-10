@@ -35,7 +35,7 @@ out vec4 FragColor;
 uniform sampler2D texture0;
 
 void main() {
-  // vec4 color = texture(texture0, fTexCoords);
+  vec4 color = texture(texture0, fTexCoords);
 
   // Negative
   // color.r = 1.0f - color.r;
@@ -50,10 +50,16 @@ void main() {
   // color.b = avr;
 
   // Applying postprocessing kernels
-  vec4 color = vec4(0.0f);
-  for (uint i = 0; i < 9; ++i) {
-    color += texture(texture0, fTexCoords + kernelOffsets[i]) * kernelSharpen[i];
-  }
+  // vec4 color = vec4(0.0f);
+  // for (uint i = 0; i < 9; ++i) {
+  //   color += texture(texture0, fTexCoords + kernelOffsets[i]) * kernelSharpen[i];
+  // }
+
+  // Applying gamma correction
+  float gammaR = 2.2f;
+  float gammaG = 2.2f;
+  float gammaB = 2.2f;
+  color.rgb = pow(color.rgb, vec3(1.0f / gammaR, 1.0f / gammaG, 1.0f / gammaB));
 
   FragColor = color;
 }
