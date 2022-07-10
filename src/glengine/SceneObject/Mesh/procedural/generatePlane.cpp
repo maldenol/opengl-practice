@@ -49,7 +49,7 @@ glengine::Mesh glengine::generatePlane(
     const float ldv = row * uvQuadSize;
     const float rdv = ldv;
 
-    constexpr glm::vec3 kForward{0.0f, 0.0f, 1.0f};
+    constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
 
     const glm::vec3 lu{lux, luy, 0.0f};
     const glm::vec3 ru{rux, ruy, 0.0f};
@@ -66,36 +66,36 @@ glengine::Mesh glengine::generatePlane(
     const unsigned int vertexOffset = v * 4;
     const unsigned int indexOffset  = v * 6;
 
-    vertices[vertexOffset]     = lu;  // left-up
-    vertices[vertexOffset + 1] = ru;  // right-up
-    vertices[vertexOffset + 2] = ld;  // left-down
-    vertices[vertexOffset + 3] = rd;  // right-down
+    vertices[vertexOffset]     = lu;  // top-left
+    vertices[vertexOffset + 1] = ru;  // top-right
+    vertices[vertexOffset + 2] = ld;  // bottom-left
+    vertices[vertexOffset + 3] = rd;  // bottom-right
 
-    normals[vertexOffset]     = n;  // left-up
-    normals[vertexOffset + 1] = n;  // right-up
-    normals[vertexOffset + 2] = n;  // left-down
-    normals[vertexOffset + 3] = n;  // right-down
+    normals[vertexOffset]     = n;  // top-left
+    normals[vertexOffset + 1] = n;  // top-right
+    normals[vertexOffset + 2] = n;  // bottom-left
+    normals[vertexOffset + 3] = n;  // bottom-right
 
-    tangents[vertexOffset]     = calculateTangent(  // left-up
+    tangents[vertexOffset]     = calculateTangent(  // top-left
         std::vector<glm::vec3>{lu, ld, rd}, std::vector<glm::vec2>{luUV, ldUV, rdUV});
-    tangents[vertexOffset + 1] = calculateTangent(  // right-up
+    tangents[vertexOffset + 1] = calculateTangent(  // top-right
         std::vector<glm::vec3>{ld, rd, ru}, std::vector<glm::vec2>{ldUV, rdUV, ruUV});
-    tangents[vertexOffset + 2] = calculateTangent(  // left-down
+    tangents[vertexOffset + 2] = calculateTangent(  // bottom-left
         std::vector<glm::vec3>{rd, ru, lu}, std::vector<glm::vec2>{rdUV, ruUV, luUV});
-    tangents[vertexOffset + 3] = calculateTangent(  // right-down
+    tangents[vertexOffset + 3] = calculateTangent(  // bottom-right
         std::vector<glm::vec3>{ru, lu, ld}, std::vector<glm::vec2>{ruUV, luUV, ldUV});
 
-    uvs[vertexOffset]     = luUV;  // left-up
-    uvs[vertexOffset + 1] = ruUV;  // right-up
-    uvs[vertexOffset + 2] = ldUV;  // left-down
-    uvs[vertexOffset + 3] = rdUV;  // right-down
+    uvs[vertexOffset]     = luUV;  // top-left
+    uvs[vertexOffset + 1] = ruUV;  // top-right
+    uvs[vertexOffset + 2] = ldUV;  // bottom-left
+    uvs[vertexOffset + 3] = rdUV;  // bottom-right
 
     indices[indexOffset]     = vertexOffset;
-    indices[indexOffset + 1] = vertexOffset + 1;  // left-up triangle
-    indices[indexOffset + 2] = vertexOffset + 2;  // left-up triangle
-    indices[indexOffset + 3] = vertexOffset + 1;  // right-down triangle
-    indices[indexOffset + 4] = vertexOffset + 3;  // right-down triangle
-    indices[indexOffset + 5] = vertexOffset + 2;  // right-down triangle
+    indices[indexOffset + 1] = vertexOffset + 2;  // top-right triangle
+    indices[indexOffset + 2] = vertexOffset + 1;  // top-right triangle
+    indices[indexOffset + 3] = vertexOffset + 1;  // bottom-left triangle
+    indices[indexOffset + 4] = vertexOffset + 2;  // bottom-left triangle
+    indices[indexOffset + 5] = vertexOffset + 3;  // bottom-left triangle
   }
 
   // Generating vertex buffer based on vertices, normals, tangents and uvs

@@ -58,10 +58,10 @@ glengine::Mesh glengine::generateUVSphere(
       const float rdV = 1.0f - static_cast<float>(r) * trapezeVDim;
 
       // Transforming from Spherical coordinates to Cartesian
-      glm::vec3 lu{-std::cos(luX) * std::sin(luY), std::cos(luY), std::sin(luX) * std::sin(luY)};
-      glm::vec3 ru{-std::cos(ruX) * std::sin(ruY), std::cos(ruY), std::sin(ruX) * std::sin(ruY)};
-      glm::vec3 ld{-std::cos(ldX) * std::sin(ldY), std::cos(ldY), std::sin(ldX) * std::sin(ldY)};
-      glm::vec3 rd{-std::cos(rdX) * std::sin(rdY), std::cos(rdY), std::sin(rdX) * std::sin(rdY)};
+      glm::vec3 lu{std::cos(luX) * std::sin(luY), std::cos(luY), std::sin(luX) * std::sin(luY)};
+      glm::vec3 ru{std::cos(ruX) * std::sin(ruY), std::cos(ruY), std::sin(ruX) * std::sin(ruY)};
+      glm::vec3 ld{std::cos(ldX) * std::sin(ldY), std::cos(ldY), std::sin(ldX) * std::sin(ldY)};
+      glm::vec3 rd{std::cos(rdX) * std::sin(rdY), std::cos(rdY), std::sin(rdX) * std::sin(rdY)};
 
       glm::vec2 luUV{luU, luV};
       glm::vec2 ruUV{ruU, ruV};
@@ -96,12 +96,12 @@ glengine::Mesh glengine::generateUVSphere(
       uvs[vertexOffset + 2] = ldUV;
       uvs[vertexOffset + 3] = rdUV;
 
-      indices[indexOffset]     = vertexOffset;      // left-up triangle
-      indices[indexOffset + 1] = vertexOffset + 1;  // left-up triangle
-      indices[indexOffset + 2] = vertexOffset + 2;  // left-up triangle
-      indices[indexOffset + 3] = vertexOffset + 1;  // right-down triangle
-      indices[indexOffset + 4] = vertexOffset + 3;  // right-down triangle
-      indices[indexOffset + 5] = vertexOffset + 2;  // right-down triangle
+      indices[indexOffset]     = vertexOffset;      // top-right triangle
+      indices[indexOffset + 1] = vertexOffset + 2;  // top-right triangle
+      indices[indexOffset + 2] = vertexOffset + 1;  // top-right triangle
+      indices[indexOffset + 3] = vertexOffset + 1;  // bottom-left triangle
+      indices[indexOffset + 4] = vertexOffset + 2;  // bottom-left triangle
+      indices[indexOffset + 5] = vertexOffset + 3;  // bottom-left triangle
     }
   }
 

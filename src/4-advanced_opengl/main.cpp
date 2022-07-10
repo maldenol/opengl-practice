@@ -39,8 +39,8 @@ static constexpr float                 kCameraVelocity      = 1.0f;
 static constexpr float                 kCameraSprintCoef    = 3.0f;
 static constexpr unsigned int          kOutlineMeshIndex    = 2;
 static constexpr unsigned int          kInstancingMeshIndex = 3;
-static constexpr unsigned int          kInstanceCount       = 1000;
-static constexpr float                 kInstanceMaxDistance = 10.0f;
+static constexpr unsigned int          kInstanceCount       = 100;
+static constexpr float                 kInstanceMaxDistance = 15.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
 
 // Global variables
@@ -328,29 +328,29 @@ int main(int argc, char *argv[]) {
   std::vector<SceneObject> sceneObjects{};
   // Lower plane
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, -1.0f, 0.0f},
-      glm::vec3{  90.0f,  0.0f, 0.0f},
-      glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr      },
+      glm::vec3{   0.0f,  -1.0f, 0.0f},
+      glm::vec3{  90.0f, 180.0f, 0.0f},
+      glm::vec3{  20.0f,  10.0f, 30.0f},
+      std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
   // Upper plane
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,   2.0f, 0.0f},
-      glm::vec3{  90.0f, 180.0f, 0.0f},
-      glm::vec3{  20.0f,  10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
+      glm::vec3{   0.0f,  2.0f, 0.0f},
+      glm::vec3{  90.0f,  0.0f, 0.0f},
+      glm::vec3{  20.0f, 10.0f, 30.0f},
+      std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
   // Central cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.1f,   0.1f, 0.1f},
-      glm::vec3{ 180.0f, 180.0f, 180.0f},
-      glm::vec3{   2.0f,   2.0f, 2.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   2.0f, 2.0f, 2.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
@@ -361,6 +361,22 @@ int main(int argc, char *argv[]) {
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
+  });
+  // Mirror cube
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{  -3.0f, 0.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   3.0f, 3.0f, 3.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
+  });
+  // Lense cube
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   3.0f, 0.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   3.0f, 3.0f, 3.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, lenseSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
   // Directional light (white)
@@ -419,7 +435,7 @@ int main(int argc, char *argv[]) {
   SceneObject skyboxSceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, -1.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, texturePtrVectors[2]))
   };
@@ -613,7 +629,6 @@ int main(int argc, char *argv[]) {
     // Drawing outline
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
     glStencilMask(0x00);
-    glDisable(GL_DEPTH_TEST);
     const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
     const GLuint    initShaderProgram{
         sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
@@ -622,13 +637,14 @@ int main(int argc, char *argv[]) {
     sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
-    glEnable(GL_DEPTH_TEST);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
 
     // Drawing skybox
     glDepthFunc(GL_LEQUAL);
+    glCullFace(GL_FRONT);
     skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPos());
     skyboxSceneObject.render(gCamera, std::vector<SceneObject>{});
+    glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
 
     // If postprocessing is enabled

@@ -40,6 +40,7 @@ void main() {
 
   vec3 V = normalize(VIEW_POS - i.worldPos);
   vec3 R = reflect(-V, N);
+  R.y *= -1.0f;
 
   FragColor = vec4(texture(SKYBOX, R).rgb, 1.0f);
 }

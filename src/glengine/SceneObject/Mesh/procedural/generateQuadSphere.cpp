@@ -51,7 +51,7 @@ glengine::Mesh glengine::generateQuadSphere(
 
       constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
       constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
-      constexpr glm::vec3 kForward{0.0f, 0.0f, 1.0f};
+      constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
 
       glm::vec3 lu{leftX, upY, 0.0f};
       glm::vec3 ru{rightX, upY, 0.0f};
@@ -68,12 +68,12 @@ glengine::Mesh glengine::generateQuadSphere(
       // Placing the side on its place
       switch (s) {
         case 0:  // x-
-          lu = glm::angleAxis(glm::radians(90.0f), kUp) * lu;
-          ru = glm::angleAxis(glm::radians(90.0f), kUp) * ru;
-          ld = glm::angleAxis(glm::radians(90.0f), kUp) * ld;
-          rd = glm::angleAxis(glm::radians(90.0f), kUp) * rd;
+          lu = glm::angleAxis(glm::radians(-90.0f), kUp) * lu;
+          ru = glm::angleAxis(glm::radians(-90.0f), kUp) * ru;
+          ld = glm::angleAxis(glm::radians(-90.0f), kUp) * ld;
+          rd = glm::angleAxis(glm::radians(-90.0f), kUp) * rd;
 
-          n = glm::angleAxis(glm::radians(90.0f), kUp) * n;
+          n = glm::angleAxis(glm::radians(-90.0f), kUp) * n;
 
           lu.x -= halfSize;
           ru.x -= halfSize;
@@ -92,12 +92,12 @@ glengine::Mesh glengine::generateQuadSphere(
           }
           break;
         case 1:  // x+
-          lu = glm::angleAxis(glm::radians(-90.0f), kUp) * lu;
-          ru = glm::angleAxis(glm::radians(-90.0f), kUp) * ru;
-          ld = glm::angleAxis(glm::radians(-90.0f), kUp) * ld;
-          rd = glm::angleAxis(glm::radians(-90.0f), kUp) * rd;
+          lu = glm::angleAxis(glm::radians(90.0f), kUp) * lu;
+          ru = glm::angleAxis(glm::radians(90.0f), kUp) * ru;
+          ld = glm::angleAxis(glm::radians(90.0f), kUp) * ld;
+          rd = glm::angleAxis(glm::radians(90.0f), kUp) * rd;
 
-          n = glm::angleAxis(glm::radians(-90.0f), kUp) * n;
+          n = glm::angleAxis(glm::radians(90.0f), kUp) * n;
 
           lu.x += halfSize;
           ru.x += halfSize;
@@ -116,12 +116,12 @@ glengine::Mesh glengine::generateQuadSphere(
           }
           break;
         case 2:  // y-
-          lu = glm::angleAxis(glm::radians(-90.0f), kRight) * lu;
-          ru = glm::angleAxis(glm::radians(-90.0f), kRight) * ru;
-          ld = glm::angleAxis(glm::radians(-90.0f), kRight) * ld;
-          rd = glm::angleAxis(glm::radians(-90.0f), kRight) * rd;
+          lu = glm::angleAxis(glm::radians(90.0f), kRight) * lu;
+          ru = glm::angleAxis(glm::radians(90.0f), kRight) * ru;
+          ld = glm::angleAxis(glm::radians(90.0f), kRight) * ld;
+          rd = glm::angleAxis(glm::radians(90.0f), kRight) * rd;
 
-          n = glm::angleAxis(glm::radians(-90.0f), kRight) * n;
+          n = glm::angleAxis(glm::radians(90.0f), kRight) * n;
 
           lu.y -= halfSize;
           ru.y -= halfSize;
@@ -140,12 +140,12 @@ glengine::Mesh glengine::generateQuadSphere(
           }
           break;
         case 3:  // y+
-          lu = glm::angleAxis(glm::radians(90.0f), kRight) * lu;
-          ru = glm::angleAxis(glm::radians(90.0f), kRight) * ru;
-          ld = glm::angleAxis(glm::radians(90.0f), kRight) * ld;
-          rd = glm::angleAxis(glm::radians(90.0f), kRight) * rd;
+          lu = glm::angleAxis(glm::radians(-90.0f), kRight) * lu;
+          ru = glm::angleAxis(glm::radians(-90.0f), kRight) * ru;
+          ld = glm::angleAxis(glm::radians(-90.0f), kRight) * ld;
+          rd = glm::angleAxis(glm::radians(-90.0f), kRight) * rd;
 
-          n = glm::angleAxis(glm::radians(90.0f), kRight) * n;
+          n = glm::angleAxis(glm::radians(-90.0f), kRight) * n;
 
           lu.y += halfSize;
           ru.y += halfSize;
@@ -164,23 +164,6 @@ glengine::Mesh glengine::generateQuadSphere(
           }
           break;
         case 4:  // z-
-          lu.z -= halfSize;
-          ru.z -= halfSize;
-          ld.z -= halfSize;
-          rd.z -= halfSize;
-
-          if (enableCubemap) {
-            luUV.x += 1.0f / 4.0f;
-            luUV.y += 1.0f / 3.0f;
-            ruUV.x += 1.0f / 4.0f;
-            ruUV.y += 1.0f / 3.0f;
-            ldUV.x += 1.0f / 4.0f;
-            ldUV.y += 1.0f / 3.0f;
-            rdUV.x += 1.0f / 4.0f;
-            rdUV.y += 1.0f / 3.0f;
-          }
-          break;
-        case 5:  // z+
           lu = glm::angleAxis(glm::radians(180.0f), kUp) * lu;
           ru = glm::angleAxis(glm::radians(180.0f), kUp) * ru;
           ld = glm::angleAxis(glm::radians(180.0f), kUp) * ld;
@@ -188,10 +171,10 @@ glengine::Mesh glengine::generateQuadSphere(
 
           n = glm::angleAxis(glm::radians(180.0f), kUp) * n;
 
-          lu.z += halfSize;
-          ru.z += halfSize;
-          ld.z += halfSize;
-          rd.z += halfSize;
+          lu.z -= halfSize;
+          ru.z -= halfSize;
+          ld.z -= halfSize;
+          rd.z -= halfSize;
 
           if (enableCubemap) {
             luUV.x += 3.0f / 4.0f;
@@ -201,6 +184,23 @@ glengine::Mesh glengine::generateQuadSphere(
             ldUV.x += 3.0f / 4.0f;
             ldUV.y += 1.0f / 3.0f;
             rdUV.x += 3.0f / 4.0f;
+            rdUV.y += 1.0f / 3.0f;
+          }
+          break;
+        case 5:  // z+
+          lu.z += halfSize;
+          ru.z += halfSize;
+          ld.z += halfSize;
+          rd.z += halfSize;
+
+          if (enableCubemap) {
+            luUV.x += 1.0f / 4.0f;
+            luUV.y += 1.0f / 3.0f;
+            ruUV.x += 1.0f / 4.0f;
+            ruUV.y += 1.0f / 3.0f;
+            ldUV.x += 1.0f / 4.0f;
+            ldUV.y += 1.0f / 3.0f;
+            rdUV.x += 1.0f / 4.0f;
             rdUV.y += 1.0f / 3.0f;
           }
           break;
@@ -233,12 +233,12 @@ glengine::Mesh glengine::generateQuadSphere(
       uvs[vertexOffset + 2] = ldUV;
       uvs[vertexOffset + 3] = rdUV;
 
-      indices[indexOffset]     = vertexOffset;      // left-up triangle
-      indices[indexOffset + 1] = vertexOffset + 1;  // left-up triangle
-      indices[indexOffset + 2] = vertexOffset + 2;  // left-up triangle
-      indices[indexOffset + 3] = vertexOffset + 1;  // right-down triangle
-      indices[indexOffset + 4] = vertexOffset + 3;  // right-down triangle
-      indices[indexOffset + 5] = vertexOffset + 2;  // right-down triangle
+      indices[indexOffset]     = vertexOffset;      // top-right triangle
+      indices[indexOffset + 1] = vertexOffset + 2;  // top-right triangle
+      indices[indexOffset + 2] = vertexOffset + 1;  // top-right triangle
+      indices[indexOffset + 3] = vertexOffset + 1;  // bottom-left triangle
+      indices[indexOffset + 4] = vertexOffset + 2;  // bottom-left triangle
+      indices[indexOffset + 5] = vertexOffset + 3;  // bottom-left triangle
     }
   }
 
