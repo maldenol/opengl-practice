@@ -22,6 +22,7 @@ class SceneObject {
   glm::vec3 _translate{};
   glm::vec3 _rotate{};
   glm::vec3 _scale{};
+  glm::mat4 _MVP{};
 
   // Unity-like components
   std::shared_ptr<BaseLight> _lightPtr{};
@@ -43,6 +44,7 @@ class SceneObject {
   void setTranslate(const glm::vec3 &translate) noexcept;
   void setRotate(const glm::vec3 &rotate) noexcept;
   void setScale(const glm::vec3 &scale) noexcept;
+  void setMVP(const glm::mat4 &matrixMVP) noexcept;
   void setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexcept;
   void setMeshPtr(const std::shared_ptr<Mesh> &meshPtr) noexcept;
 
@@ -53,19 +55,22 @@ class SceneObject {
   glm::vec3                        &getRotate() noexcept;
   const glm::vec3                  &getScale() const noexcept;
   glm::vec3                        &getScale() noexcept;
+  const glm::mat4                  &getMVP() const noexcept;
+  glm::mat4                        &getMVP() noexcept;
   const std::shared_ptr<BaseLight> &getLightPtr() const noexcept;
   std::shared_ptr<BaseLight>       &getLightPtr() noexcept;
   const std::shared_ptr<Mesh>      &getMeshPtr() const noexcept;
   std::shared_ptr<Mesh>            &getMeshPtr() noexcept;
 
   // Other member functions
-  void render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
-              unsigned int instanceCount = 1) const noexcept;
+  void recalculateMVP() noexcept;
 
   void updateShaderMVP(const BaseCamera &camera) const noexcept;
   void updateShaderViewPos(const BaseCamera &camera) const noexcept;
   void updateShaderLights(const std::vector<SceneObject> &sceneObjects) const noexcept;
-  void updateShaderMaterial() const noexcept;
+
+  void render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
+              unsigned int instanceCount = 1) const noexcept;
 };
 
 }  // namespace glengine

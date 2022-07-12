@@ -39,10 +39,10 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 void processUserInput(GLFWwindow *window);
 
 // Functions for sceneObjects
-void   initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
+void   initMesh(GLuint &vao, GLuint &vbo, GLuint &ebo, const std::vector<float> &vertices,
                 const std::vector<GLuint> &indices);
 GLuint initTexture(const std::string &filename);
-void   drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
+void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
                 const std::vector<GLuint> &textures);
 
 // Main function
@@ -107,9 +107,9 @@ int main(int argc, char *argv[]) {
       0, 1, 2,  // top-left
       1, 3, 2,  // bottom-right
   };
-  // Creating and configuring a mesh and getting its VAO and VBO
-  GLuint vao{}, vbo{};
-  initMesh(vao, vbo, vertices, indices);
+  // Creating and configuring a mesh and getting its VAO, VBO and EBO
+  GLuint vao = 0, vbo = 0, ebo = 0;
+  initMesh(vao, vbo, ebo, vertices, indices);
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Drawing mesh
-    drawMesh(vao, vbo, indices.size(), shaderProgram, textures);
+    drawMesh(vao, indices.size(), shaderProgram, textures);
 
     // Swapping front and back buffers
     glfwSwapBuffers(window);
@@ -156,6 +156,14 @@ int main(int argc, char *argv[]) {
 
     std::this_thread::sleep_for(kRenderCycleInterval);
   }
+
+  for (size_t i = 0; i < textures.size(); ++i) {
+    glDeleteTextures(1, &textures[i]);
+  }
+  glDeleteBuffers(1, &ebo);
+  glDeleteBuffers(1, &vbo);
+  glDeleteVertexArrays(1, &vao);
+  glDeleteProgram(shaderProgram);
 
   // Waiting for shaderWatcher to stop
   shaderWatcherIsRunning = false;
@@ -216,12 +224,11 @@ void processUserInput(GLFWwindow *window) {
 }
 
 // Initializes mesh based on vertices and indices
-void initMesh(GLuint &vao, GLuint &vbo, const std::vector<float> &vertices,
+void initMesh(GLuint &vao, GLuint &vbo, GLuint &ebo, const std::vector<float> &vertices,
               const std::vector<GLuint> &indices) {
   // Creating VAO, VBO and EBO
   glGenVertexArrays(1, &vao);
   glGenBuffers(1, &vbo);
-  GLuint ebo{};
   glGenBuffers(1, &ebo);
 
   // Binding VAO to bind to it VBO and EBO and then configure them
@@ -294,7 +301,7 @@ GLuint initTexture(const std::string &filename) {
 }
 
 // Draws mesh
-void drawMesh(GLuint vao, GLuint vbo, GLsizei indexCount, GLuint shaderProgram,
+void drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
               const std::vector<GLuint> &textures) {
   // Setting specific shader program to use for render
   glUseProgram(shaderProgram);

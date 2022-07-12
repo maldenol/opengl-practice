@@ -30,8 +30,8 @@ using namespace glengine;
 using namespace std::chrono_literals;
 
 // Global constants
-static constexpr unsigned int          kWidth               = 800;
-static constexpr unsigned int          kHeight              = 600;
+static constexpr unsigned int          kInitWidth           = 800;
+static constexpr unsigned int          kInitHeight          = 600;
 static constexpr int                   kOpenGLVersionMajor  = 4;
 static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
@@ -44,6 +44,8 @@ static constexpr float                 kInstanceMaxDistance = 15.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
 
 // Global variables
+unsigned int         gWidth{kInitWidth};
+unsigned int         gHeight{kInitHeight};
 float                gCurrTime{};
 float                gDeltaTime{};
 PerspectiveCamera    gCamera{};
@@ -73,8 +75,8 @@ int main(int argc, char *argv[]) {
 
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
-  GLFWwindow *window = createWindow(kWidth, kHeight, "5-advanced_lighting", kOpenGLVersionMajor,
-                                    kOpenGLVersionMinor);
+  GLFWwindow *window = createWindow(kInitWidth, kInitHeight, "5-advanced_lighting",
+                                    kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -98,7 +100,8 @@ int main(int argc, char *argv[]) {
   GLuint postprocessingTexture = 0;
   glGenTextures(1, &postprocessingTexture);
   glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, kWidth, kHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, kInitWidth, kInitHeight, 0, GL_RGB, GL_UNSIGNED_BYTE,
+               nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocessingTexture,
@@ -107,7 +110,7 @@ int main(int argc, char *argv[]) {
   GLuint postprocessingRBO = 0;
   glGenRenderbuffers(1, &postprocessingRBO);
   glBindRenderbuffer(GL_RENDERBUFFER, postprocessingRBO);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kWidth, kHeight);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kInitWidth, kInitHeight);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
                             postprocessingRBO);
   // Checking if postprocessing framebuffer is complete and unbinding it
@@ -134,14 +137,15 @@ int main(int argc, char *argv[]) {
   GLuint multisamplingTexture = 0;
   glGenTextures(1, &multisamplingTexture);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisamplingTexture);
-  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, kWidth, kHeight, GL_TRUE);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, kInitWidth, kInitHeight, GL_TRUE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE,
                          multisamplingTexture, 0);
   // Creating and binding renderbuffer for multisampling framebuffer
   GLuint multisamplingRBO = 0;
   glGenRenderbuffers(1, &multisamplingRBO);
   glBindRenderbuffer(GL_RENDERBUFFER, multisamplingRBO);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, kWidth, kHeight);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, kInitWidth,
+                                   kInitHeight);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
                             multisamplingRBO);
   // Checking if multisampling framebuffer is complete and unbinding it
@@ -296,34 +300,30 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
-      std::vector<std::shared_ptr<Mesh::Material::Texture>>{},
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("albedoMap.png", true), 0, false}),std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("heightMap.png", false), 2, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png", false), 3, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("roughnessMap.png", false), 4, false}),
-                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png", true), 5, false}),
-          std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadCubemap(
-                                          std::vector<std::string>{
-                                              "cubemapXP.png",
-                                              "cubemapXN.png",
-                                              "cubemapYP.png",
-                                              "cubemapYN.png",
-                                              "cubemapZP.png",
-                                              "cubemapZN.png",
-                                          },
-                                          true),
-                                      6, true}),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", true), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("heightMap.png", false), 2, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
+                                                            3, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
+                                                            false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", true), 5, false),
+          std::make_shared<Mesh::Material::Texture>(loadCubemap(
+                                                        std::vector<std::string>{
+                                                            "cubemapXP.png",
+                                                            "cubemapXN.png",
+                                                            "cubemapYP.png",
+                                                            "cubemapYN.png",
+                                                            "cubemapZP.png",
+                                                            "cubemapZN.png",
+                                                        }, true),
+                                                            6, true),
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("cubemap.png", true), 0, false}),}
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("cubemap.png", true), 0, false),
+                                                            }
   };
 
   // Creating and configuring scene objects
@@ -336,8 +336,8 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef   = 0.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  2.0f, 0.0f},
@@ -346,9 +346,9 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
   // Central cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -357,8 +357,8 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   // Instance cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -367,8 +367,8 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef    = 0.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 15.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(15.0f);
   // Mirror cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{  -3.0f, 0.0f, -10.0f},
@@ -377,7 +377,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Lense cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   3.0f, 0.0f, -10.0f},
@@ -386,7 +386,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, lenseSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
@@ -407,7 +407,7 @@ int main(int argc, char *argv[]) {
       1.0f, 0.0f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
@@ -418,7 +418,7 @@ int main(int argc, char *argv[]) {
                                   0.0f, 0.075f, 15.0f, 13.0f),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
@@ -429,7 +429,7 @@ int main(int argc, char *argv[]) {
                                   0.0f, 0.075f, 30.0f, 25.0f),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->ambCoef = 0.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Flashlight
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -595,6 +595,8 @@ int main(int argc, char *argv[]) {
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
+      // Setting viewport
+      glViewport(0, 0, kInitWidth, kInitHeight);
       // Binding multisampling framebuffer
       glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
     }
@@ -662,11 +664,13 @@ int main(int argc, char *argv[]) {
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
+      // Setting viewport
+      glViewport(0, 0, gWidth, gHeight);
       // Converting multisampling FBO data to postprocessing one
       glBindFramebuffer(GL_READ_FRAMEBUFFER, multisamplingFBO);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, postprocessingFBO);
-      glBlitFramebuffer(0, 0, kWidth, kHeight, 0, 0, kWidth, kHeight, GL_COLOR_BUFFER_BIT,
-                        GL_LINEAR);
+      glBlitFramebuffer(0, 0, kInitWidth, kInitHeight, 0, 0, kInitWidth, kInitHeight,
+                        GL_COLOR_BUFFER_BIT, GL_LINEAR);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       // Binding default framebuffer
@@ -719,7 +723,9 @@ int main(int argc, char *argv[]) {
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   // Setting viewport position and size relative to window
-  glViewport(0, 0, width, height);
+  gWidth  = width;
+  gHeight = height;
+  glViewport(0, 0, gWidth, gHeight);
 }
 
 void cursorPosCallback(GLFWwindow *window, double posX, double posY) {

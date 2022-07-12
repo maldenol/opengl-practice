@@ -13,7 +13,7 @@ using namespace glengine;
 // Constructors, assignment operators and destructor
 
 // Default constructor
-SceneObject::SceneObject() noexcept {}
+SceneObject::SceneObject() noexcept { recalculateMVP(); }
 
 // Parameterized constructor
 SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
@@ -23,13 +23,16 @@ SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
       _rotate{rotate},
       _scale{scale},
       _lightPtr{lightPtr},
-      _meshPtr{meshPtr} {}
+      _meshPtr{meshPtr} {
+  recalculateMVP();
+}
 
 // Copy constructor
 SceneObject::SceneObject(const SceneObject &sceneObject) noexcept
     : _translate{sceneObject._translate},
       _rotate{sceneObject._rotate},
       _scale{sceneObject._scale},
+      _MVP{sceneObject._MVP},
       _lightPtr{sceneObject._lightPtr},
       _meshPtr{sceneObject._meshPtr} {}
 
@@ -38,6 +41,7 @@ SceneObject &SceneObject::operator=(const SceneObject &sceneObject) noexcept {
   _translate = sceneObject._translate;
   _rotate    = sceneObject._rotate;
   _scale     = sceneObject._scale;
+  _MVP       = sceneObject._MVP;
   _lightPtr  = sceneObject._lightPtr;
   _meshPtr   = sceneObject._meshPtr;
 
@@ -49,6 +53,7 @@ SceneObject::SceneObject(SceneObject &&sceneObject) noexcept
     : _translate{std::exchange(sceneObject._translate, glm::vec3{})},
       _rotate{std::exchange(sceneObject._rotate, glm::vec3{})},
       _scale{std::exchange(sceneObject._scale, glm::vec3{})},
+      _MVP{std::exchange(sceneObject._MVP, glm::mat4{})},
       _lightPtr{std::exchange(sceneObject._lightPtr, std::shared_ptr<BaseLight>{})},
       _meshPtr{std::exchange(sceneObject._meshPtr, std::shared_ptr<Mesh>{})} {}
 
@@ -57,6 +62,7 @@ SceneObject &SceneObject::operator=(SceneObject &&sceneObject) noexcept {
   std::swap(_translate, sceneObject._translate);
   std::swap(_rotate, sceneObject._rotate);
   std::swap(_scale, sceneObject._scale);
+  std::swap(_MVP, sceneObject._MVP);
   std::swap(_lightPtr, sceneObject._lightPtr);
   std::swap(_meshPtr, sceneObject._meshPtr);
 
@@ -68,11 +74,22 @@ SceneObject::~SceneObject() noexcept {}
 
 // Setters
 
-void SceneObject::setTranslate(const glm::vec3 &translate) noexcept { _translate = translate; }
+void SceneObject::setTranslate(const glm::vec3 &translate) noexcept {
+  _translate = translate;
+  recalculateMVP();
+}
 
-void SceneObject::setRotate(const glm::vec3 &rotate) noexcept { _rotate = rotate; }
+void SceneObject::setRotate(const glm::vec3 &rotate) noexcept {
+  _rotate = rotate;
+  recalculateMVP();
+}
 
-void SceneObject::setScale(const glm::vec3 &scale) noexcept { _scale = scale; }
+void SceneObject::setScale(const glm::vec3 &scale) noexcept {
+  _scale = scale;
+  recalculateMVP();
+}
+
+void SceneObject::setMVP(const glm::mat4 &matrixMVP) noexcept { _MVP = matrixMVP; }
 
 void SceneObject::setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexcept {
   _lightPtr = lightPtr;
@@ -94,6 +111,10 @@ const glm::vec3 &SceneObject::getScale() const noexcept { return _scale; }
 
 glm::vec3 &SceneObject::getScale() noexcept { return _scale; }
 
+const glm::mat4 &SceneObject::getMVP() const noexcept { return _MVP; }
+
+glm::mat4 &SceneObject::getMVP() noexcept { return _MVP; }
+
 const std::shared_ptr<BaseLight> &SceneObject::getLightPtr() const noexcept { return _lightPtr; }
 
 std::shared_ptr<BaseLight> &SceneObject::getLightPtr() noexcept { return _lightPtr; }
@@ -104,34 +125,22 @@ std::shared_ptr<Mesh> &SceneObject::getMeshPtr() noexcept { return _meshPtr; }
 
 // Other member functions
 
-void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
-                         unsigned int instanceCount) const noexcept {
-  if (_meshPtr == nullptr || !_meshPtr->isComplete()) return;
-
-  // Updating shader uniform variables
-  updateShaderMVP(camera);
-  updateShaderViewPos(camera);
-  updateShaderLights(sceneObjects);
-  updateShaderMaterial();
-
-  // Rendering mesh
-  _meshPtr->render(instanceCount);
+void SceneObject::recalculateMVP() noexcept {
+  // Calculating scene object model matrix
+  _MVP = glm::mat4{1.0f};
+  _MVP = glm::translate(_MVP, _translate);
+  _MVP = _MVP * glm::eulerAngleXYZ(glm::radians(_rotate.x), glm::radians(_rotate.y),
+                                   glm::radians(_rotate.z));
+  _MVP = glm::scale(_MVP, _scale);
 }
 
 void SceneObject::updateShaderMVP(const BaseCamera &camera) const noexcept {
-  // Calculating mesh model matrix
-  glm::mat4x4 modelMatrix{1.0f};
-  modelMatrix = glm::translate(modelMatrix, _translate);
-  modelMatrix = modelMatrix * glm::eulerAngleXYZ(glm::radians(_rotate.x), glm::radians(_rotate.y),
-                                                 glm::radians(_rotate.z));
-  modelMatrix = glm::scale(modelMatrix, _scale);
-
   // Updating object shader program uniform values
   const GLuint shaderProgram = _meshPtr->getShaderProgram();
   glUseProgram(shaderProgram);
 
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "MODEL"), 1, GL_FALSE,
-                     glm::value_ptr(modelMatrix));
+                     glm::value_ptr(_MVP));
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "VIEW"), 1, GL_FALSE,
                      glm::value_ptr(camera.getViewMatrix()));
   glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PROJ"), 1, GL_FALSE,
@@ -212,10 +221,10 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
         glGetUniformLocation(shaderProgram,
                              ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
         directionalLight->getIntensity());
-    glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                                                glm::radians(sceneObject.getRotate().y),
-                                                glm::radians(sceneObject.getRotate().z))};
-    glm::vec3   dir{
+    glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                                              glm::radians(sceneObject.getRotate().y),
+                                              glm::radians(sceneObject.getRotate().z))};
+    glm::vec3 dir{
         rotateMatrix * glm::vec4{directionalLight->getDirection(), 0.0f}
     };
     glUniform3fv(glGetUniformLocation(
@@ -260,10 +269,10 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
     glUniform1f(glGetUniformLocation(shaderProgram,
                                      ("SPOT_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
                 spotLight->getIntensity());
-    glm::mat4x4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                                                glm::radians(sceneObject.getRotate().y),
-                                                glm::radians(sceneObject.getRotate().z))};
-    glm::vec3   dir{
+    glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                                              glm::radians(sceneObject.getRotate().y),
+                                              glm::radians(sceneObject.getRotate().z))};
+    glm::vec3 dir{
         rotateMatrix * glm::vec4{spotLight->getDirection(), 0.0f}
     };
     glUniform3fv(
@@ -286,27 +295,15 @@ void SceneObject::updateShaderLights(const std::vector<SceneObject> &sceneObject
   glUseProgram(0);
 }
 
-void SceneObject::updateShaderMaterial() const noexcept {
-  // Updating object shader program uniform values
-  const GLuint shaderProgram = _meshPtr->getShaderProgram();
-  glUseProgram(shaderProgram);
+void SceneObject::render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
+                         unsigned int instanceCount) const noexcept {
+  if (_meshPtr == nullptr || !_meshPtr->isComplete()) return;
 
-  glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.ambCoef"),
-              _meshPtr->getMaterialPtr()->ambCoef);
-  glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.diffCoef"),
-              _meshPtr->getMaterialPtr()->diffCoef);
-  glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.specCoef"),
-              _meshPtr->getMaterialPtr()->specCoef);
-  glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.glossiness"),
-              _meshPtr->getMaterialPtr()->glossiness);
-  glUniform1f(glGetUniformLocation(shaderProgram, "MATERIAL.maxHeight"),
-              _meshPtr->getMaterialPtr()->maxHeight);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.albedoMap"), 0);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.normalMap"), 1);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.heightMap"), 2);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.ambOccMap"), 3);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.roughMap"), 4);
-  glUniform1i(glGetUniformLocation(shaderProgram, "MATERIAL.emissMap"), 5);
+  // Updating shader uniform variables
+  updateShaderMVP(camera);
+  updateShaderViewPos(camera);
+  updateShaderLights(sceneObjects);
 
-  glUseProgram(0);
+  // Rendering mesh
+  _meshPtr->render(instanceCount);
 }

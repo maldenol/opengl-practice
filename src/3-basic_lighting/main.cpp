@@ -131,18 +131,16 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
-      std::vector<std::shared_ptr<Mesh::Material::Texture>>{                           },
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{     },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("albedoMap.png", false), 0, false}),std::make_shared<Mesh::Material::Texture>(
-Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("heightMap.png", false), 2, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-                                                            Mesh::Material::Texture{loadTexture("ambientOcclusionMap.png", false), 3, false}),
-                                                            std::make_shared<Mesh::Material::Texture>(
-              Mesh::Material::Texture{loadTexture("roughnessMap.png", false), 4, false}),
-                                                            //std::make_shared<Mesh::Material::Texture>(Mesh::Material::Texture{loadTexture("emissionMap.png", false), 5, false}),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", false), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("heightMap.png", false), 2, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
+                                                            3, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
+                                                            false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", false), 5, false),
       },
   };
 
@@ -155,7 +153,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,   2.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
@@ -163,8 +161,8 @@ Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 5.0f;
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->maxHeight  = 0.5f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.1f,   0.1f, 0.1f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
@@ -172,7 +170,7 @@ Mesh::Material::Texture{loadTexture("normalMap.png", false), 1, false}),
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->glossiness = 10.0f;
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},

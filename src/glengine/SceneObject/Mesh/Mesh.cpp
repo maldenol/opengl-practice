@@ -170,18 +170,35 @@ void Mesh::render(unsigned int instanceCount) const noexcept {
   glBindVertexArray(_vao);
 
   // For each texture
-  for (size_t i = 0; i < material.texturePtrs.size(); ++i) {
+  for (size_t i = 0; i < material.getTexturePtrs().size(); ++i) {
     // Binding texture to texture unit
-    glActiveTexture(GL_TEXTURE0 + material.texturePtrs[i]->index);
-    if (material.texturePtrs[i]->isCubemap) {
-      glBindTexture(GL_TEXTURE_CUBE_MAP, material.texturePtrs[i]->texture);
+    glActiveTexture(GL_TEXTURE0 + material.getTexturePtrs()[i]->getUnit());
+    if (material.getTexturePtrs()[i]->getIsCubemap()) {
+      glBindTexture(GL_TEXTURE_CUBE_MAP, material.getTexturePtrs()[i]->getName());
     } else {
-      glBindTexture(GL_TEXTURE_2D, material.texturePtrs[i]->texture);
+      glBindTexture(GL_TEXTURE_2D, material.getTexturePtrs()[i]->getName());
     }
   }
 
   // Setting specific shader program to use for render
   glUseProgram(_shaderProgram);
+
+  // Updating object shader program uniform values
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.ambCoef"), _materialPtr->getAmbCoef());
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.diffCoef"),
+              _materialPtr->getDiffCoef());
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.specCoef"),
+              _materialPtr->getSpecCoef());
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.glossiness"),
+              _materialPtr->getGlossiness());
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.maxHeight"),
+              _materialPtr->getMaxHeight());
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.albedoMap"), 0);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.normalMap"), 1);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.heightMap"), 2);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.ambOccMap"), 3);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.roughMap"), 4);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);
 
   // Drawing mesh
   glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
@@ -190,10 +207,10 @@ void Mesh::render(unsigned int instanceCount) const noexcept {
   glUseProgram(0);
 
   // For each texture
-  for (size_t i = 0; i < material.texturePtrs.size(); ++i) {
+  for (size_t i = 0; i < material.getTexturePtrs().size(); ++i) {
     // Unbinding texture from texture unit
-    glActiveTexture(GL_TEXTURE0 + material.texturePtrs[i]->index);
-    if (material.texturePtrs[i]->isCubemap) {
+    glActiveTexture(GL_TEXTURE0 + material.getTexturePtrs()[i]->getUnit());
+    if (material.getTexturePtrs()[i]->getIsCubemap()) {
       glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     } else {
       glBindTexture(GL_TEXTURE_2D, 0);

@@ -36,24 +36,83 @@ class Mesh {
     const void *pointer{};
   };
 
-  // Material struct
-  struct Material {
-    // Texture struct
-    struct Texture {
-      GLuint texture{};
-      int    index{};
-      bool   isCubemap{};
+  // Material class
+  class Material {
+   public:
+    // Texture class
+    class Texture {
+     private:
+      GLuint _name{};
+      int    _unit{};
+      bool   _isCubemap{};
+
+     public:
+      // Constructors, assignment operators and destructor
+      Texture() noexcept;
+      Texture(GLuint name, int unit, bool isCubemap) noexcept;
+      Texture(const Texture &texture) noexcept;
+      Texture &operator=(const Texture &texture) noexcept;
+      Texture(Texture &&texture) noexcept;
+      Texture &operator=(Texture &&texture) noexcept;
+      ~Texture() noexcept;
+
+      // Setters
+      void setName(GLuint name) noexcept;
+      void setUnit(int unit) noexcept;
+      void setIsCubemap(bool isCubemap) noexcept;
+
+      // Getters
+      GLuint  getName() const noexcept;
+      GLuint &getName() noexcept;
+      int     getUnit() const noexcept;
+      int    &getUnit() noexcept;
+      bool    getIsCubemap() const noexcept;
+      bool   &getIsCubemap() noexcept;
     };
 
-    float ambCoef{};
-    float diffCoef{};
-    float specCoef{};
+   private:
+    float _ambCoef{};
+    float _diffCoef{};
+    float _specCoef{};
 
-    float glossiness{};
+    float _glossiness{};
 
-    float maxHeight{};
+    float _maxHeight{};
 
-    std::vector<std::shared_ptr<Texture>> texturePtrs{};
+    std::vector<std::shared_ptr<Texture>> _texturePtrs{};
+
+   public:
+    // Constructors, assignment operators and destructor
+    Material() noexcept;
+    Material(float ambCoef, float diffCoef, float specCoef, float glossiness, float maxHeight,
+             const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
+    Material(const Material &material) noexcept;
+    Material &operator=(const Material &material) noexcept;
+    Material(Material &&material) noexcept;
+    Material &operator=(Material &&material) noexcept;
+    ~Material() noexcept;
+
+    // Setters
+    void setAmbCoef(float ambCoef) noexcept;
+    void setDiffCoef(float diffCoef) noexcept;
+    void setSpecCoef(float specCoef) noexcept;
+    void setGlossiness(float glossiness) noexcept;
+    void setMaxHeight(float maxHeight) noexcept;
+    void setTexturePtrs(const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
+
+    // Getters
+    float                                        getAmbCoef() const noexcept;
+    float                                       &getAmbCoef() noexcept;
+    float                                        getDiffCoef() const noexcept;
+    float                                       &getDiffCoef() noexcept;
+    float                                        getSpecCoef() const noexcept;
+    float                                       &getSpecCoef() noexcept;
+    float                                        getGlossiness() const noexcept;
+    float                                       &getGlossiness() noexcept;
+    float                                        getMaxHeight() const noexcept;
+    float                                       &getMaxHeight() noexcept;
+    const std::vector<std::shared_ptr<Texture>> &getTexturePtrs() const noexcept;
+    std::vector<std::shared_ptr<Texture>>       &getTexturePtrs() noexcept;
   };
 
  private:
