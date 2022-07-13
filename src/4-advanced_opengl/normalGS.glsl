@@ -35,7 +35,7 @@ void generateNormal(uint index) {
   // Generating normal strip line
   gl_Position = PROJ * VIEW * gl_in[index].gl_Position;
   EmitVertex();
-  vec3 N = normalize(mat3(transpose(inverse(MODEL))) * i[index].normal);
+  vec3 N      = normalize(mat3(transpose(inverse(MODEL))) * i[index].normal);
   gl_Position = PROJ * VIEW * (gl_in[index].gl_Position + vec4(MAGNITUDE * N, 0.0f));
   EmitVertex();
   EndPrimitive();

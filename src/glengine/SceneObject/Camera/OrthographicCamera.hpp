@@ -26,12 +26,29 @@ class OrthographicCamera : public BaseCamera {
   OrthographicCamera &operator=(OrthographicCamera &&camera) noexcept;
   virtual ~OrthographicCamera() noexcept;
 
-  // Other member functions
-  void setProjectionAttributes(float leftBorder, float rightBorder, float bottomBorder,
-                               float topBorder, float nearPlane, float farPlane) noexcept;
-  void getProjectionAttributes(float &leftBorder, float &rightBorder, float &bottomBorder,
-                               float &topBorder, float &nearPlane, float &farPlane) const noexcept;
+  // Setters
+  void setLeftBorder(float leftBorder) noexcept;
+  void setRightBorder(float rightBorder) noexcept;
+  void setBottomBorder(float bottomBorder) noexcept;
+  void setTopBorder(float topBorder) noexcept;
+  void setNearPlane(float nearPlane) noexcept;
+  void setFarPlane(float farPlane) noexcept;
 
+  // Getters
+  float  getLeftBorder() const noexcept;
+  float &getLeftBorder() noexcept;
+  float  getRightBorder() const noexcept;
+  float &getRightBorder() noexcept;
+  float  getBottomBorder() const noexcept;
+  float &getBottomBorder() noexcept;
+  float  getTopBorder() const noexcept;
+  float &getTopBorder() noexcept;
+  float  getNearPlane() const noexcept;
+  float &getNearPlane() noexcept;
+  float  getFarPlane() const noexcept;
+  float &getFarPlane() noexcept;
+
+  // Other member functions
   glm::mat4 getProjectionMatrix() const noexcept override;
 };
 

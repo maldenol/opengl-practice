@@ -12,12 +12,13 @@ using namespace glengine;
 Mesh::Mesh() noexcept {}
 
 // Parameterized constructor
-Mesh::Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-           const std::shared_ptr<Material> &materialPtr) noexcept
+Mesh::Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLsizei instanceCount,
+           GLuint shaderProgram, const std::shared_ptr<Material> &materialPtr) noexcept
     : _vao{vao},
       _vbo{vbo},
       _ebo{ebo},
       _indexCount{indexCount},
+      _instanceCount{instanceCount},
       _shaderProgram{shaderProgram},
       _materialPtr{materialPtr} {}
 
@@ -26,6 +27,7 @@ Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<flo
            const std::vector<GLuint> &indices, GLuint shaderProgram,
            const std::shared_ptr<Material> &materialPtr)
     : _indexCount{static_cast<GLsizei>(indices.size())},
+      _instanceCount{1},
       _shaderProgram{shaderProgram},
       _materialPtr{materialPtr} {
   // Creating VAO, VBO and EBO
@@ -65,6 +67,7 @@ Mesh::Mesh(const Mesh &mesh) noexcept
       _vbo{mesh._vbo},
       _ebo{mesh._ebo},
       _indexCount{mesh._indexCount},
+      _instanceCount{mesh._instanceCount},
       _shaderProgram{mesh._shaderProgram},
       _materialPtr{mesh._materialPtr} {}
 
@@ -74,6 +77,7 @@ Mesh &Mesh::operator=(const Mesh &mesh) noexcept {
   _vbo           = mesh._vbo;
   _ebo           = mesh._ebo;
   _indexCount    = mesh._indexCount;
+  _instanceCount = mesh._instanceCount;
   _shaderProgram = mesh._shaderProgram;
   _materialPtr   = mesh._materialPtr;
 
@@ -86,6 +90,7 @@ Mesh::Mesh(Mesh &&mesh) noexcept
       _vbo{std::exchange(mesh._vbo, 0)},
       _ebo{std::exchange(mesh._ebo, 0)},
       _indexCount{std::exchange(mesh._indexCount, 0)},
+      _instanceCount{std::exchange(mesh._instanceCount, 0)},
       _shaderProgram{std::exchange(mesh._shaderProgram, 0)},
       _materialPtr{std::exchange(mesh._materialPtr, std::shared_ptr<Material>{})} {}
 
@@ -95,6 +100,7 @@ Mesh &Mesh::operator=(Mesh &&mesh) noexcept {
   std::swap(_vbo, mesh._vbo);
   std::swap(_ebo, mesh._ebo);
   std::swap(_indexCount, mesh._indexCount);
+  std::swap(_instanceCount, mesh._instanceCount);
   std::swap(_shaderProgram, mesh._shaderProgram);
   std::swap(_materialPtr, mesh._materialPtr);
 
@@ -112,9 +118,6 @@ Mesh::~Mesh() noexcept {
   if (_ebo > 0) {
     glDeleteBuffers(1, &_ebo);
   }
-  if (_shaderProgram > 0) {
-    glDeleteProgram(_shaderProgram);
-  }
 }
 
 // Setters
@@ -126,6 +129,8 @@ void Mesh::setVBO(GLuint vbo) noexcept { _vbo = vbo; }
 void Mesh::setEBO(GLuint ebo) noexcept { _ebo = ebo; }
 
 void Mesh::setIndexCount(GLsizei indexCount) noexcept { _indexCount = indexCount; }
+
+void Mesh::setInstanceCount(GLsizei instanceCount) noexcept { _instanceCount = instanceCount; }
 
 void Mesh::setShaderProgram(GLuint shaderProgram) noexcept { _shaderProgram = shaderProgram; }
 
@@ -151,6 +156,10 @@ GLsizei Mesh::getIndexCount() const noexcept { return _indexCount; }
 
 GLsizei &Mesh::getIndexCount() noexcept { return _indexCount; }
 
+GLsizei Mesh::getInstanceCount() const noexcept { return _instanceCount; }
+
+GLsizei &Mesh::getInstanceCount() noexcept { return _instanceCount; }
+
 GLuint Mesh::getShaderProgram() const noexcept { return _shaderProgram; }
 
 GLuint &Mesh::getShaderProgram() noexcept { return _shaderProgram; }
@@ -161,7 +170,7 @@ const std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() const noexcept {
 
 std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() noexcept { return _materialPtr; }
 
-void Mesh::render(unsigned int instanceCount) const noexcept {
+void Mesh::render() const noexcept {
   if (!isComplete()) return;
 
   const Mesh::Material &material = *_materialPtr;
@@ -201,7 +210,7 @@ void Mesh::render(unsigned int instanceCount) const noexcept {
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);
 
   // Drawing mesh
-  glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
+  glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, _instanceCount);
 
   // Unbinding shader program
   glUseProgram(0);
@@ -222,6 +231,6 @@ void Mesh::render(unsigned int instanceCount) const noexcept {
 }
 
 bool Mesh::isComplete() const noexcept {
-  return _vao > 0 && _vbo > 0 && _ebo > 0 && _indexCount > 0 && _shaderProgram > 0 &&
-         _materialPtr != nullptr;
+  return _vao > 0 && _vbo > 0 && _ebo > 0 && _indexCount > 0 && _instanceCount > 0 &&
+         _shaderProgram > 0 && _materialPtr != nullptr;
 }

@@ -225,12 +225,16 @@ int main(int argc, char *argv[]) {
   gCamera.setPos(glm::vec3{0.0f, 1.0f, 2.0f});
   gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+  gCamera.setVerticalFOV(glm::radians(60.0f));
+  gCamera.setAspectRatio(static_cast<float>(kWidth) / static_cast<float>(kHeight));
+  gCamera.setNearPlane(0.1f);
+  gCamera.setFarPlane(100.0f);
   // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFController =
+  Camera5DoFController *camera5DoFControllerPtr =
       dynamic_cast<Camera5DoFController *>(&gCameraController);
-  if (camera5DoFController != nullptr) {
-    camera5DoFController->updateLook();
-    camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
+  if (camera5DoFControllerPtr != nullptr) {
+    camera5DoFControllerPtr->updateLook();
+    camera5DoFControllerPtr->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
   }
 
   // Starting clock
@@ -243,7 +247,14 @@ int main(int argc, char *argv[]) {
     glfwMakeContextCurrent(window);
 
     // If window should close
-    if (glfwWindowShouldClose(window)) break;
+    if (glfwWindowShouldClose(window)) {
+      // Releasing OpenGL context and mutex
+      glfwMakeContextCurrent(nullptr);
+      glfwContextLock.unlock();
+
+      // Breaking render cycle
+      break;
+    }
 
     // Processing window events
     glfwPollEvents();
@@ -264,14 +275,16 @@ int main(int argc, char *argv[]) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
     }
 
-    // Updating flashlight SceneObjcet fields
+    // Updating flashlight SceneObject fields
     gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPos();
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // Rendering scene objects
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
+    SceneObject::updateShadersLights(sceneObjects);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
-      sceneObjects[i].render(gCamera, sceneObjects);
+      sceneObjects[i].render();
     }
 
     // Swapping front and back buffers
@@ -290,6 +303,10 @@ int main(int argc, char *argv[]) {
   lightShaderWatcherIsRunning = false;
   lightShaderWatcherThread.join();
 
+  // Deleting OpenGL objects
+  glDeleteProgram(lightSP);
+  glDeleteProgram(blinnPhongSP);
+
   // Terminating window with OpenGL context and GLFW
   terminateWindow(window);
   terminateGLFW();
@@ -303,6 +320,8 @@ int main(int argc, char *argv[]) {
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   // Setting viewport position and size relative to window
   glViewport(0, 0, width, height);
+  // Setting camera aspect ratio
+  gCamera.setAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 }
 
 void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
@@ -317,31 +336,32 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
   sPrevMousePosY = static_cast<float>(posY);
 
   // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFController =
+  Camera5DoFController *camera5DoFControllerPtr =
       dynamic_cast<Camera5DoFController *>(&gCameraController);
-  if (camera5DoFController != nullptr) {
+  if (camera5DoFControllerPtr != nullptr) {
     // Rotating camera
-    camera5DoFController->addAngles(glm::radians(offsetX), glm::radians(offsetY));
+    camera5DoFControllerPtr->addAngles(glm::radians(offsetX), glm::radians(offsetY));
   }
 
   // If cameraController is Camera6DoFController
-  Camera6DoFController *camera6DoFController =
+  Camera6DoFController *camera6DoFControllerPtr =
       dynamic_cast<Camera6DoFController *>(&gCameraController);
-  if (camera6DoFController != nullptr) {
+  if (camera6DoFControllerPtr != nullptr) {
     // Rotating camera
-    camera6DoFController->rotateRight(glm::radians(offsetY));
-    camera6DoFController->rotateUp(glm::radians(offsetX));
+    camera6DoFControllerPtr->rotateRight(glm::radians(offsetY));
+    camera6DoFControllerPtr->rotateUp(glm::radians(offsetX));
   }
 }
 
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
   // Checking if camera is orthographic
-  OrthographicCamera *orthoCamera = dynamic_cast<OrthographicCamera *>(&gCamera);
-  if (orthoCamera != nullptr) {
+  OrthographicCamera *orthoCameraPtr = dynamic_cast<OrthographicCamera *>(&gCamera);
+  if (orthoCameraPtr != nullptr) {
     // Getting orthographic projection attributes of camera
-    float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{}, farPlane{};
-    orthoCamera->getProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
-                                         nearPlane, farPlane);
+    float leftBorder   = orthoCameraPtr->getLeftBorder();
+    float rightBorder  = orthoCameraPtr->getRightBorder();
+    float bottomBorder = orthoCameraPtr->getBottomBorder();
+    float topBorder    = orthoCameraPtr->getTopBorder();
 
     // Updating border attributes
     leftBorder -= static_cast<float>(glm::radians(offsetY));
@@ -350,16 +370,17 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     topBorder += static_cast<float>(glm::radians(offsetY));
 
     // Setting orthographic projection attributes of camera
-    orthoCamera->setProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
-                                         nearPlane, farPlane);
+    orthoCameraPtr->setLeftBorder(leftBorder);
+    orthoCameraPtr->setRightBorder(rightBorder);
+    orthoCameraPtr->setBottomBorder(bottomBorder);
+    orthoCameraPtr->setTopBorder(topBorder);
   }
 
   // Checking if camera is perspective
-  PerspectiveCamera *perspCamera = dynamic_cast<PerspectiveCamera *>(&gCamera);
-  if (perspCamera != nullptr) {
+  PerspectiveCamera *perspCameraPtr = dynamic_cast<PerspectiveCamera *>(&gCamera);
+  if (perspCameraPtr != nullptr) {
     // Getting perspective projection attributes of camera
-    float verticalVOF{}, aspectRatio{}, nearPlane{}, farPlane{};
-    perspCamera->getProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+    float verticalVOF = perspCameraPtr->getVerticalFOV();
 
     // Updating verticalFOV attribute
     verticalVOF -= static_cast<float>(glm::radians(offsetY));
@@ -370,7 +391,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     }
 
     // Setting perspective projection attributes of camera
-    perspCamera->setProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+    perspCameraPtr->setVerticalFOV(verticalVOF);
   }
 }
 

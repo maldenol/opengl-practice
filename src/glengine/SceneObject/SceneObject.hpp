@@ -22,7 +22,7 @@ class SceneObject {
   glm::vec3 _translate{};
   glm::vec3 _rotate{};
   glm::vec3 _scale{};
-  glm::mat4 _MVP{};
+  glm::mat4 _modelMatrix{};
 
   // Unity-like components
   std::shared_ptr<BaseLight> _lightPtr{};
@@ -44,7 +44,7 @@ class SceneObject {
   void setTranslate(const glm::vec3 &translate) noexcept;
   void setRotate(const glm::vec3 &rotate) noexcept;
   void setScale(const glm::vec3 &scale) noexcept;
-  void setMVP(const glm::mat4 &matrixMVP) noexcept;
+  void setModelMatrix(const glm::mat4 &modelMatrix) noexcept;
   void setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexcept;
   void setMeshPtr(const std::shared_ptr<Mesh> &meshPtr) noexcept;
 
@@ -55,22 +55,24 @@ class SceneObject {
   glm::vec3                        &getRotate() noexcept;
   const glm::vec3                  &getScale() const noexcept;
   glm::vec3                        &getScale() noexcept;
-  const glm::mat4                  &getMVP() const noexcept;
-  glm::mat4                        &getMVP() noexcept;
+  const glm::mat4                  &getModelMatrix() const noexcept;
+  glm::mat4                        &getModelMatrix() noexcept;
   const std::shared_ptr<BaseLight> &getLightPtr() const noexcept;
   std::shared_ptr<BaseLight>       &getLightPtr() noexcept;
   const std::shared_ptr<Mesh>      &getMeshPtr() const noexcept;
   std::shared_ptr<Mesh>            &getMeshPtr() noexcept;
 
   // Other member functions
-  void recalculateMVP() noexcept;
+  void recalculateModelMatrix() noexcept;
 
-  void updateShaderMVP(const BaseCamera &camera) const noexcept;
-  void updateShaderViewPos(const BaseCamera &camera) const noexcept;
-  void updateShaderLights(const std::vector<SceneObject> &sceneObjects) const noexcept;
+  void updateShaderModelMatrix() const noexcept;
 
-  void render(const BaseCamera &camera, const std::vector<SceneObject> &sceneObjects,
-              unsigned int instanceCount = 1) const noexcept;
+  void render() const noexcept;
+
+  // Other static member functions
+  static void updateShadersCamera(const std::vector<SceneObject> &sceneObjects,
+                                  const BaseCamera               &camera) noexcept;
+  static void updateShadersLights(const std::vector<SceneObject> &sceneObjects) noexcept;
 };
 
 }  // namespace glengine

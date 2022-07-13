@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+#include <ctime>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -32,6 +33,7 @@ using namespace std::chrono_literals;
 // Global constants
 static constexpr unsigned int          kInitWidth           = 800;
 static constexpr unsigned int          kInitHeight          = 600;
+static constexpr unsigned int          kMSAASampleCount     = 4;
 static constexpr int                   kOpenGLVersionMajor  = 4;
 static constexpr int                   kOpenGLVersionMinor  = 6;
 static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
@@ -55,6 +57,12 @@ int                  gPolygonMode{};
 bool                 gEnableSceneObjectsFloating{true};
 bool                 gEnablePostprocessing{true};
 bool                 gEnableNormals{false};
+GLuint               gPostprocessingFBO{};
+GLuint               gPostprocessingTexture{};
+GLuint               gPostprocessingRBO{};
+GLuint               gMultisamplingFBO{};
+GLuint               gMultisamplingTexture{};
+GLuint               gMultisamplingRBO{};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -75,8 +83,8 @@ int main(int argc, char *argv[]) {
 
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
-  GLFWwindow *window = createWindow(kInitWidth, kInitHeight, "5-advanced_lighting",
-                                    kOpenGLVersionMajor, kOpenGLVersionMinor);
+  GLFWwindow *window = createWindow(gWidth, gHeight, "5-advanced_lighting", kOpenGLVersionMajor,
+                                    kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -90,37 +98,33 @@ int main(int argc, char *argv[]) {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Setting pseudo random generator seed
-  srand(glfwGetTime());
+  srand(time(0));
 
   // Creating and binding postprocessing framebuffer
-  GLuint postprocessingFBO = 0;
-  glGenFramebuffers(1, &postprocessingFBO);
-  glBindFramebuffer(GL_FRAMEBUFFER, postprocessingFBO);
-  // Creating and binding texture for postprocessing framebuffer
-  GLuint postprocessingTexture = 0;
-  glGenTextures(1, &postprocessingTexture);
-  glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, kInitWidth, kInitHeight, 0, GL_RGB, GL_UNSIGNED_BYTE,
-               nullptr);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocessingTexture,
-                         0);
-  // Creating and binding renderbuffer for postprocessing framebuffer
-  GLuint postprocessingRBO = 0;
-  glGenRenderbuffers(1, &postprocessingRBO);
-  glBindRenderbuffer(GL_RENDERBUFFER, postprocessingRBO);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, kInitWidth, kInitHeight);
+  glGenFramebuffers(1, &gPostprocessingFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, gPostprocessingFBO);
+  // Creating and binding texture to postprocessing framebuffer
+  glGenTextures(1, &gPostprocessingTexture);
+  glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         gPostprocessingTexture, 0);
+  // Creating and binding renderbuffer to postprocessing framebuffer
+  glGenRenderbuffers(1, &gPostprocessingRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, gPostprocessingRBO);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, gWidth, gHeight);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
-                            postprocessingRBO);
+                            gPostprocessingRBO);
   // Checking if postprocessing framebuffer is complete and unbinding it
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &postprocessingFBO);
-    glDeleteTextures(1, &postprocessingTexture);
-    glDeleteRenderbuffers(1, &postprocessingRBO);
+    glDeleteFramebuffers(1, &gPostprocessingFBO);
+    glDeleteTextures(1, &gPostprocessingTexture);
+    glDeleteRenderbuffers(1, &gPostprocessingRBO);
 
     std::cout << "Postprocessing framebuffer object is incomplete!" << std::endl;
 
@@ -130,32 +134,30 @@ int main(int argc, char *argv[]) {
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   // Creating and binding multisampling framebuffer
-  GLuint multisamplingFBO = 0;
-  glGenFramebuffers(1, &multisamplingFBO);
-  glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
-  // Creating and binding texture for multisampling framebuffer
-  GLuint multisamplingTexture = 0;
-  glGenTextures(1, &multisamplingTexture);
-  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisamplingTexture);
-  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, kInitWidth, kInitHeight, GL_TRUE);
+  glGenFramebuffers(1, &gMultisamplingFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, gMultisamplingFBO);
+  // Creating and binding texture to multisampling framebuffer
+  glGenTextures(1, &gMultisamplingTexture);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gMultisamplingTexture);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB, gWidth, gHeight,
+                          GL_TRUE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE,
-                         multisamplingTexture, 0);
-  // Creating and binding renderbuffer for multisampling framebuffer
-  GLuint multisamplingRBO = 0;
-  glGenRenderbuffers(1, &multisamplingRBO);
-  glBindRenderbuffer(GL_RENDERBUFFER, multisamplingRBO);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, kInitWidth,
-                                   kInitHeight);
+                         gMultisamplingTexture, 0);
+  // Creating and binding renderbuffer to multisampling framebuffer
+  glGenRenderbuffers(1, &gMultisamplingRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, gMultisamplingRBO);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, kMSAASampleCount, GL_DEPTH24_STENCIL8, gWidth,
+                                   gHeight);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
-                            multisamplingRBO);
+                            gMultisamplingRBO);
   // Checking if multisampling framebuffer is complete and unbinding it
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &multisamplingFBO);
-    glDeleteTextures(1, &multisamplingTexture);
-    glDeleteRenderbuffers(1, &multisamplingRBO);
+    glDeleteFramebuffers(1, &gMultisamplingFBO);
+    glDeleteTextures(1, &gMultisamplingTexture);
+    glDeleteRenderbuffers(1, &gMultisamplingRBO);
 
     std::cout << "Multisampling framebuffer object is incomplete!" << std::endl;
 
@@ -367,6 +369,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setInstanceCount(kInstanceCount);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(15.0f);
   // Mirror cube
@@ -462,7 +465,7 @@ int main(int argc, char *argv[]) {
       0, 2, 1,  // top-right
       1, 2, 3,  // bottom-left
   };
-  GLuint screenVAO = 0, screenVBO = 0, screenEBO = 0;
+  GLuint screenVAO{}, screenVBO{}, screenEBO{};
   glGenVertexArrays(1, &screenVAO);
   glGenBuffers(1, &screenVBO);
   glGenBuffers(1, &screenEBO);
@@ -537,12 +540,16 @@ int main(int argc, char *argv[]) {
   gCamera.setPos(glm::vec3{0.0f, 1.0f, 2.0f});
   gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+  gCamera.setVerticalFOV(glm::radians(60.0f));
+  gCamera.setAspectRatio(static_cast<float>(gWidth) / static_cast<float>(gHeight));
+  gCamera.setNearPlane(0.1f);
+  gCamera.setFarPlane(100.0f);
   // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFController =
+  Camera5DoFController *camera5DoFControllerPtr =
       dynamic_cast<Camera5DoFController *>(&gCameraController);
-  if (camera5DoFController != nullptr) {
-    camera5DoFController->updateLook();
-    camera5DoFController->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
+  if (camera5DoFControllerPtr != nullptr) {
+    camera5DoFControllerPtr->updateLook();
+    camera5DoFControllerPtr->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
   }
 
   // Starting clock
@@ -556,14 +563,6 @@ int main(int argc, char *argv[]) {
 
     // If window should close
     if (glfwWindowShouldClose(window)) {
-      // Deleting postprocessing and multisampling framebuffers
-      glDeleteFramebuffers(1, &postprocessingFBO);
-      glDeleteTextures(1, &postprocessingTexture);
-      glDeleteRenderbuffers(1, &postprocessingRBO);
-      glDeleteFramebuffers(1, &multisamplingFBO);
-      glDeleteTextures(1, &multisamplingTexture);
-      glDeleteRenderbuffers(1, &multisamplingRBO);
-
       // Releasing OpenGL context and mutex
       glfwMakeContextCurrent(nullptr);
       glfwContextLock.unlock();
@@ -588,17 +587,15 @@ int main(int argc, char *argv[]) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
     }
 
-    // Updating flashlight SceneObjcet fields
+    // Updating flashlight SceneObject fields
     gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPos());
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
-      // Setting viewport
-      glViewport(0, 0, kInitWidth, kInitHeight);
       // Binding multisampling framebuffer
-      glBindFramebuffer(GL_FRAMEBUFFER, multisamplingFBO);
+      glBindFramebuffer(GL_FRAMEBUFFER, gMultisamplingFBO);
     }
 
     // Enabling Z- and stencil testing
@@ -618,22 +615,20 @@ int main(int argc, char *argv[]) {
     glStencilMask(0x00);
 
     // Rendering scene objects
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
+    SceneObject::updateShadersLights(sceneObjects);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
       }
 
-      if (i == kInstancingMeshIndex) {
-        sceneObjects[i].render(gCamera, sceneObjects, kInstanceCount);
-      } else {
-        sceneObjects[i].render(gCamera, sceneObjects);
+      sceneObjects[i].render();
 
-        if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
-          GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
-          sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
-          sceneObjects[i].render(gCamera, std::vector<SceneObject>{});
-          sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
-        }
+      if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
+        const GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
+        sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
+        sceneObjects[i].render();
+        sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
       }
 
       if (i == kOutlineMeshIndex) {
@@ -649,7 +644,7 @@ int main(int argc, char *argv[]) {
         sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
     sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
-    sceneObjects[kOutlineMeshIndex].render(gCamera, sceneObjects);
+    sceneObjects[kOutlineMeshIndex].render();
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
@@ -658,19 +653,18 @@ int main(int argc, char *argv[]) {
     glDepthFunc(GL_LEQUAL);
     glCullFace(GL_FRONT);
     skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPos());
-    skyboxSceneObject.render(gCamera, std::vector<SceneObject>{});
+    SceneObject::updateShadersCamera(std::vector<SceneObject>{skyboxSceneObject}, gCamera);
+    skyboxSceneObject.render();
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
 
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
-      // Setting viewport
-      glViewport(0, 0, gWidth, gHeight);
       // Converting multisampling FBO data to postprocessing one
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, multisamplingFBO);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, postprocessingFBO);
-      glBlitFramebuffer(0, 0, kInitWidth, kInitHeight, 0, 0, kInitWidth, kInitHeight,
-                        GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, gMultisamplingFBO);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gPostprocessingFBO);
+      glBlitFramebuffer(0, 0, gWidth, gHeight, 0, 0, gWidth, gHeight, GL_COLOR_BUFFER_BIT,
+                        GL_NEAREST);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       // Binding default framebuffer
@@ -683,7 +677,7 @@ int main(int argc, char *argv[]) {
       //glEnable(GL_FRAMEBUFFER_SRGB);
       glBindVertexArray(screenVAO);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, postprocessingTexture);
+      glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
       glUseProgram(screenSP);
       glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -711,6 +705,18 @@ int main(int argc, char *argv[]) {
   lightShaderWatcherIsRunning = false;
   lightShaderWatcherThread.join();
 
+  // Deleting OpenGL objects
+  glDeleteBuffers(1, &screenEBO);
+  glDeleteBuffers(1, &screenVBO);
+  glDeleteVertexArrays(1, &screenVAO);
+  glDeleteBuffers(1, &instanceVBO);
+  glDeleteFramebuffers(1, &gPostprocessingFBO);
+  glDeleteTextures(1, &gPostprocessingTexture);
+  glDeleteRenderbuffers(1, &gPostprocessingRBO);
+  glDeleteFramebuffers(1, &gMultisamplingFBO);
+  glDeleteTextures(1, &gMultisamplingTexture);
+  glDeleteRenderbuffers(1, &gMultisamplingRBO);
+
   // Terminating window with OpenGL context and GLFW
   terminateWindow(window);
   terminateGLFW();
@@ -722,10 +728,28 @@ int main(int argc, char *argv[]) {
 }
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
-  // Setting viewport position and size relative to window
+  // Updating global variables
   gWidth  = width;
   gHeight = height;
+  // Setting viewport position and size relative to window
   glViewport(0, 0, gWidth, gHeight);
+  // Setting postprocessing and multisampling framebuffers sizes
+  glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindRenderbuffer(GL_RENDERBUFFER, gPostprocessingRBO);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, gWidth, gHeight);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gMultisamplingTexture);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB, gWidth, gHeight,
+                          GL_TRUE);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+  glBindRenderbuffer(GL_RENDERBUFFER, gMultisamplingRBO);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, kMSAASampleCount, GL_DEPTH24_STENCIL8, gWidth,
+                                   gHeight);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  // Setting camera aspect ratio
+  gCamera.setAspectRatio(static_cast<float>(gWidth) / static_cast<float>(gHeight));
 }
 
 void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
@@ -740,31 +764,32 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
   sPrevMousePosY = static_cast<float>(posY);
 
   // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFController =
+  Camera5DoFController *camera5DoFControllerPtr =
       dynamic_cast<Camera5DoFController *>(&gCameraController);
-  if (camera5DoFController != nullptr) {
+  if (camera5DoFControllerPtr != nullptr) {
     // Rotating camera
-    camera5DoFController->addAngles(glm::radians(offsetX), glm::radians(offsetY));
+    camera5DoFControllerPtr->addAngles(glm::radians(offsetX), glm::radians(offsetY));
   }
 
   // If cameraController is Camera6DoFController
-  Camera6DoFController *camera6DoFController =
+  Camera6DoFController *camera6DoFControllerPtr =
       dynamic_cast<Camera6DoFController *>(&gCameraController);
-  if (camera6DoFController != nullptr) {
+  if (camera6DoFControllerPtr != nullptr) {
     // Rotating camera
-    camera6DoFController->rotateRight(glm::radians(offsetY));
-    camera6DoFController->rotateUp(glm::radians(offsetX));
+    camera6DoFControllerPtr->rotateRight(glm::radians(offsetY));
+    camera6DoFControllerPtr->rotateUp(glm::radians(offsetX));
   }
 }
 
 void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
   // Checking if camera is orthographic
-  OrthographicCamera *orthoCamera = dynamic_cast<OrthographicCamera *>(&gCamera);
-  if (orthoCamera != nullptr) {
+  OrthographicCamera *orthoCameraPtr = dynamic_cast<OrthographicCamera *>(&gCamera);
+  if (orthoCameraPtr != nullptr) {
     // Getting orthographic projection attributes of camera
-    float leftBorder{}, rightBorder{}, bottomBorder{}, topBorder{}, nearPlane{}, farPlane{};
-    orthoCamera->getProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
-                                         nearPlane, farPlane);
+    float leftBorder   = orthoCameraPtr->getLeftBorder();
+    float rightBorder  = orthoCameraPtr->getRightBorder();
+    float bottomBorder = orthoCameraPtr->getBottomBorder();
+    float topBorder    = orthoCameraPtr->getTopBorder();
 
     // Updating border attributes
     leftBorder -= static_cast<float>(glm::radians(offsetY));
@@ -773,16 +798,17 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     topBorder += static_cast<float>(glm::radians(offsetY));
 
     // Setting orthographic projection attributes of camera
-    orthoCamera->setProjectionAttributes(leftBorder, rightBorder, bottomBorder, topBorder,
-                                         nearPlane, farPlane);
+    orthoCameraPtr->setLeftBorder(leftBorder);
+    orthoCameraPtr->setRightBorder(rightBorder);
+    orthoCameraPtr->setBottomBorder(bottomBorder);
+    orthoCameraPtr->setTopBorder(topBorder);
   }
 
   // Checking if camera is perspective
-  PerspectiveCamera *perspCamera = dynamic_cast<PerspectiveCamera *>(&gCamera);
-  if (perspCamera != nullptr) {
+  PerspectiveCamera *perspCameraPtr = dynamic_cast<PerspectiveCamera *>(&gCamera);
+  if (perspCameraPtr != nullptr) {
     // Getting perspective projection attributes of camera
-    float verticalVOF{}, aspectRatio{}, nearPlane{}, farPlane{};
-    perspCamera->getProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+    float verticalVOF = perspCameraPtr->getVerticalFOV();
 
     // Updating verticalFOV attribute
     verticalVOF -= static_cast<float>(glm::radians(offsetY));
@@ -793,7 +819,7 @@ void scrollCallback(GLFWwindow *window, double offsetX, double offsetY) {
     }
 
     // Setting perspective projection attributes of camera
-    perspCamera->setProjectionAttributes(verticalVOF, aspectRatio, nearPlane, farPlane);
+    perspCameraPtr->setVerticalFOV(verticalVOF);
   }
 }
 

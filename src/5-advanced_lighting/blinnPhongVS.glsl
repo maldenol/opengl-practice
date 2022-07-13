@@ -47,13 +47,16 @@ void main() {
   // Using height map and normal to get world space height vector
   vec3 height = MATERIAL.maxHeight * N * (texture(MATERIAL.heightMap, aTexCoords).r * 2.0f - 1.0f);
 
+  // Calculating vertex world position
+  vec4 worldPos = MODEL * vec4(aPos, 1.0f) + vec4(height, 0.0f);
+
   // Passing interpolators to rasterizer
-  o.worldPos   = vec3(MODEL * vec4(aPos, 1.0f)) + height;
+  o.worldPos   = vec3(worldPos);
   o.normal     = aNormal;
   o.TBN        = TBN;
   o.texCoords  = aTexCoords;
 
   // Calculating vertex position in clip space by vertex position,
   // MVP transformation and height vector
-  gl_Position = PROJ * VIEW * (MODEL * vec4(aPos, 1.0f) + vec4(height, 0.0f));
+  gl_Position = PROJ * VIEW * worldPos;
 }

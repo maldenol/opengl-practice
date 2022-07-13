@@ -36,7 +36,7 @@ GLuint glengine::loadTexture(const std::string &filename, bool sRGB) {
 
   // Filling texture with image data and generating mip-maps
   GLenum iformat = (sRGB ? GL_SRGB_ALPHA : GL_RGBA);
-  GLenum oformat = 0;
+  GLenum oformat{};
   switch (componentCount) {
     case 1:
       oformat = GL_RED;
@@ -99,7 +99,7 @@ GLuint glengine::loadCubemap(const std::vector<std::string> &filenames, bool sRG
 
     // Filling texture with image data
     GLenum iformat = (sRGB ? GL_SRGB_ALPHA : GL_RGBA);
-    GLenum oformat = 0;
+    GLenum oformat{};
     switch (componentCount) {
       case 1:
         oformat = GL_RED;

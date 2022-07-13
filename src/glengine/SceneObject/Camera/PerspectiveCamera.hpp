@@ -24,12 +24,23 @@ class PerspectiveCamera : public BaseCamera {
   PerspectiveCamera &operator=(PerspectiveCamera &&camera) noexcept;
   virtual ~PerspectiveCamera() noexcept;
 
-  // Other member functions
-  void setProjectionAttributes(float verticalFOV, float aspectRatio, float nearPlane,
-                               float farPlane) noexcept;
-  void getProjectionAttributes(float &verticalFOV, float &aspectRatio, float &nearPlane,
-                               float &farPlane) const noexcept;
+  // Setters
+  void setVerticalFOV(float verticalVOF) noexcept;
+  void setAspectRatio(float aspectRatio) noexcept;
+  void setNearPlane(float nearPlane) noexcept;
+  void setFarPlane(float farPlane) noexcept;
 
+  // Getters
+  float  getVerticalFOV() const noexcept;
+  float &getVerticalFOV() noexcept;
+  float  getAspectRatio() const noexcept;
+  float &getAspectRatio() noexcept;
+  float  getNearPlane() const noexcept;
+  float &getNearPlane() noexcept;
+  float  getFarPlane() const noexcept;
+  float &getFarPlane() noexcept;
+
+  // Other member functions
   glm::mat4 getProjectionMatrix() const noexcept override;
 };
 

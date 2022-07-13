@@ -7,31 +7,15 @@
 // GLM
 #include <glm/gtc/matrix_transform.hpp>
 
-// Global constants
-static constexpr float kInitVerticalFov = glm::radians(60.0f);
-static constexpr float kInitAspectRatio = 4.0f / 3.0f;
-static constexpr float kInitNearPlane   = 0.1f;
-static constexpr float kInitFarPlane    = 100.0f;
-
 using namespace glengine;
 
 // Constructors, assignment operators and destructor
 
 // Default constructor
-PerspectiveCamera::PerspectiveCamera() noexcept
-    : BaseCamera{},
-      _verticalFOV{kInitVerticalFov},
-      _aspectRatio{kInitAspectRatio},
-      _nearPlane{kInitNearPlane},
-      _farPlane{kInitFarPlane} {}
+PerspectiveCamera::PerspectiveCamera() noexcept : BaseCamera{} {}
 
 // Copy constructor (base class)
-PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept
-    : BaseCamera{camera},
-      _verticalFOV{kInitVerticalFov},
-      _aspectRatio{kInitAspectRatio},
-      _nearPlane{kInitNearPlane},
-      _farPlane{kInitFarPlane} {}
+PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept : BaseCamera{camera} {}
 
 // Copy assignment operator (base class)
 PerspectiveCamera &PerspectiveCamera::operator=(const BaseCamera &camera) noexcept {
@@ -83,23 +67,35 @@ PerspectiveCamera &PerspectiveCamera::operator=(PerspectiveCamera &&camera) noex
 // Destructor
 PerspectiveCamera::~PerspectiveCamera() noexcept {}
 
+// Setters
+
+void PerspectiveCamera::setVerticalFOV(float verticalVOF) noexcept { _verticalFOV = verticalVOF; }
+
+void PerspectiveCamera::setAspectRatio(float aspectRatio) noexcept { _aspectRatio = aspectRatio; }
+
+void PerspectiveCamera::setNearPlane(float nearPlane) noexcept { _nearPlane = nearPlane; }
+
+void PerspectiveCamera::setFarPlane(float farPlane) noexcept { _farPlane = farPlane; }
+
+// Getters
+
+float PerspectiveCamera::getVerticalFOV() const noexcept { return _verticalFOV; }
+
+float &PerspectiveCamera::getVerticalFOV() noexcept { return _verticalFOV; }
+
+float PerspectiveCamera::getAspectRatio() const noexcept { return _aspectRatio; }
+
+float &PerspectiveCamera::getAspectRatio() noexcept { return _aspectRatio; }
+
+float PerspectiveCamera::getNearPlane() const noexcept { return _nearPlane; }
+
+float &PerspectiveCamera::getNearPlane() noexcept { return _nearPlane; }
+
+float PerspectiveCamera::getFarPlane() const noexcept { return _farPlane; }
+
+float &PerspectiveCamera::getFarPlane() noexcept { return _farPlane; }
+
 // Other member functions
-
-void PerspectiveCamera::setProjectionAttributes(float verticalFOV, float aspectRatio,
-                                                float nearPlane, float farPlane) noexcept {
-  _verticalFOV = verticalFOV;
-  _aspectRatio = aspectRatio;
-  _nearPlane   = nearPlane;
-  _farPlane    = farPlane;
-}
-
-void PerspectiveCamera::getProjectionAttributes(float &verticalFOV, float &aspectRatio,
-                                                float &nearPlane, float &farPlane) const noexcept {
-  verticalFOV = _verticalFOV;
-  aspectRatio = _aspectRatio;
-  nearPlane   = _nearPlane;
-  farPlane    = _farPlane;
-}
 
 glm::mat4 PerspectiveCamera::getProjectionMatrix() const noexcept {
   return glm::perspective(_verticalFOV, _aspectRatio, _nearPlane, _farPlane);

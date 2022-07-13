@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
       1, 3, 2,  // bottom-right
   };
   // Creating and configuring a mesh and getting its VAO, VBO and EBO
-  GLuint vao = 0, vbo = 0, ebo = 0;
+  GLuint vao{}, vbo{}, ebo{};
   initMesh(vao, vbo, ebo, vertices, indices);
 
   // Releasing OpenGL context
@@ -121,7 +121,14 @@ int main(int argc, char *argv[]) {
     glfwMakeContextCurrent(window);
 
     // If window should close
-    if (glfwWindowShouldClose(window)) break;
+    if (glfwWindowShouldClose(window)) {
+      // Releasing OpenGL context and mutex
+      glfwMakeContextCurrent(nullptr);
+      glfwContextLock.unlock();
+
+      // Breaking render cycle
+      break;
+    }
 
     // Processing window events
     glfwPollEvents();
@@ -157,6 +164,11 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(kRenderCycleInterval);
   }
 
+  // Waiting for shaderWatcher to stop
+  shaderWatcherIsRunning = false;
+  shaderWatcherThread.join();
+
+  // Deleting OpenGL objects
   for (size_t i = 0; i < textures.size(); ++i) {
     glDeleteTextures(1, &textures[i]);
   }
@@ -164,10 +176,6 @@ int main(int argc, char *argv[]) {
   glDeleteBuffers(1, &vbo);
   glDeleteVertexArrays(1, &vao);
   glDeleteProgram(shaderProgram);
-
-  // Waiting for shaderWatcher to stop
-  shaderWatcherIsRunning = false;
-  shaderWatcherThread.join();
 
   // Terminating window with OpenGL context and GLFW
   terminateWindow(window);

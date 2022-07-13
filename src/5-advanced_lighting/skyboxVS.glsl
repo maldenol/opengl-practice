@@ -29,9 +29,9 @@ out Interpolators {
 // Vertex shader
 void main() {
   // Passing interpolators to rasterizer
-  o.texCoords  = aTexCoords;
+  o.texCoords = aTexCoords;
 
   // Calculating vertex position in clip space by vertex position and MVP transformation
-  gl_Position = PROJ * VIEW * MODEL * vec4(aPos, 1.0f);
+  gl_Position   = PROJ * VIEW * MODEL * vec4(aPos, 1.0f);
   gl_Position.z = gl_Position.w;
 }

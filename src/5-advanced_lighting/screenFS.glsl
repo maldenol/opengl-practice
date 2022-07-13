@@ -1,28 +1,28 @@
 #version 460 core
 
-const float kernelOffset = 0.001f;
-const vec2 kernelOffsets[] = {
-  vec2(-kernelOffset, kernelOffset),
-  vec2(0.0f, kernelOffset),
-  vec2(kernelOffset, kernelOffset),
-  vec2(-kernelOffset, 0.0f),
+const float kKernelOffset = 0.001f;
+const vec2 kKernelOffsets[] = {
+  vec2(-kKernelOffset, kKernelOffset),
+  vec2(0.0f, kKernelOffset),
+  vec2(kKernelOffset, kKernelOffset),
+  vec2(-kKernelOffset, 0.0f),
   vec2(0.0f, 0.0f),
-  vec2(kernelOffset, 0.0f),
-  vec2(-kernelOffset, -kernelOffset),
-  vec2(0.0f, -kernelOffset),
-  vec2(kernelOffset, -kernelOffset),
+  vec2(kKernelOffset, 0.0f),
+  vec2(-kKernelOffset, -kKernelOffset),
+  vec2(0.0f, -kKernelOffset),
+  vec2(kKernelOffset, -kKernelOffset),
 };
-const float kernelSharpen[] = {
+const float kKernelSharpen[] = {
   -1.0f, -1.0f, -1.0f,
   -1.0f,  9.0f, -1.0f,
   -1.0f, -1.0f, -1.0f,
 };
-const float kernelBlur[] = {
+const float kKernelBlur[] = {
    1.0f / 16.0f,  2.0f / 16.0f,  1.0f / 16.0f,
    2.0f / 16.0f,  4.0f / 16.0f,  2.0f / 16.0f,
    1.0f / 16.0f,  2.0f / 16.0f,  1.0f / 16.0f,
 };
-const float kernelEdgeDetection[] = {
+const float kKernelEdgeDetection[] = {
    1.0f,  1.0f,  1.0f,
    1.0f, -8.0f,  1.0f,
    1.0f,  1.0f,  1.0f,
@@ -52,7 +52,7 @@ void main() {
   // Applying postprocessing kernels
   // vec4 color = vec4(0.0f);
   // for (uint i = 0; i < 9; ++i) {
-  //   color += texture(texture0, fTexCoords + kernelOffsets[i]) * kernelSharpen[i];
+  //   color += texture(texture0, fTexCoords + kKernelOffsets[i]) * kKernelSharpen[i];
   // }
 
   // Applying gamma correction

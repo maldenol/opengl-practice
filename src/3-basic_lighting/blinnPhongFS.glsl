@@ -65,15 +65,26 @@ in vec2 fTexCoords;
 
 out vec4 FragColor;
 
+void calcLambertianLight(out vec3 diffuse,
+                        vec3 N,
+                        vec3 L,
+                        float attenuation,
+                        vec3 color) {
+  float LdotN = max(dot(L, N), 0.0f);
+
+  diffuse = color
+          * LdotN
+          * attenuation
+          * MATERIAL.diffCoef;
+}
+
 void calcPhongLight(out vec3 diffuse,
                     out vec3 specular,
                     vec3 N,
                     vec3 L,
                     float attenuation,
                     vec3 color) {
-  float LdotN = max(dot(L, N), 0.0f);
-
-  diffuse = color * LdotN * MATERIAL.diffCoef * attenuation;
+  calcLambertianLight(diffuse, N, L, attenuation, color);
 
   vec3 R = reflect(-L, N); // 2.0f * dot(L, N) * N - L;
   vec3 V = normalize(VIEW_POS - fWorldPos);
@@ -94,15 +105,14 @@ void calcBlinnPhongLight(out vec3 diffuse,
                          vec3 L,
                          float attenuation,
                          vec3 color) {
-  float LdotN = max(dot(L, N), 0.0f);
-
-  diffuse = color * LdotN * MATERIAL.diffCoef * attenuation;
+  calcLambertianLight(diffuse, N, L, attenuation, color);
 
   float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, fTexCoords).r);
   float glossExp = 2.0f * exp2(gloss);
   vec3  V        = normalize(VIEW_POS - fWorldPos);
   vec3  H        = normalize(L + V);
   float HdotN    = max(dot(H, N), 0.0f);
+  float LdotN    = max(dot(L, N), 0.0f);
 
   specular = color
            * gloss * pow(HdotN, glossExp) * float(LdotN > 0.0f)
@@ -148,12 +158,12 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
       SPOT_LIGHTS[index].linAttCoef,
       SPOT_LIGHTS[index].quadAttCoef
   );
-  float angle        = cos(SPOT_LIGHTS[index].angle);
-  vec3  D            = normalize(-SPOT_LIGHTS[index].dir);
-  float LdotD        = dot(L, D);
-  float smoothAngle  = cos(SPOT_LIGHTS[index].smoothAngle);
-  //attenuation       *= 1.0f - min((1.0f - LdotD) / (1.0f - angle), 1.0f);
-  attenuation       *= 1.0f - min((smoothAngle - LdotD) / (smoothAngle - angle), 1.0f);
+  float angle       = cos(SPOT_LIGHTS[index].angle);
+  vec3  D           = normalize(-SPOT_LIGHTS[index].dir);
+  float LdotD       = dot(L, D);
+  float smoothAngle = cos(SPOT_LIGHTS[index].smoothAngle);
+  //attenuation      *= 1.0f - min((1.0f - LdotD) / (1.0f - angle), 1.0f);
+  attenuation      *= 1.0f - min((smoothAngle - LdotD) / (smoothAngle - angle), 1.0f);
 
   vec3 color = normalize(SPOT_LIGHTS[index].color) * SPOT_LIGHTS[index].intensity;
 

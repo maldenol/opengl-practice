@@ -121,6 +121,8 @@ class Mesh {
   GLuint  _ebo{};
   GLsizei _indexCount{};
 
+  GLsizei _instanceCount{};
+
   GLuint _shaderProgram{};
 
   std::shared_ptr<Material> _materialPtr{};
@@ -128,8 +130,8 @@ class Mesh {
  public:
   // Constructors, assignment operators and destructor
   Mesh() noexcept;
-  Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLuint shaderProgram,
-       const std::shared_ptr<Material> &materialPtr) noexcept;
+  Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLsizei instanceCount,
+       GLuint shaderProgram, const std::shared_ptr<Material> &materialPtr) noexcept;
   Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,
        const std::vector<GLuint> &indices, GLuint shaderProgram,
        const std::shared_ptr<Material> &materialPtr);
@@ -144,6 +146,7 @@ class Mesh {
   void setVBO(GLuint vbo) noexcept;
   void setEBO(GLuint ebo) noexcept;
   void setIndexCount(GLsizei indexCount) noexcept;
+  void setInstanceCount(GLsizei instanceCount) noexcept;
   void setShaderProgram(GLuint shaderProgram) noexcept;
   void setMaterialPtr(const std::shared_ptr<Material> &materialPtr) noexcept;
 
@@ -156,13 +159,15 @@ class Mesh {
   GLuint                          &getEBO() noexcept;
   GLsizei                          getIndexCount() const noexcept;
   GLsizei                         &getIndexCount() noexcept;
+  GLsizei                          getInstanceCount() const noexcept;
+  GLsizei                         &getInstanceCount() noexcept;
   GLuint                           getShaderProgram() const noexcept;
   GLuint                          &getShaderProgram() noexcept;
   const std::shared_ptr<Material> &getMaterialPtr() const noexcept;
   std::shared_ptr<Material>       &getMaterialPtr() noexcept;
 
   // Other member functions
-  void render(unsigned int instanceCount) const noexcept;
+  void render() const noexcept;
 
   bool isComplete() const noexcept;
 };
