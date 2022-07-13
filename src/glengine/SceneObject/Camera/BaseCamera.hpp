@@ -51,9 +51,10 @@ class BaseCamera {
   glm::mat4         getViewMatrix() const noexcept;
   virtual glm::mat4 getProjectionMatrix() const noexcept = 0;
 
-  friend class Camera3DoFController;
-  friend class Camera5DoFController;
-  friend class Camera6DoFController;
+  // Friend classes
+  friend class Controller3DoF;
+  friend class Controller5DoF;
+  friend class Controller6DoF;
 };
 
 }  // namespace glengine

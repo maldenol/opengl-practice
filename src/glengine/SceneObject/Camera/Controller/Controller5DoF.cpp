@@ -1,5 +1,5 @@
 // Header file
-#include "./Camera5DoFController.hpp"
+#include "./Controller5DoF.hpp"
 
 // STD
 #include <utility>
@@ -18,24 +18,22 @@ using namespace glengine;
 // Constructors, assignment operators and destructor
 
 // Default constructor
-Camera5DoFController::Camera5DoFController() noexcept {}
+Controller5DoF::Controller5DoF() noexcept {}
 
 // Parameterized constructor
-Camera5DoFController::Camera5DoFController(BaseCamera *camera) noexcept
-    : Camera3DoFController{camera} {
+Controller5DoF::Controller5DoF(BaseCamera *camera) noexcept : Controller3DoF{camera} {
   updateLook();
 }
 
 // Copy constructor (base class)
-Camera5DoFController::Camera5DoFController(const Camera3DoFController &cameraController) noexcept
-    : Camera3DoFController{cameraController} {
+Controller5DoF::Controller5DoF(const Controller3DoF &cameraController) noexcept
+    : Controller3DoF{cameraController} {
   updateLook();
 }
 
 // Copy assignment operator (base class)
-Camera5DoFController &Camera5DoFController::operator=(
-    const Camera3DoFController &cameraController) noexcept {
-  this->Camera3DoFController::operator=(cameraController);
+Controller5DoF &Controller5DoF::operator=(const Controller3DoF &cameraController) noexcept {
+  this->Controller3DoF::operator=(cameraController);
 
   updateLook();
 
@@ -43,8 +41,8 @@ Camera5DoFController &Camera5DoFController::operator=(
 }
 
 // Copy constructor
-Camera5DoFController::Camera5DoFController(const Camera5DoFController &cameraController) noexcept
-    : Camera3DoFController{dynamic_cast<const Camera3DoFController &>(cameraController)},
+Controller5DoF::Controller5DoF(const Controller5DoF &cameraController) noexcept
+    : Controller3DoF{dynamic_cast<const Controller3DoF &>(cameraController)},
       _angleUp{cameraController._angleUp},
       _angleRight{cameraController._angleRight},
       _angleUpLimitMin{cameraController._angleUpLimitMin},
@@ -54,10 +52,8 @@ Camera5DoFController::Camera5DoFController(const Camera5DoFController &cameraCon
       _baseLookDirection{cameraController._baseLookDirection} {}
 
 // Copy assignment operator
-Camera5DoFController &Camera5DoFController::operator=(
-    const Camera5DoFController &cameraController) noexcept {
-  this->Camera3DoFController::operator=(
-      dynamic_cast<const Camera3DoFController &>(cameraController));
+Controller5DoF &Controller5DoF::operator=(const Controller5DoF &cameraController) noexcept {
+  this->Controller3DoF::operator=(dynamic_cast<const Controller3DoF &>(cameraController));
 
   _angleUp            = cameraController._angleUp;
   _angleRight         = cameraController._angleRight;
@@ -70,8 +66,8 @@ Camera5DoFController &Camera5DoFController::operator=(
 }
 
 // Move constructor
-Camera5DoFController::Camera5DoFController(Camera5DoFController &&cameraController) noexcept
-    : Camera3DoFController{dynamic_cast<Camera3DoFController &&>(cameraController)},
+Controller5DoF::Controller5DoF(Controller5DoF &&cameraController) noexcept
+    : Controller3DoF{dynamic_cast<Controller3DoF &&>(cameraController)},
       _angleUp{std::exchange(cameraController._angleUp, 0.0f)},
       _angleRight{std::exchange(cameraController._angleRight, 0.0f)},
       _angleUpLimitMin{std::exchange(cameraController._angleUpLimitMin, 0.0f)},
@@ -80,9 +76,8 @@ Camera5DoFController::Camera5DoFController(Camera5DoFController &&cameraControll
       _angleRightLimitMax{std::exchange(cameraController._angleRightLimitMax, 0.0f)} {}
 
 // Move assignment operator
-Camera5DoFController &Camera5DoFController::operator=(
-    Camera5DoFController &&cameraController) noexcept {
-  this->Camera3DoFController::operator=(dynamic_cast<Camera3DoFController &&>(cameraController));
+Controller5DoF &Controller5DoF::operator=(Controller5DoF &&cameraController) noexcept {
+  this->Controller3DoF::operator=(dynamic_cast<Controller3DoF &&>(cameraController));
 
   std::swap(_angleUp, cameraController._angleUp);
   std::swap(_angleRight, cameraController._angleRight);
@@ -95,18 +90,18 @@ Camera5DoFController &Camera5DoFController::operator=(
 }
 
 // Destructor
-Camera5DoFController::~Camera5DoFController() noexcept {}
+Controller5DoF::~Controller5DoF() noexcept {}
 
 // Setters
 
-void Camera5DoFController::setCamera(BaseCamera *camera) noexcept {
+void Controller5DoF::setCamera(BaseCamera *camera) noexcept {
   _camera = camera;
   updateLook();
 }
 
 // Other member functions
 
-void Camera5DoFController::updateLook() noexcept {
+void Controller5DoF::updateLook() noexcept {
   glm::vec3 look                          = _camera->_forward;
   float     absoluteAngleBetweenLookAndUp = glm::angle(look, _camera->_worldUp);
   float     rotationAngle                 = absoluteAngleBetweenLookAndUp - glm::radians(90.0f);
@@ -116,41 +111,40 @@ void Camera5DoFController::updateLook() noexcept {
   setAngles(0.0f, -rotationAngle);
 }
 
-void Camera5DoFController::moveUp(float distance) noexcept {
+void Controller5DoF::moveUp(float distance) noexcept {
   _camera->_pos += _camera->_worldUp * distance;
 }
 
-void Camera5DoFController::setAngles(float angleUp, float angleRight) noexcept {
+void Controller5DoF::setAngles(float angleUp, float angleRight) noexcept {
   _angleUp    = angleUp;
   _angleUp    = angleIntoBounds(_angleUp, _angleUpLimitMin, _angleUpLimitMax);
   _angleRight = angleRight;
   _angleRight = angleIntoBounds(_angleRight, _angleRightLimitMin, _angleRightLimitMax);
 }
 
-void Camera5DoFController::getAngles(float &angleUp, float &angleRight) const noexcept {
+void Controller5DoF::getAngles(float &angleUp, float &angleRight) const noexcept {
   angleUp    = _angleUp;
   angleRight = _angleRight;
 }
 
-void Camera5DoFController::setAngleLimits(float angleUpLimitMin, float angleUpLimitMax,
-                                          float angleRightLimitMin,
-                                          float angleRightLimitMax) noexcept {
+void Controller5DoF::setAngleLimits(float angleUpLimitMin, float angleUpLimitMax,
+                                    float angleRightLimitMin, float angleRightLimitMax) noexcept {
   _angleUpLimitMin    = angleUpLimitMin;
   _angleUpLimitMax    = angleUpLimitMax;
   _angleRightLimitMin = angleRightLimitMin;
   _angleRightLimitMax = angleRightLimitMax;
 }
 
-void Camera5DoFController::getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
-                                          float &angleRightLimitMin,
-                                          float &angleRightLimitMax) const noexcept {
+void Controller5DoF::getAngleLimits(float &angleUpLimitMin, float &angleUpLimitMax,
+                                    float &angleRightLimitMin,
+                                    float &angleRightLimitMax) const noexcept {
   angleUpLimitMin    = _angleUpLimitMin;
   angleUpLimitMax    = _angleUpLimitMax;
   angleRightLimitMin = _angleRightLimitMin;
   angleRightLimitMax = _angleRightLimitMax;
 }
 
-void Camera5DoFController::addAngles(float angleUp, float angleRight) noexcept {
+void Controller5DoF::addAngles(float angleUp, float angleRight) noexcept {
   _angleUp += angleUp;
   _angleUp = angleIntoBounds(_angleUp, _angleUpLimitMin, _angleUpLimitMax);
   _angleRight += angleRight;

@@ -1,12 +1,12 @@
-#ifndef GLENGINE_SCENEOBJECT_CAMERA_CAMERA5DOFCONTROLLER_HPP
-#define GLENGINE_SCENEOBJECT_CAMERA_CAMERA5DOFCONTROLLER_HPP
+#ifndef GLENGINE_SCENEOBJECT_CAMERA_CONTROLLER_CONTROLLER5DOF_HPP
+#define GLENGINE_SCENEOBJECT_CAMERA_CONTROLLER_CONTROLLER5DOF_HPP
 
 // "glengine" internal library
-#include "./Camera3DoFController.hpp"
+#include "./Controller3DoF.hpp"
 
 namespace glengine {
 
-class Camera5DoFController : public Camera3DoFController {
+class Controller5DoF : public Controller3DoF {
  private:
   float _angleUp{};
   float _angleRight{};
@@ -19,15 +19,15 @@ class Camera5DoFController : public Camera3DoFController {
 
  public:
   // Constructors, assignment operators and destructor
-  Camera5DoFController() noexcept;
-  Camera5DoFController(BaseCamera *camera) noexcept;
-  Camera5DoFController(const Camera3DoFController &cameraController) noexcept;
-  Camera5DoFController &operator=(const Camera3DoFController &cameraController) noexcept;
-  Camera5DoFController(const Camera5DoFController &cameraController) noexcept;
-  Camera5DoFController &operator=(const Camera5DoFController &cameraController) noexcept;
-  Camera5DoFController(Camera5DoFController &&cameraController) noexcept;
-  Camera5DoFController &operator=(Camera5DoFController &&cameraController) noexcept;
-  virtual ~Camera5DoFController() noexcept;
+  Controller5DoF() noexcept;
+  Controller5DoF(BaseCamera *camera) noexcept;
+  Controller5DoF(const Controller3DoF &cameraController) noexcept;
+  Controller5DoF &operator=(const Controller3DoF &cameraController) noexcept;
+  Controller5DoF(const Controller5DoF &cameraController) noexcept;
+  Controller5DoF &operator=(const Controller5DoF &cameraController) noexcept;
+  Controller5DoF(Controller5DoF &&cameraController) noexcept;
+  Controller5DoF &operator=(Controller5DoF &&cameraController) noexcept;
+  virtual ~Controller5DoF() noexcept;
 
   // Setters
   void setCamera(BaseCamera *camera) noexcept override;

@@ -46,23 +46,23 @@ static constexpr float                 kInstanceMaxDistance = 15.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
 
 // Global variables
-unsigned int         gWidth{kInitWidth};
-unsigned int         gHeight{kInitHeight};
-float                gCurrTime{};
-float                gDeltaTime{};
-PerspectiveCamera    gCamera{};
-Camera6DoFController gCameraController{&gCamera};
-SceneObject         *gFlashlightSceneObjectPtr{};
-int                  gPolygonMode{};
-bool                 gEnableSceneObjectsFloating{true};
-bool                 gEnablePostprocessing{false};
-bool                 gEnableNormals{false};
-GLuint               gPostprocessingFBO{};
-GLuint               gPostprocessingTexture{};
-GLuint               gPostprocessingRBO{};
-GLuint               gMultisamplingFBO{};
-GLuint               gMultisamplingTexture{};
-GLuint               gMultisamplingRBO{};
+unsigned int      gWidth{kInitWidth};
+unsigned int      gHeight{kInitHeight};
+float             gCurrTime{};
+float             gDeltaTime{};
+PerspectiveCamera gCamera{};
+Controller6DoF    gCameraController{&gCamera};
+SceneObject      *gFlashlightSceneObjectPtr{};
+int               gPolygonMode{};
+bool              gEnableSceneObjectsFloating{true};
+bool              gEnablePostprocessing{false};
+bool              gEnableNormals{false};
+GLuint            gPostprocessingFBO{};
+GLuint            gPostprocessingTexture{};
+GLuint            gPostprocessingRBO{};
+GLuint            gMultisamplingFBO{};
+GLuint            gMultisamplingTexture{};
+GLuint            gMultisamplingRBO{};
 
 // GLFW callbacks
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -533,9 +533,8 @@ int main(int argc, char *argv[]) {
   gCamera.setAspectRatio(static_cast<float>(gWidth) / static_cast<float>(gHeight));
   gCamera.setNearPlane(0.1f);
   gCamera.setFarPlane(100.0f);
-  // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFControllerPtr =
-      dynamic_cast<Camera5DoFController *>(&gCameraController);
+  // If cameraController is Controller5DoF
+  Controller5DoF *camera5DoFControllerPtr = dynamic_cast<Controller5DoF *>(&gCameraController);
   if (camera5DoFControllerPtr != nullptr) {
     camera5DoFControllerPtr->updateLook();
     camera5DoFControllerPtr->setAngleLimits(0.0f, 0.0f, glm::radians(-85.0f), glm::radians(85.0f));
@@ -750,17 +749,15 @@ void cursorPosCallback(GLFWwindow *window, double posX, double posY) {
   sPrevMousePosX = static_cast<float>(posX);
   sPrevMousePosY = static_cast<float>(posY);
 
-  // If cameraController is Camera5DoFController
-  Camera5DoFController *camera5DoFControllerPtr =
-      dynamic_cast<Camera5DoFController *>(&gCameraController);
+  // If cameraController is Controller5DoF
+  Controller5DoF *camera5DoFControllerPtr = dynamic_cast<Controller5DoF *>(&gCameraController);
   if (camera5DoFControllerPtr != nullptr) {
     // Rotating camera
     camera5DoFControllerPtr->addAngles(glm::radians(offsetX), glm::radians(offsetY));
   }
 
-  // If cameraController is Camera6DoFController
-  Camera6DoFController *camera6DoFControllerPtr =
-      dynamic_cast<Camera6DoFController *>(&gCameraController);
+  // If cameraController is Controller6DoF
+  Controller6DoF *camera6DoFControllerPtr = dynamic_cast<Controller6DoF *>(&gCameraController);
   if (camera6DoFControllerPtr != nullptr) {
     // Rotating camera
     camera6DoFControllerPtr->rotateRight(glm::radians(offsetY));
@@ -838,9 +835,8 @@ void processUserInput(GLFWwindow *window) {
     gCameraController.moveUp(-distance);
   }
 
-  // If cameraController is Camera6DoFController
-  Camera6DoFController *camera6DoFController =
-      dynamic_cast<Camera6DoFController *>(&gCameraController);
+  // If cameraController is Controller6DoF
+  Controller6DoF *camera6DoFController = dynamic_cast<Controller6DoF *>(&gCameraController);
   // Processing movement
   if (camera6DoFController != nullptr) {
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
