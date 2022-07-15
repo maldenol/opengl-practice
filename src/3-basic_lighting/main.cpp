@@ -280,8 +280,8 @@ int main(int argc, char *argv[]) {
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // Rendering scene objects
-    SceneObject::updateShadersCamera(sceneObjects, gCamera);
     SceneObject::updateShadersLights(sceneObjects);
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       sceneObjects[i].render();
     }

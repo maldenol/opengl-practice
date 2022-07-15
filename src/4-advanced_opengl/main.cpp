@@ -603,8 +603,8 @@ int main(int argc, char *argv[]) {
     glStencilMask(0x00);
 
     // Rendering scene objects
-    SceneObject::updateShadersCamera(sceneObjects, gCamera);
     SceneObject::updateShadersLights(sceneObjects);
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
@@ -628,8 +628,8 @@ int main(int argc, char *argv[]) {
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
     glStencilMask(0x00);
     const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-    const GLuint    initShaderProgram{
-        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
+    const GLuint    initShaderProgram =
+        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram();
     sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
     sceneObjects[kOutlineMeshIndex].render();

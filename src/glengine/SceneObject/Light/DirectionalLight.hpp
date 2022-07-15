@@ -25,6 +25,7 @@ class DirectionalLight : virtual public BaseLight {
 
   // Setters
   void setDirection(const glm::vec3 &direction) noexcept;
+  void setShadowMapTextureResolution(GLsizei shadowMapTextureResolution) noexcept override;
 
   // Getters
   const glm::vec3 &getDirection() const noexcept;

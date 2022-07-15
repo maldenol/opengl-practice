@@ -101,6 +101,10 @@ void SpotLight::setAngle(float angle) noexcept { _angle = angle; }
 
 void SpotLight::setSmoothAngle(float smoothAngle) noexcept { _smoothAngle = smoothAngle; }
 
+void SpotLight::setShadowMapTextureResolution(GLsizei shadowMapTextureResolution) noexcept {
+  _shadowMapTextureResolution = shadowMapTextureResolution;
+}
+
 // Getters
 
 float SpotLight::getAngle() const noexcept { return _angle; }

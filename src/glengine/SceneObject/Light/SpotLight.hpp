@@ -33,6 +33,7 @@ class SpotLight : public DirectionalLight, public PointLight {
   // Setters
   void setAngle(float angle) noexcept;
   void setSmoothAngle(float smoothAngle) noexcept;
+  void setShadowMapTextureResolution(GLsizei shadowMapTextureResolution) noexcept override;
 
   // Getters
   float  getAngle() const noexcept;

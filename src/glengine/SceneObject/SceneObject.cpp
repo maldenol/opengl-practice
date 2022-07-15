@@ -2,6 +2,7 @@
 #include "./SceneObject.hpp"
 
 // STD
+#include <algorithm>
 #include <utility>
 
 // GLM
@@ -9,6 +10,15 @@
 #include <glm/gtx/euler_angles.hpp>
 
 using namespace glengine;
+
+// Global constants
+static constexpr size_t kMaxDirectionLightCount = 8;
+static constexpr size_t kMaxPointLightCount     = 8;
+static constexpr size_t kMaxSpotLightCount      = 8;
+
+static constexpr int kInitShadowMapTextureUnit = 7;
+
+static constexpr float kDirectionalShadowMapDistance = 10.0f;
 
 // Constructors, assignment operators and destructor
 
@@ -161,41 +171,14 @@ void SceneObject::render() const noexcept {
 
 // Other static member functions
 
-void SceneObject::updateShadersCamera(const std::vector<SceneObject> &sceneObjects,
-                                      const BaseCamera               &camera) noexcept {
-  // Getting camera view and projection matrices
-  const glm::mat4 viewMatrix{camera.getViewMatrix()};
-  const glm::mat4 projMatrix{camera.getProjectionMatrix()};
-
-  // For each scene object
-  for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    const Mesh *meshPtr = sceneObjects[i].getMeshPtr().get();
-
-    // If scene object has mesh
-    if (meshPtr != nullptr && meshPtr->isComplete()) {
-      // Updating object shader program uniform values
-      const GLuint shaderProgram = meshPtr->getShaderProgram();
-
-      glUseProgram(shaderProgram);
-
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "VIEW"), 1, GL_FALSE,
-                         glm::value_ptr(viewMatrix));
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PROJ"), 1, GL_FALSE,
-                         glm::value_ptr(projMatrix));
-      glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1,
-                   glm::value_ptr(camera.getPos()));
-
-      glUseProgram(0);
-    }
-  }
-}
-
-void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjects) noexcept {
-  // Getting shader programs and light sources
-  std::vector<GLuint>      shaderPrograms{};
-  std::vector<SceneObject> directionalLightSceneObjects{};
-  std::vector<SceneObject> pointLightSceneObjects{};
-  std::vector<SceneObject> spotLightSceneObjects{};
+void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjects,
+                                      GLuint shadowMapSP, const glm::vec3 &viewPos) noexcept {
+  // Getting shader programs, light sources and light cameras
+  std::vector<GLuint>              shaderPrograms{};
+  std::vector<const SceneObject *> directionalLightSceneObjectPtrs{};
+  std::vector<const SceneObject *> pointLightSceneObjectPtrs{};
+  std::vector<const SceneObject *> spotLightSceneObjectPtrs{};
+  std::vector<glm::mat4>           directionalLightVPMatrices{};
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
     const SceneObject &sceneObject = sceneObjects[i];
     const Mesh        *meshPtr     = sceneObject.getMeshPtr().get();
@@ -218,12 +201,11 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
       }
     }
 
-    if (lightPtr == nullptr) continue;
-
-    // If light is spot (must be before directional and point light)
+    // If light is spot (must be before directional and point lights)
     const SpotLight *spotLightPtr = dynamic_cast<const SpotLight *>(lightPtr);
     if (spotLightPtr != nullptr) {
-      spotLightSceneObjects.push_back(sceneObject);
+      // Adding scene object to spot light vector
+      spotLightSceneObjectPtrs.push_back(&sceneObject);
 
       continue;
     }
@@ -231,7 +213,78 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
     // If light is directional
     const DirectionalLight *direcionalLightPtr = dynamic_cast<const DirectionalLight *>(lightPtr);
     if (direcionalLightPtr != nullptr) {
-      directionalLightSceneObjects.push_back(sceneObject);
+      // Adding scene object to directional light vector
+      directionalLightSceneObjectPtrs.push_back(&sceneObject);
+
+      // Rendering shadow map
+      if (shadowMapSP > 0) {
+        // Enabling Z- and disabling stencil testing
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDisable(GL_STENCIL_TEST);
+
+        // Setting shadow map viewport
+        int viewport[4] = {0};
+        glGetIntegerv(GL_VIEWPORT, &viewport[0]);
+        glViewport(0, 0, direcionalLightPtr->getShadowMapTextureResolution(),
+                   direcionalLightPtr->getShadowMapTextureResolution());
+
+        // Binding and clearing shadow map framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneObject.getLightPtr()->getShadowMapFBO());
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Configuring camera viewing from light position in light direction
+        OrthographicCamera shadowMapCamera{};
+        glm::vec3          lightDir{};
+        lightDir =
+            dynamic_cast<DirectionalLight *>(sceneObject.getLightPtr().get())->getDirection();
+        lightDir = glm::vec3{
+            glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                               glm::radians(sceneObject.getRotate().y),
+                               glm::radians(sceneObject.getRotate().z)) *
+            glm::vec4{lightDir, 0.0f}
+        };
+        lightDir = glm::normalize(lightDir);
+        shadowMapCamera.setPos(-lightDir * kDirectionalShadowMapDistance + viewPos);
+        shadowMapCamera.setWorldUp(kUp);
+        shadowMapCamera.look(lightDir);
+        shadowMapCamera.setLeftBorder(-kDirectionalShadowMapDistance);
+        shadowMapCamera.setRightBorder(kDirectionalShadowMapDistance);
+        shadowMapCamera.setBottomBorder(-kDirectionalShadowMapDistance);
+        shadowMapCamera.setTopBorder(kDirectionalShadowMapDistance);
+        shadowMapCamera.setNearPlane(0.0f);
+        shadowMapCamera.setFarPlane(2.0f * kDirectionalShadowMapDistance);
+        directionalLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
+                                             shadowMapCamera.getViewMatrix());
+
+        // Temporary changing scene objects shader programs and updating shaders camera
+        std::vector<GLuint> initShaderPrograms{};
+        initShaderPrograms.resize(sceneObjects.size());
+        for (size_t j = 0; j < sceneObjects.size(); ++j) {
+          if (sceneObjects[j].getMeshPtr() != nullptr) {
+            initShaderPrograms[j] = sceneObjects[j].getMeshPtr()->getShaderProgram();
+            sceneObjects[j].getMeshPtr()->setShaderProgram(shadowMapSP);
+          }
+        }
+        SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
+
+        // Rendering scene objects from camera point of view and revering shader program changes
+        for (size_t j = 0; j < sceneObjects.size(); ++j) {
+          if (sceneObjects[j].getMeshPtr() != nullptr) {
+            sceneObjects[j].render();
+            sceneObjects[j].getMeshPtr()->setShaderProgram(initShaderPrograms[j]);
+          }
+        }
+
+        // Unbinding shadow map framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Reverting viewport changes
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+        // Disabling Z-testing
+        glDisable(GL_DEPTH_TEST);
+      }
 
       continue;
     }
@@ -239,13 +292,15 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
     // If light is point
     const PointLight *pointLightPtr = dynamic_cast<const PointLight *>(lightPtr);
     if (pointLightPtr != nullptr) {
-      pointLightSceneObjects.push_back(sceneObject);
+      // Adding scene object to point light vector
+      pointLightSceneObjectPtrs.push_back(&sceneObject);
 
       continue;
     }
   }
 
   // Updating shader programs uniform values
+  int currShadowMapTextureUnit = kInitShadowMapTextureUnit;
   for (size_t i = 0; i < shaderPrograms.size(); ++i) {
     const GLuint shaderProgram = shaderPrograms[i];
 
@@ -259,19 +314,60 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                  glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
     glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
 
+    // Spot lights
+    for (size_t j = 0; j < spotLightSceneObjectPtrs.size() && j < kMaxSpotLightCount; ++j) {
+      const SceneObject &sceneObject = *spotLightSceneObjectPtrs[j];
+      const SpotLight   *spotLightPtr =
+          dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
+
+      glUniform3fv(glGetUniformLocation(
+                       shaderProgram, ("SPOT_LIGHTS[" + std::to_string(j) + "].worldPos").c_str()),
+                   1, glm::value_ptr(sceneObject.getTranslate()));
+      glUniform3fv(glGetUniformLocation(shaderProgram,
+                                        ("SPOT_LIGHTS[" + std::to_string(j) + "].color").c_str()),
+                   1, glm::value_ptr(spotLightPtr->getColor()));
+      glUniform1f(glGetUniformLocation(
+                      shaderProgram, ("SPOT_LIGHTS[" + std::to_string(j) + "].intensity").c_str()),
+                  spotLightPtr->getIntensity());
+      glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                                                glm::radians(sceneObject.getRotate().y),
+                                                glm::radians(sceneObject.getRotate().z))};
+      glm::vec3 dir{
+          rotateMatrix * glm::vec4{spotLightPtr->getDirection(), 0.0f}
+      };
+      glUniform3fv(glGetUniformLocation(shaderProgram,
+                                        ("SPOT_LIGHTS[" + std::to_string(j) + "].dir").c_str()),
+                   1, glm::value_ptr(dir));
+      glUniform1f(glGetUniformLocation(
+                      shaderProgram, ("SPOT_LIGHTS[" + std::to_string(j) + "].linAttCoef").c_str()),
+                  spotLightPtr->getLinAttCoef());
+      glUniform1f(
+          glGetUniformLocation(shaderProgram,
+                               ("SPOT_LIGHTS[" + std::to_string(j) + "].quadAttCoef").c_str()),
+          spotLightPtr->getQuadAttCoef());
+      glUniform1f(glGetUniformLocation(shaderProgram,
+                                       ("SPOT_LIGHTS[" + std::to_string(j) + "].angle").c_str()),
+                  glm::radians(spotLightPtr->getAngle()));
+      glUniform1f(
+          glGetUniformLocation(shaderProgram,
+                               ("SPOT_LIGHTS[" + std::to_string(j) + "].smoothAngle").c_str()),
+          glm::radians(spotLightPtr->getSmoothAngle()));
+    }
+
     // Directional lights
-    for (size_t i = 0; i < directionalLightSceneObjects.size(); ++i) {
-      const SceneObject      &sceneObject = directionalLightSceneObjects[i];
+    for (size_t j = 0; j < directionalLightSceneObjectPtrs.size() && j < kMaxDirectionLightCount;
+         ++j) {
+      const SceneObject      &sceneObject = *directionalLightSceneObjectPtrs[j];
       const DirectionalLight *directionalLightPtr =
           dynamic_cast<const DirectionalLight *>(sceneObject.getLightPtr().get());
 
       glUniform3fv(
           glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].color").c_str()),
+                               ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].color").c_str()),
           1, glm::value_ptr(directionalLightPtr->getColor()));
       glUniform1f(
           glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
+                               ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].intensity").c_str()),
           directionalLightPtr->getIntensity());
       glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
                                                 glm::radians(sceneObject.getRotate().y),
@@ -281,75 +377,79 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
       };
       glUniform3fv(
           glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].dir").c_str()),
+                               ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].dir").c_str()),
           1, glm::value_ptr(dir));
+      glUniform1i(
+          glGetUniformLocation(shaderProgram,
+                               ("DIRECTIONAL_LIGHTS[" + std::to_string(0) + "].shadowMap").c_str()),
+          currShadowMapTextureUnit);
+      glUniformMatrix4fv(
+          glGetUniformLocation(shaderProgram,
+                               ("DIRECTIONAL_LIGHTS[" + std::to_string(0) + "].VP").c_str()),
+          1, GL_FALSE, glm::value_ptr(directionalLightVPMatrices[j]));
+
+      // Binding shadow map texture
+      glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+      glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+
+      // Incrementing current shadow map texture unit
+      ++currShadowMapTextureUnit;
     }
 
     // Point lights
-    for (size_t i = 0; i < pointLightSceneObjects.size(); ++i) {
-      const SceneObject &sceneObject = pointLightSceneObjects[i];
+    for (size_t j = 0; j < pointLightSceneObjectPtrs.size() && j < kMaxPointLightCount; ++j) {
+      const SceneObject &sceneObject = *pointLightSceneObjectPtrs[j];
       const PointLight  *pointLightPtr =
           dynamic_cast<const PointLight *>(sceneObject.getLightPtr().get());
 
       glUniform3fv(glGetUniformLocation(
-                       shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].worldPos").c_str()),
+                       shaderProgram, ("POINT_LIGHTS[" + std::to_string(j) + "].worldPos").c_str()),
                    1, glm::value_ptr(sceneObject.getTranslate()));
       glUniform3fv(glGetUniformLocation(shaderProgram,
-                                        ("POINT_LIGHTS[" + std::to_string(i) + "].color").c_str()),
+                                        ("POINT_LIGHTS[" + std::to_string(j) + "].color").c_str()),
                    1, glm::value_ptr(pointLightPtr->getColor()));
       glUniform1f(glGetUniformLocation(
-                      shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
+                      shaderProgram, ("POINT_LIGHTS[" + std::to_string(j) + "].intensity").c_str()),
                   pointLightPtr->getIntensity());
       glUniform1f(
           glGetUniformLocation(shaderProgram,
-                               ("POINT_LIGHTS[" + std::to_string(i) + "].linAttCoef").c_str()),
+                               ("POINT_LIGHTS[" + std::to_string(j) + "].linAttCoef").c_str()),
           pointLightPtr->getLinAttCoef());
       glUniform1f(
           glGetUniformLocation(shaderProgram,
-                               ("POINT_LIGHTS[" + std::to_string(i) + "].quadAttCoef").c_str()),
+                               ("POINT_LIGHTS[" + std::to_string(j) + "].quadAttCoef").c_str()),
           pointLightPtr->getQuadAttCoef());
     }
 
-    // Spot lights
-    for (size_t i = 0; i < spotLightSceneObjects.size(); ++i) {
-      const SceneObject &sceneObject = spotLightSceneObjects[i];
-      const SpotLight   *spotLightPtr =
-          dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
-
-      glUniform3fv(glGetUniformLocation(
-                       shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].worldPos").c_str()),
-                   1, glm::value_ptr(sceneObject.getTranslate()));
-      glUniform3fv(glGetUniformLocation(shaderProgram,
-                                        ("SPOT_LIGHTS[" + std::to_string(i) + "].color").c_str()),
-                   1, glm::value_ptr(spotLightPtr->getColor()));
-      glUniform1f(glGetUniformLocation(
-                      shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
-                  spotLightPtr->getIntensity());
-      glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                                                glm::radians(sceneObject.getRotate().y),
-                                                glm::radians(sceneObject.getRotate().z))};
-      glm::vec3 dir{
-          rotateMatrix * glm::vec4{spotLightPtr->getDirection(), 0.0f}
-      };
-      glUniform3fv(glGetUniformLocation(shaderProgram,
-                                        ("SPOT_LIGHTS[" + std::to_string(i) + "].dir").c_str()),
-                   1, glm::value_ptr(dir));
-      glUniform1f(glGetUniformLocation(
-                      shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].linAttCoef").c_str()),
-                  spotLightPtr->getLinAttCoef());
-      glUniform1f(
-          glGetUniformLocation(shaderProgram,
-                               ("SPOT_LIGHTS[" + std::to_string(i) + "].quadAttCoef").c_str()),
-          spotLightPtr->getQuadAttCoef());
-      glUniform1f(glGetUniformLocation(shaderProgram,
-                                       ("SPOT_LIGHTS[" + std::to_string(i) + "].angle").c_str()),
-                  glm::radians(spotLightPtr->getAngle()));
-      glUniform1f(
-          glGetUniformLocation(shaderProgram,
-                               ("SPOT_LIGHTS[" + std::to_string(i) + "].smoothAngle").c_str()),
-          glm::radians(spotLightPtr->getSmoothAngle()));
-    }
-
     glUseProgram(0);
+  }
+}
+
+void SceneObject::updateShadersCamera(const std::vector<SceneObject> &sceneObjects,
+                                      const BaseCamera               &camera) noexcept {
+  // Getting camera view and projection matrices
+  const glm::mat4 viewMatrix{camera.getViewMatrix()};
+  const glm::mat4 projMatrix{camera.getProjectionMatrix()};
+  const glm::vec3 position{camera.getPos()};
+
+  // For each scene object
+  for (size_t i = 0; i < sceneObjects.size(); ++i) {
+    const Mesh *meshPtr = sceneObjects[i].getMeshPtr().get();
+
+    // If scene object has mesh
+    if (meshPtr != nullptr && meshPtr->isComplete()) {
+      // Updating object shader program uniform values
+      const GLuint shaderProgram = meshPtr->getShaderProgram();
+
+      glUseProgram(shaderProgram);
+
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "VIEW"), 1, GL_FALSE,
+                         glm::value_ptr(viewMatrix));
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PROJ"), 1, GL_FALSE,
+                         glm::value_ptr(projMatrix));
+      glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1, glm::value_ptr(position));
+
+      glUseProgram(0);
+    }
   }
 }

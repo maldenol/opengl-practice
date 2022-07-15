@@ -67,6 +67,10 @@ void PointLight::setLinAttCoef(float linAttCoef) noexcept { _linAttCoef = linAtt
 
 void PointLight::setQuadAttCoef(float quadAttCoef) noexcept { _quadAttCoef = quadAttCoef; }
 
+void PointLight::setShadowMapTextureResolution(GLsizei shadowMapTextureResolution) noexcept {
+  _shadowMapTextureResolution = shadowMapTextureResolution;
+}
+
 // Getters
 
 float PointLight::getLinAttCoef() const noexcept { return _linAttCoef; }

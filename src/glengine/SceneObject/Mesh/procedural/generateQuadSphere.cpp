@@ -49,10 +49,6 @@ glengine::Mesh glengine::generateQuadSphere(
       const float        downV  = static_cast<float>(row) * vQuadSize;
       const float        upV    = static_cast<float>(row + 1) * vQuadSize;
 
-      constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
-      constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
-      constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
-
       glm::vec3 lu{leftX, upY, 0.0f};
       glm::vec3 ru{rightX, upY, 0.0f};
       glm::vec3 ld{leftX, downY, 0.0f};

@@ -4,6 +4,19 @@
 #define MAX_POINT_LIGHT_COUNT       8
 #define MAX_SPOT_LIGHT_COUNT        8
 
+const float kKernelOffset = 0.001f;
+const vec2 kKernelOffsets[] = {
+  vec2(-kKernelOffset, kKernelOffset),
+  vec2(0.0f, kKernelOffset),
+  vec2(kKernelOffset, kKernelOffset),
+  vec2(-kKernelOffset, 0.0f),
+  vec2(0.0f, 0.0f),
+  vec2(kKernelOffset, 0.0f),
+  vec2(-kKernelOffset, -kKernelOffset),
+  vec2(0.0f, -kKernelOffset),
+  vec2(kKernelOffset, -kKernelOffset),
+};
+
 uniform mat4 MODEL;
 
 uniform vec3 VIEW_POS;
@@ -17,6 +30,9 @@ uniform struct {
   float intensity;
 
   vec3 dir;
+
+  sampler2D shadowMap;
+  mat4      VP;
 } DIRECTIONAL_LIGHTS[MAX_DIRECTIONAL_LIGHT_COUNT];
 uniform struct {
   vec3 worldPos;
@@ -137,6 +153,29 @@ void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint inde
   vec3 color = normalize(DIRECTIONAL_LIGHTS[index].color) * DIRECTIONAL_LIGHTS[index].intensity;
 
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
+
+  vec4 lightSpaceFragCoords = DIRECTIONAL_LIGHTS[index].VP * vec4(i.worldPos, 1.0f);
+  lightSpaceFragCoords     /= lightSpaceFragCoords.w;
+  lightSpaceFragCoords      = lightSpaceFragCoords * 0.5f + vec4(vec3(0.5f), 0.0f);
+
+  float notInShadow = 0.0f;
+  for (uint i = 0; i < 9; ++i) {
+    float fragmentDepth = lightSpaceFragCoords.z;
+    float obstacleDepth = texture(
+        DIRECTIONAL_LIGHTS[index].shadowMap,
+        lightSpaceFragCoords.xy + kKernelOffsets[i]
+    ).r;
+
+    float LdotN    = max(dot(L, N), 0.0f);
+    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    obstacleDepth += bias;
+
+    notInShadow += float(fragmentDepth <= obstacleDepth || fragmentDepth >= 1.0f);
+  }
+  notInShadow /= 9.0f;
+
+  diffuse  *= notInShadow;
+  specular *= notInShadow;
 }
 
 void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {

@@ -29,8 +29,6 @@ glengine::Mesh glengine::generateIcoSphere(
   float circumferenceRadius = 1.0f / std::sqrt(5.0f);
   // For each pole
   for (int p = 0; p < 2; ++p) {
-    constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
-
     const unsigned int currPoleOffset = p * 6;
 
     // For each vertex of the hemisphere of appropriate pole except the pole vertex

@@ -49,8 +49,6 @@ glengine::Mesh glengine::generatePlane(
     const float ldv = row * uvQuadSize;
     const float rdv = ldv;
 
-    constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
-
     const glm::vec3 lu{lux, luy, 0.0f};
     const glm::vec3 ru{rux, ruy, 0.0f};
     const glm::vec3 ld{ldx, ldy, 0.0f};

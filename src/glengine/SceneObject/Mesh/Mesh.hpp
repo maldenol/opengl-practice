@@ -17,12 +17,15 @@
 namespace glengine {
 
 // Global constants
+static constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
+static constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
+static constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
 
-constexpr float kInitAmbCoef    = 0.15f;
-constexpr float kInitDiffCoef   = 0.6f;
-constexpr float kInitSpecCoef   = 0.3f;
-constexpr float kInitGlossiness = 1.0f;
-constexpr float kInitMaxHeight  = 0.0f;
+static constexpr float kInitAmbCoef    = 0.15f;
+static constexpr float kInitDiffCoef   = 0.6f;
+static constexpr float kInitSpecCoef   = 0.3f;
+static constexpr float kInitGlossiness = 1.0f;
+static constexpr float kInitMaxHeight  = 0.0f;
 
 // Mesh class
 class Mesh {

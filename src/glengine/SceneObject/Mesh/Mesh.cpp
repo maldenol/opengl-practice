@@ -170,6 +170,8 @@ const std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() const noexcept {
 
 std::shared_ptr<Mesh::Material> &Mesh::getMaterialPtr() noexcept { return _materialPtr; }
 
+// Other member functions
+
 void Mesh::render() const noexcept {
   if (!isComplete()) return;
 

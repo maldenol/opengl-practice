@@ -208,6 +208,10 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("lenseFS.glsl"),
   };
+  std::vector<std::string> shadowMapShaderFilenames{
+      getAbsolutePathRelativeToExecutable("shadowMapVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shadowMapFS.glsl"),
+  };
   // Creating shader programs
   GLuint blinnPhongSP = glCreateProgram();
   GLuint lightSP      = glCreateProgram();
@@ -217,6 +221,7 @@ int main(int argc, char *argv[]) {
   GLuint skyboxSP     = glCreateProgram();
   GLuint mirrorSP     = glCreateProgram();
   GLuint lenseSP      = glCreateProgram();
+  GLuint shadowMapSP  = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -299,6 +304,16 @@ int main(int argc, char *argv[]) {
                                        lenseSP,
                                        std::cref(shaderTypes[0]),
                                        std::cref(lenseShaderFilenames)};
+  std::atomic<bool> shadowMapShaderWatcherIsRunning = true;
+  std::atomic<bool> shadowMapShadersAreRecompiled   = false;
+  std::thread       shadowMapShaderWatcherThread{shaderWatcher,
+                                           std::cref(shadowMapShaderWatcherIsRunning),
+                                           std::ref(shadowMapShadersAreRecompiled),
+                                           window,
+                                           std::ref(glfwContextMutex),
+                                           shadowMapSP,
+                                           std::cref(shaderTypes[0]),
+                                           std::cref(shadowMapShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -392,12 +407,12 @@ int main(int argc, char *argv[]) {
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 10.0f, 0.0f},
+      glm::vec3{  -1.0f,  2.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
       std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
       0.2f,
-                                         glm::vec3{   0.5f, -1.0f, 0.0f}
+                                         glm::vec3{   0.5f, -2.0f, -0.5f}
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
@@ -591,6 +606,10 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
+    // Updating scene objects shader programs uniform values
+    SceneObject::updateShadersLights(sceneObjects, shadowMapSP, gCamera.getPos());
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
+
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
       // Binding multisampling framebuffer
@@ -614,8 +633,6 @@ int main(int argc, char *argv[]) {
     glStencilMask(0x00);
 
     // Rendering scene objects
-    SceneObject::updateShadersCamera(sceneObjects, gCamera);
-    SceneObject::updateShadersLights(sceneObjects);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
@@ -639,8 +656,8 @@ int main(int argc, char *argv[]) {
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
     glStencilMask(0x00);
     const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-    const GLuint    initShaderProgram{
-        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram()};
+    const GLuint    initShaderProgram =
+        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram();
     sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
     sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
     sceneObjects[kOutlineMeshIndex].render();

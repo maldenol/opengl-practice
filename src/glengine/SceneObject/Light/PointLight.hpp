@@ -27,6 +27,7 @@ class PointLight : virtual public BaseLight {
   // Setters
   void setLinAttCoef(float linAttCoef) noexcept;
   void setQuadAttCoef(float quadAttCoef) noexcept;
+  void setShadowMapTextureResolution(GLsizei shadowMapTextureResolution) noexcept override;
 
   // Getters
   float  getLinAttCoef() const noexcept;
