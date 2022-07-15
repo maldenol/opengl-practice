@@ -5,7 +5,6 @@
 #define MAX_SPOT_LIGHT_COUNT        8
 
 uniform vec3 VIEW_POS;
-uniform mat4 MODEL;
 
 uniform struct {
   vec3  color;
@@ -72,6 +71,7 @@ void calcLambertianLight(out vec3 diffuse,
                         vec3 color) {
   float LdotN = max(dot(L, N), 0.0f);
 
+  // Calculating diffuse (Lambertian) light
   diffuse = color
           * LdotN
           * attenuation
@@ -84,6 +84,7 @@ void calcPhongLight(out vec3 diffuse,
                     vec3 L,
                     float attenuation,
                     vec3 color) {
+  // Calculating diffuse (Lambertian) light
   calcLambertianLight(diffuse, N, L, attenuation, color);
 
   vec3 R = reflect(-L, N); // 2.0f * dot(L, N) * N - L;
@@ -93,6 +94,7 @@ void calcPhongLight(out vec3 diffuse,
   float glossExp = exp2(gloss);
   float VdotR    = max(dot(V, R), 0.0f);
 
+  // Calculating specular (Phong) light
   specular = color
            * gloss * pow(VdotR, glossExp)
            * attenuation
@@ -105,6 +107,7 @@ void calcBlinnPhongLight(out vec3 diffuse,
                          vec3 L,
                          float attenuation,
                          vec3 color) {
+  // Calculating diffuse (Lambertian) light
   calcLambertianLight(diffuse, N, L, attenuation, color);
 
   float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, fTexCoords).r);
@@ -114,6 +117,7 @@ void calcBlinnPhongLight(out vec3 diffuse,
   float HdotN    = max(dot(H, N), 0.0f);
   float LdotN    = max(dot(L, N), 0.0f);
 
+  // Calculating specular (Blinn-Phong) light
   specular = color
            * gloss * pow(HdotN, glossExp) * float(LdotN > 0.0f)
            * attenuation
@@ -129,16 +133,19 @@ float calcLightAttenuation(vec3 worldPos, float linAttCoef, float quadAttCoef) {
 void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
   vec3 L = normalize(-DIRECTIONAL_LIGHTS[index].dir);
 
+  // Calculating light distance attenuation
   float attenuation = 1.0f;
 
   vec3 color = normalize(DIRECTIONAL_LIGHTS[index].color) * DIRECTIONAL_LIGHTS[index].intensity;
 
+  // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
 
 void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
   vec3 L = normalize(POINT_LIGHTS[index].worldPos - fWorldPos);
 
+  // Calculating light distance attenuation
   float attenuation = calcLightAttenuation(
       POINT_LIGHTS[index].worldPos,
       POINT_LIGHTS[index].linAttCoef,
@@ -147,12 +154,14 @@ void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 
   vec3 color = normalize(POINT_LIGHTS[index].color) * POINT_LIGHTS[index].intensity;
 
+  // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
 
 void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
   vec3 L = normalize(SPOT_LIGHTS[index].worldPos - fWorldPos);
 
+  // Calculating light distance attenuation
   float attenuation = calcLightAttenuation(
       SPOT_LIGHTS[index].worldPos,
       SPOT_LIGHTS[index].linAttCoef,
@@ -167,6 +176,7 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 
   vec3 color = normalize(SPOT_LIGHTS[index].color) * SPOT_LIGHTS[index].intensity;
 
+  // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
 }
 
@@ -181,7 +191,6 @@ void main() {
 
   // Using normal map and TBN matrix to get world space normal
   vec3 N = normalize(fTBN * (vec3(texture(MATERIAL.normalMap, fTexCoords)) * 2.0f - 1.0f));
-  //vec3 N = normalize(mat3(transpose(inverse(model))) * fNormal);
 
   // Adding each directional light contribution
   for (uint i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {

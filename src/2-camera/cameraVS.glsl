@@ -12,7 +12,8 @@ out vec3 fColor;
 out vec2 fTexCoords;
 
 void main() {
-  fColor = aColor;
-  fTexCoords = aTexCoords;
+  fColor      = aColor;
+  fTexCoords  = aTexCoords;
+
   gl_Position = proj * view * model * vec4(aPos.xyz, 1.0f);
 }

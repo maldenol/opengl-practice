@@ -64,7 +64,7 @@ BaseCamera::~BaseCamera() noexcept {}
 
 // Setters
 
-void BaseCamera::setPos(const glm::vec3 &pos) noexcept { _pos = pos; }
+void BaseCamera::setPosition(const glm::vec3 &pos) noexcept { _pos = pos; }
 
 void BaseCamera::setWorldUp(const glm::vec3 &worldUp) noexcept {
   _worldUp = glm::normalize(worldUp);
@@ -78,9 +78,9 @@ void BaseCamera::setUp(const glm::vec3 &up) noexcept { _up = up; }
 
 // Getters
 
-const glm::vec3 &BaseCamera::getPos() const noexcept { return _pos; }
+const glm::vec3 &BaseCamera::getPosition() const noexcept { return _pos; }
 
-glm::vec3 &BaseCamera::getPos() noexcept { return _pos; }
+glm::vec3 &BaseCamera::getPosition() noexcept { return _pos; }
 
 const glm::vec3 &BaseCamera::getWorldUp() const noexcept { return _worldUp; }
 

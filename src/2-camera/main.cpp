@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPos(glm::vec3{1.0f, 0.0f, 1.0f});
+  gCamera.setPosition(glm::vec3{1.0f, 0.0f, 1.0f});
   gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   gCamera.setVerticalFOV(glm::radians(60.0f));

@@ -18,7 +18,7 @@ static constexpr size_t kMaxSpotLightCount      = 8;
 
 static constexpr int kInitShadowMapTextureUnit = 7;
 
-static constexpr float kDirectionalShadowMapDistance = 10.0f;
+static constexpr float kDirectionalShadowMapDistance = 20.0f;
 
 // Constructors, assignment operators and destructor
 
@@ -245,7 +245,7 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
             glm::vec4{lightDir, 0.0f}
         };
         lightDir = glm::normalize(lightDir);
-        shadowMapCamera.setPos(-lightDir * kDirectionalShadowMapDistance + viewPos);
+        shadowMapCamera.setPosition(-lightDir * kDirectionalShadowMapDistance + viewPos);
         shadowMapCamera.setWorldUp(kUp);
         shadowMapCamera.look(lightDir);
         shadowMapCamera.setLeftBorder(-kDirectionalShadowMapDistance);
@@ -257,9 +257,10 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
         directionalLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
                                              shadowMapCamera.getViewMatrix());
 
-        // Temporary changing scene objects shader programs and updating shaders camera
         std::vector<GLuint> initShaderPrograms{};
         initShaderPrograms.resize(sceneObjects.size());
+
+        // Temporary changing scene objects shader programs and updating shaders camera
         for (size_t j = 0; j < sceneObjects.size(); ++j) {
           if (sceneObjects[j].getMeshPtr() != nullptr) {
             initShaderPrograms[j] = sceneObjects[j].getMeshPtr()->getShaderProgram();
@@ -430,7 +431,7 @@ void SceneObject::updateShadersCamera(const std::vector<SceneObject> &sceneObjec
   // Getting camera view and projection matrices
   const glm::mat4 viewMatrix{camera.getViewMatrix()};
   const glm::mat4 projMatrix{camera.getProjectionMatrix()};
-  const glm::vec3 position{camera.getPos()};
+  const glm::vec3 position{camera.getPosition()};
 
   // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {

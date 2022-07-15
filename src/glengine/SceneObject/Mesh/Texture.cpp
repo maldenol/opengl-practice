@@ -44,11 +44,7 @@ Mesh::Material::Texture &Mesh::Material::Texture::operator=(Texture &&texture) n
 }
 
 // Destructor
-Mesh::Material::Texture::~Texture() noexcept {
-  if (_name > 0) {
-    glDeleteTextures(1, &_name);
-  }
-}
+Mesh::Material::Texture::~Texture() noexcept { glDeleteTextures(1, &_name); }
 
 // Setters
 

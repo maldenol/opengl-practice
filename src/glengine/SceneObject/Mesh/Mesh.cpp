@@ -109,15 +109,9 @@ Mesh &Mesh::operator=(Mesh &&mesh) noexcept {
 
 // Destructor
 Mesh::~Mesh() noexcept {
-  if (_vao > 0) {
-    glDeleteVertexArrays(1, &_vao);
-  }
-  if (_vbo > 0) {
-    glDeleteBuffers(1, &_vbo);
-  }
-  if (_ebo > 0) {
-    glDeleteBuffers(1, &_ebo);
-  }
+  glDeleteVertexArrays(1, &_vao);
+  glDeleteBuffers(1, &_vbo);
+  glDeleteBuffers(1, &_ebo);
 }
 
 // Setters
@@ -210,6 +204,9 @@ void Mesh::render() const noexcept {
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.ambOccMap"), 3);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.roughMap"), 4);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);
+
+  glUniform1i(glGetUniformLocation(_shaderProgram, "INSTANCED"),
+              static_cast<int>(_instanceCount > 1));
 
   // Drawing mesh
   glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, _instanceCount);

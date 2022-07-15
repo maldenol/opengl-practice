@@ -192,10 +192,6 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("normalGS.glsl"),
       getAbsolutePathRelativeToExecutable("normalFS.glsl"),
   };
-  std::vector<std::string> instanceShaderFilenames{
-      getAbsolutePathRelativeToExecutable("instanceVS.glsl"),
-      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
-  };
   std::vector<std::string> skyboxShaderFilenames{
       getAbsolutePathRelativeToExecutable("skyboxVS.glsl"),
       getAbsolutePathRelativeToExecutable("skyboxFS.glsl"),
@@ -213,7 +209,6 @@ int main(int argc, char *argv[]) {
   GLuint lightSP      = glCreateProgram();
   GLuint screenSP     = glCreateProgram();
   GLuint normalSP     = glCreateProgram();
-  GLuint instanceSP   = glCreateProgram();
   GLuint skyboxSP     = glCreateProgram();
   GLuint mirrorSP     = glCreateProgram();
   GLuint lenseSP      = glCreateProgram();
@@ -259,16 +254,6 @@ int main(int argc, char *argv[]) {
                                         normalSP,
                                         std::cref(shaderTypes[1]),
                                         std::cref(normalShaderFilenames)};
-  std::atomic<bool> instanceShaderWatcherIsRunning = true;
-  std::atomic<bool> instanceShadersAreRecompiled   = false;
-  std::thread       instanceShaderWatcherThread{shaderWatcher,
-                                          std::cref(instanceShaderWatcherIsRunning),
-                                          std::ref(instanceShadersAreRecompiled),
-                                          window,
-                                          std::ref(glfwContextMutex),
-                                          instanceSP,
-                                          std::cref(shaderTypes[0]),
-                                          std::cref(instanceShaderFilenames)};
   std::atomic<bool> skyboxShaderWatcherIsRunning = true;
   std::atomic<bool> skyboxShadersAreRecompiled   = false;
   std::thread       skyboxShaderWatcherThread{shaderWatcher,
@@ -364,7 +349,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, instanceSP, texturePtrVectors[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setInstanceCount(kInstanceCount);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(15.0f);
@@ -526,7 +511,7 @@ int main(int argc, char *argv[]) {
   glfwMakeContextCurrent(nullptr);
 
   // Configuring camera and cameraControllers
-  gCamera.setPos(glm::vec3{0.0f, 1.0f, 2.0f});
+  gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});
   gCamera.setWorldUp(glm::vec3{0.0f, 1.0f, 0.0f});
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   gCamera.setVerticalFOV(glm::radians(60.0f));
@@ -576,7 +561,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Updating flashlight SceneObject fields
-    gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPos());
+    gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
@@ -612,13 +597,6 @@ int main(int argc, char *argv[]) {
 
       sceneObjects[i].render();
 
-      if (gEnableNormals && sceneObjects[i].getMeshPtr() != nullptr) {
-        const GLuint initShaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
-        sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
-        sceneObjects[i].render();
-        sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderProgram);
-      }
-
       if (i == kOutlineMeshIndex) {
         glStencilMask(0x00);
       }
@@ -637,10 +615,34 @@ int main(int argc, char *argv[]) {
     sceneObjects[kOutlineMeshIndex].setScale(initScale);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
 
+    // Rendering normals
+    if (gEnableNormals) {
+      std::vector<GLuint> initShaderPrograms{};
+      initShaderPrograms.resize(sceneObjects.size());
+
+      // Temporary changing scene objects shader programs and updating shaders camera
+      // to render normals
+      for (size_t i = 0; i < sceneObjects.size(); ++i) {
+        if (sceneObjects[i].getMeshPtr() != nullptr) {
+          initShaderPrograms[i] = sceneObjects[i].getMeshPtr()->getShaderProgram();
+          sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
+        }
+      }
+      SceneObject::updateShadersCamera(sceneObjects, gCamera);
+
+      // Rendering normals and revering shader program changes
+      for (size_t i = 0; i < sceneObjects.size(); ++i) {
+        if (sceneObjects[i].getMeshPtr() != nullptr) {
+          sceneObjects[i].render();
+          sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderPrograms[i]);
+        }
+      }
+    }
+
     // Drawing skybox
     glDepthFunc(GL_LEQUAL);
     glCullFace(GL_FRONT);
-    skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPos());
+    skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPosition());
     SceneObject::updateShadersCamera(std::vector<SceneObject>{skyboxSceneObject}, gCamera);
     skyboxSceneObject.render();
     glCullFace(GL_BACK);

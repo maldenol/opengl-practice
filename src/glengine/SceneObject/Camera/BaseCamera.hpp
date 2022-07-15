@@ -26,15 +26,15 @@ class BaseCamera {
 
  public:
   // Setters
-  void setPos(const glm::vec3 &pos) noexcept;
+  void setPosition(const glm::vec3 &pos) noexcept;
   void setWorldUp(const glm::vec3 &worldUp) noexcept;
   void setForward(const glm::vec3 &forward) noexcept;
   void setRight(const glm::vec3 &right) noexcept;
   void setUp(const glm::vec3 &up) noexcept;
 
   // Getters
-  const glm::vec3 &getPos() const noexcept;
-  glm::vec3       &getPos() noexcept;
+  const glm::vec3 &getPosition() const noexcept;
+  glm::vec3       &getPosition() noexcept;
   const glm::vec3 &getWorldUp() const noexcept;
   glm::vec3       &getWorldUp() noexcept;
   const glm::vec3 &getForward() const noexcept;

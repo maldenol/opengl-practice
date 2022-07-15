@@ -45,9 +45,9 @@ void main() {
   // Black and white
   // float avr = (color.r + color.g + color.b) / 3.0f;
   // float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
-  // color.r = avr;
-  // color.g = avr;
-  // color.b = avr;
+  // color.r   = avr;
+  // color.g   = avr;
+  // color.b   = avr;
 
   // Applying postprocessing kernels
   vec4 color = vec4(0.0f);

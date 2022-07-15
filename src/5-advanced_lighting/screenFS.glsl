@@ -45,9 +45,9 @@ void main() {
   // Black and white
   // float avr = (color.r + color.g + color.b) / 3.0f;
   // float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
-  // color.r = avr;
-  // color.g = avr;
-  // color.b = avr;
+  // color.r   = avr;
+  // color.g   = avr;
+  // color.b   = avr;
 
   // Applying postprocessing kernels
   // vec4 color = vec4(0.0f);
@@ -59,7 +59,7 @@ void main() {
   float gammaR = 2.2f;
   float gammaG = 2.2f;
   float gammaB = 2.2f;
-  color.rgb = pow(color.rgb, vec3(1.0f / gammaR, 1.0f / gammaG, 1.0f / gammaB));
+  color.rgb    = pow(color.rgb, vec3(1.0f / gammaR, 1.0f / gammaG, 1.0f / gammaB));
 
   FragColor = color;
 }
