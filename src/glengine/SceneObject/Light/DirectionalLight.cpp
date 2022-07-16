@@ -11,10 +11,10 @@ using namespace glengine;
 
 // Local function headers
 
-void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
-                                   GLsizei shadowMapTextureResolution);
-void copyShadowMapFramebuffer(GLuint srcShadowMapFBO, GLsizei srcShadowMapTextureResolution,
-                              GLuint dstShadowMapFBO, GLsizei dstShadowMapTextureResolution);
+static void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
+                                          GLsizei shadowMapTextureResolution);
+static void copyShadowMapFramebuffer(GLuint srcShadowMapFBO, GLsizei srcShadowMapTextureResolution,
+                                     GLuint dstShadowMapFBO, GLsizei dstShadowMapTextureResolution);
 
 // Constructors, assignment operators and destructor
 
@@ -105,8 +105,8 @@ glm::vec3 &DirectionalLight::getDirection() noexcept { return _direction; }
 
 // Local function definition
 
-void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
-                                   GLsizei shadowMapTextureResolution) {
+static void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
+                                          GLsizei shadowMapTextureResolution) {
   // Creating and configuring shadow map depth texture
   glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapTextureResolution,
@@ -127,8 +127,9 @@ void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void copyShadowMapFramebuffer(GLuint srcShadowMapFBO, GLsizei srcShadowMapTextureResolution,
-                              GLuint dstShadowMapFBO, GLsizei dstShadowMapTextureResolution) {
+static void copyShadowMapFramebuffer(GLuint srcShadowMapFBO, GLsizei srcShadowMapTextureResolution,
+                                     GLuint  dstShadowMapFBO,
+                                     GLsizei dstShadowMapTextureResolution) {
   // Copying shadow map framebuffer
   glBindFramebuffer(GL_READ_FRAMEBUFFER, srcShadowMapFBO);
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstShadowMapFBO);

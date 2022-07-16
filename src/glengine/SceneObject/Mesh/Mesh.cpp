@@ -205,6 +205,7 @@ void Mesh::render() const noexcept {
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.roughMap"), 4);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);
 
+  // If instanced
   glUniform1i(glGetUniformLocation(_shaderProgram, "INSTANCED"),
               static_cast<int>(_instanceCount > 1));
 

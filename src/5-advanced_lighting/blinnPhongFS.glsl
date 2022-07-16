@@ -54,6 +54,9 @@ uniform struct {
 
   float angle;
   float smoothAngle;
+
+  sampler2D shadowMap;
+  mat4      VP;
 } SPOT_LIGHTS[MAX_SPOT_LIGHT_COUNT];
 
 uniform struct {
@@ -224,6 +227,35 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
+
+  // Calculating fragment coordinates in light space
+  vec4 lightSpaceFragCoords = SPOT_LIGHTS[index].VP * vec4(i.worldPos, 1.0f);
+  lightSpaceFragCoords     /= lightSpaceFragCoords.w;
+  lightSpaceFragCoords      = lightSpaceFragCoords * 0.5f + vec4(vec3(0.5f), 0.0f);
+
+  // Calculating shadow coefficient (Percentage-Closer Filtering)
+  float notInShadow = 0.0f;
+  for (uint i = 0; i < 9; ++i) {
+    // Calculating fragment and obstacle depth
+    float fragmentDepth = lightSpaceFragCoords.z;
+    float obstacleDepth = texture(
+        SPOT_LIGHTS[index].shadowMap,
+        lightSpaceFragCoords.xy + kKernelOffsets[i]
+    ).r;
+
+    // Applying shadow bias
+    float LdotN    = max(dot(L, N), 0.0f);
+    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    obstacleDepth += bias;
+
+    // Calculating if fragment is not in shadow
+    notInShadow += float(fragmentDepth <= obstacleDepth || fragmentDepth >= 1.0f);
+  }
+  notInShadow /= 9.0f;
+
+  // Applying shadow
+  diffuse  *= notInShadow;
+  specular *= notInShadow;
 }
 
 // Fragment shader

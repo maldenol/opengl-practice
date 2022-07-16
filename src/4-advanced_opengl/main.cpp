@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
   });
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 10.0f, 0.0f},
+      glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
       std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.45f, 0.075f, 15.0f, 13.0f),
+                                  0.45f, 0.075f, glm::radians(15.0f), glm::radians(13.0f)),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
   // Spot light (yellow)
@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.45f, 0.075f, 30.0f, 25.0f),
+                                  0.45f, 0.075f, glm::radians(30.0f), glm::radians(25.0f)),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   // Flashlight
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
       1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.45f, 0.075f, 20.0f, 18.0f),
+                                  0.45f, 0.075f, glm::radians(20.0f), glm::radians(18.0f)),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];

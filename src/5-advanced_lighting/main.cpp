@@ -392,7 +392,7 @@ int main(int argc, char *argv[]) {
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{  -1.0f,  2.0f, 0.0f},
+      glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
       std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
@@ -401,6 +401,7 @@ int main(int argc, char *argv[]) {
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
+  sceneObjects[sceneObjects.size() - 1].getLightPtr()->setShadowMapTextureResolution(2048);
   // Point light (purple)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.0f, 0.8f, -1.0f},
@@ -410,7 +411,6 @@ int main(int argc, char *argv[]) {
       1.0f, 0.0f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
@@ -418,10 +418,9 @@ int main(int argc, char *argv[]) {
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.0f, 0.075f, 15.0f, 13.0f),
+                                  0.0f, 0.075f, glm::radians(15.0f), glm::radians(13.0f)),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
@@ -429,10 +428,9 @@ int main(int argc, char *argv[]) {
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.0f, 0.075f, 30.0f, 25.0f),
+                                  0.0f, 0.075f, glm::radians(30.0f), glm::radians(25.0f)),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   // Flashlight
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -440,7 +438,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
       1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.0f, 0.075f, 20.0f, 18.0f),
+                                  0.0f, 0.075f, glm::radians(20.0f), glm::radians(18.0f)),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];

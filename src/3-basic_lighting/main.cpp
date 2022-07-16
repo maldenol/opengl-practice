@@ -145,32 +145,36 @@ int main(int argc, char *argv[]) {
   };
 
   // Creating and configuring scene objects
+  // Lower plane
   std::vector<SceneObject> sceneObjects{};
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, -1.0f, 0.0f},
-      glm::vec3{  90.0f,  0.0f, 0.0f},
-      glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
-  });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
-  sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,   2.0f, 0.0f},
+      glm::vec3{   0.0f,  -1.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
+  // Upper plane
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   0.0f,  2.0f, 0.0f},
+      glm::vec3{  90.0f,  0.0f, 0.0f},
+      glm::vec3{  20.0f, 10.0f, 30.0f},
+      std::shared_ptr<BaseLight>{nullptr      },
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+  });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
+  // Central cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.1f,   0.1f, 0.1f},
+      glm::vec3{   0.0f,   0.0f, 0.0f},
       glm::vec3{ 180.0f, 180.0f, 180.0f},
       glm::vec3{   2.0f,   2.0f, 2.0f},
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
+  // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
@@ -181,6 +185,7 @@ int main(int argc, char *argv[]) {
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
+  // Point light (purple)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.0f, 0.8f, -1.0f},
       glm::vec3{0.0f, 0.0f,  0.0f},
@@ -189,31 +194,34 @@ int main(int argc, char *argv[]) {
       1.0f, 0.45f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
+  // Spot light (green)
   sceneObjects.push_back(SceneObject{
       glm::vec3{-0.1f, 0.75f, -0.1f},
       glm::vec3{ 0.0f, 90.0f,  0.0f},
       glm::vec3{ 1.0f,  1.0f,  1.0f},
       std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
       1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.45f, 0.075f, 15.0f, 13.0f),
+                                  0.45f, 0.075f, glm::radians(15.0f), glm::radians(13.0f)),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
+  // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
       glm::vec3{0.1f,  1.0f, 0.1f},
       glm::vec3{0.0f,  0.0f, 0.0f},
       glm::vec3{1.0f,  1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
       1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.45f, 0.075f, 30.0f, 25.0f),
+                                  0.45f, 0.075f, glm::radians(30.0f), glm::radians(25.0f)),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
+  // Flashlight
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, 1.0f},
       std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
       1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.45f, 0.075f, 20.0f, 18.0f),
+                                  0.45f, 0.075f, glm::radians(20.0f), glm::radians(18.0f)),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];

@@ -18,7 +18,7 @@ static constexpr size_t kMaxSpotLightCount      = 8;
 
 static constexpr int kInitShadowMapTextureUnit = 7;
 
-static constexpr float kDirectionalShadowMapDistance = 20.0f;
+static constexpr float kShadowMapDistance = 20.0f;
 
 // Constructors, assignment operators and destructor
 
@@ -173,11 +173,12 @@ void SceneObject::render() const noexcept {
 
 void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjects,
                                       GLuint shadowMapSP, const glm::vec3 &viewPos) noexcept {
-  // Getting shader programs, light sources and light cameras
+  // Getting shader programs, light sources and light cameras matrices
   std::vector<GLuint>              shaderPrograms{};
+  std::vector<const SceneObject *> spotLightSceneObjectPtrs{};
   std::vector<const SceneObject *> directionalLightSceneObjectPtrs{};
   std::vector<const SceneObject *> pointLightSceneObjectPtrs{};
-  std::vector<const SceneObject *> spotLightSceneObjectPtrs{};
+  std::vector<glm::mat4>           spotLightVPMatrices{};
   std::vector<glm::mat4>           directionalLightVPMatrices{};
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
     const SceneObject &sceneObject = sceneObjects[i];
@@ -207,6 +208,72 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
       // Adding scene object to spot light vector
       spotLightSceneObjectPtrs.push_back(&sceneObject);
 
+      // Rendering shadow map
+      if (shadowMapSP > 0) {
+        // Enabling Z- and disabling stencil testing
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDisable(GL_STENCIL_TEST);
+
+        // Setting shadow map viewport
+        int viewport[4] = {0};
+        glGetIntegerv(GL_VIEWPORT, &viewport[0]);
+        glViewport(0, 0, spotLightPtr->getShadowMapTextureResolution(),
+                   spotLightPtr->getShadowMapTextureResolution());
+
+        // Binding and clearing shadow map framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneObject.getLightPtr()->getShadowMapFBO());
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Configuring camera viewing from light position in light direction
+        PerspectiveCamera shadowMapCamera{};
+        shadowMapCamera.setPosition(sceneObject.getTranslate());
+        shadowMapCamera.setWorldUp(kUp);
+        shadowMapCamera.look(glm::vec3{
+            glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
+                               glm::radians(sceneObject.getRotate().y),
+                               glm::radians(sceneObject.getRotate().z)) *
+            glm::vec4{spotLightPtr->getDirection(), 0.0f}
+        });
+        shadowMapCamera.setVerticalFOV(2.0f * spotLightPtr->getAngle());
+        shadowMapCamera.setAspectRatio(1.0f);
+        shadowMapCamera.setNearPlane(0.1f);
+        shadowMapCamera.setFarPlane(2.0f * kShadowMapDistance);
+
+        // Pushing light VP matrix to vector
+        spotLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
+                                      shadowMapCamera.getViewMatrix());
+
+        std::vector<GLuint> initShaderPrograms{};
+        initShaderPrograms.resize(sceneObjects.size());
+
+        // Temporary changing scene objects shader programs and updating shaders camera
+        for (size_t j = 0; j < sceneObjects.size(); ++j) {
+          if (sceneObjects[j].getMeshPtr() != nullptr) {
+            initShaderPrograms[j] = sceneObjects[j].getMeshPtr()->getShaderProgram();
+            sceneObjects[j].getMeshPtr()->setShaderProgram(shadowMapSP);
+          }
+        }
+        SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
+
+        // Rendering scene objects from camera point of view and reverting shader program changes
+        for (size_t j = 0; j < sceneObjects.size(); ++j) {
+          if (sceneObjects[j].getMeshPtr() != nullptr) {
+            sceneObjects[j].render();
+            sceneObjects[j].getMeshPtr()->setShaderProgram(initShaderPrograms[j]);
+          }
+        }
+
+        // Unbinding shadow map framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Reverting viewport changes
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+        // Disabling Z-testing
+        glDisable(GL_DEPTH_TEST);
+      }
+
       continue;
     }
 
@@ -235,25 +302,23 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
 
         // Configuring camera viewing from light position in light direction
         OrthographicCamera shadowMapCamera{};
-        glm::vec3          lightDir{};
-        lightDir =
-            dynamic_cast<DirectionalLight *>(sceneObject.getLightPtr().get())->getDirection();
-        lightDir = glm::vec3{
+        glm::vec3          lightDir{
             glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
-                               glm::radians(sceneObject.getRotate().y),
-                               glm::radians(sceneObject.getRotate().z)) *
-            glm::vec4{lightDir, 0.0f}
+                                        glm::radians(sceneObject.getRotate().y),
+                                        glm::radians(sceneObject.getRotate().z)) *
+            glm::vec4{direcionalLightPtr->getDirection(), 0.0f}
         };
-        lightDir = glm::normalize(lightDir);
-        shadowMapCamera.setPosition(-lightDir * kDirectionalShadowMapDistance + viewPos);
+        shadowMapCamera.setPosition(-glm::normalize(lightDir) * kShadowMapDistance + viewPos);
         shadowMapCamera.setWorldUp(kUp);
         shadowMapCamera.look(lightDir);
-        shadowMapCamera.setLeftBorder(-kDirectionalShadowMapDistance);
-        shadowMapCamera.setRightBorder(kDirectionalShadowMapDistance);
-        shadowMapCamera.setBottomBorder(-kDirectionalShadowMapDistance);
-        shadowMapCamera.setTopBorder(kDirectionalShadowMapDistance);
+        shadowMapCamera.setLeftBorder(-kShadowMapDistance);
+        shadowMapCamera.setRightBorder(kShadowMapDistance);
+        shadowMapCamera.setBottomBorder(-kShadowMapDistance);
+        shadowMapCamera.setTopBorder(kShadowMapDistance);
         shadowMapCamera.setNearPlane(0.0f);
-        shadowMapCamera.setFarPlane(2.0f * kDirectionalShadowMapDistance);
+        shadowMapCamera.setFarPlane(2.0f * kShadowMapDistance);
+
+        // Pushing light VP matrix to vector
         directionalLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
                                              shadowMapCamera.getViewMatrix());
 
@@ -269,7 +334,7 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
         }
         SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
 
-        // Rendering scene objects from camera point of view and revering shader program changes
+        // Rendering scene objects from camera point of view and reverting shader program changes
         for (size_t j = 0; j < sceneObjects.size(); ++j) {
           if (sceneObjects[j].getMeshPtr() != nullptr) {
             sceneObjects[j].render();
@@ -315,6 +380,12 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                  glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
     glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
 
+    // Copying light VP matrices deques
+    std::vector<glm::mat4> spotLightVPMatricesCopy{spotLightVPMatrices.crbegin(),
+                                                   spotLightVPMatrices.crend()};
+    std::vector<glm::mat4> directionalLightVPMatricesCopy{directionalLightVPMatrices.crbegin(),
+                                                          directionalLightVPMatrices.crend()};
+
     // Spot lights
     for (size_t j = 0; j < spotLightSceneObjectPtrs.size() && j < kMaxSpotLightCount; ++j) {
       const SceneObject &sceneObject = *spotLightSceneObjectPtrs[j];
@@ -348,11 +419,32 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
           spotLightPtr->getQuadAttCoef());
       glUniform1f(glGetUniformLocation(shaderProgram,
                                        ("SPOT_LIGHTS[" + std::to_string(j) + "].angle").c_str()),
-                  glm::radians(spotLightPtr->getAngle()));
+                  spotLightPtr->getAngle());
       glUniform1f(
           glGetUniformLocation(shaderProgram,
                                ("SPOT_LIGHTS[" + std::to_string(j) + "].smoothAngle").c_str()),
-          glm::radians(spotLightPtr->getSmoothAngle()));
+          spotLightPtr->getSmoothAngle());
+
+      if (shadowMapSP > 0) {
+        glUniform1i(
+            glGetUniformLocation(shaderProgram,
+                                 ("SPOT_LIGHTS[" + std::to_string(j) + "].shadowMap").c_str()),
+            currShadowMapTextureUnit);
+        glUniformMatrix4fv(
+            glGetUniformLocation(shaderProgram,
+                                 ("SPOT_LIGHTS[" + std::to_string(j) + "].VP").c_str()),
+            1, GL_FALSE, glm::value_ptr(spotLightVPMatricesCopy.back()));
+
+        // Deleting element from back
+        spotLightVPMatricesCopy.pop_back();
+
+        // Binding shadow map texture
+        glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+
+        // Incrementing current shadow map texture unit
+        ++currShadowMapTextureUnit;
+      }
     }
 
     // Directional lights
@@ -380,21 +472,27 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
           glGetUniformLocation(shaderProgram,
                                ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].dir").c_str()),
           1, glm::value_ptr(dir));
-      glUniform1i(
-          glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(0) + "].shadowMap").c_str()),
-          currShadowMapTextureUnit);
-      glUniformMatrix4fv(
-          glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(0) + "].VP").c_str()),
-          1, GL_FALSE, glm::value_ptr(directionalLightVPMatrices[j]));
 
-      // Binding shadow map texture
-      glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-      glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+      if (shadowMapSP > 0) {
+        glUniform1i(
+            glGetUniformLocation(
+                shaderProgram, ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].shadowMap").c_str()),
+            currShadowMapTextureUnit);
+        glUniformMatrix4fv(
+            glGetUniformLocation(shaderProgram,
+                                 ("DIRECTIONAL_LIGHTS[" + std::to_string(j) + "].VP").c_str()),
+            1, GL_FALSE, glm::value_ptr(directionalLightVPMatricesCopy.back()));
 
-      // Incrementing current shadow map texture unit
-      ++currShadowMapTextureUnit;
+        // Deleting element from back
+        directionalLightVPMatricesCopy.pop_back();
+
+        // Binding shadow map texture
+        glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+
+        // Incrementing current shadow map texture unit
+        ++currShadowMapTextureUnit;
+      }
     }
 
     // Point lights
