@@ -82,8 +82,6 @@ int main(int argc, char *argv[]) {
 
   // Setting OpenGL clear color
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  // Enabling Z-testing
-  glEnable(GL_DEPTH_TEST);
 
   // Creating arrays of types of shaders
   std::vector<GLuint> blinnPhongShaderTypes{
@@ -287,9 +285,14 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
-    // Rendering scene objects
+    // Updating scene objects shader programs uniform values
     SceneObject::updateShadersLights(sceneObjects);
     SceneObject::updateShadersCamera(sceneObjects, gCamera);
+
+    // Enabling Z-testing
+    glEnable(GL_DEPTH_TEST);
+
+    // Rendering scene objects
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       sceneObjects[i].render();
     }

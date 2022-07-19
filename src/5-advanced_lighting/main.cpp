@@ -317,6 +317,8 @@ int main(int argc, char *argv[]) {
                                                std::cref(shadowMapCubeShaderFilenames)};
 
   // Loading textures
+  gTextureBlack = loadTexture("black.png", false);
+  gTextureWhite = loadTexture("white.png", false);
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
@@ -607,7 +609,7 @@ int main(int argc, char *argv[]) {
 
     // Updating scene objects shader programs uniform values
     SceneObject::updateShadersLights(sceneObjects, shadowMap2DSP, shadowMapCubeSP, shadowMap2DSP,
-                                     gCamera.getPosition());
+                                     gCamera);
     SceneObject::updateShadersCamera(sceneObjects, gCamera);
 
     // If postprocessing is enabled

@@ -71,10 +71,10 @@ class SceneObject {
 
   // Other static member functions
   static void updateShadersLights(const std::vector<SceneObject> &sceneObjects,
-                                  GLuint           directionalLightShadowMapShaderProgram = 0,
-                                  GLuint           pointLightShadowMapShaderProgram       = 0,
-                                  GLuint           spotLightShadowMapShaderProgram        = 0,
-                                  const glm::vec3 &viewPos = glm::vec3{0.0f}) noexcept;
+                                  GLuint            directionalLightShadowMapShaderProgram = 0,
+                                  GLuint            pointLightShadowMapShaderProgram       = 0,
+                                  GLuint            spotLightShadowMapShaderProgram        = 0,
+                                  const BaseCamera &camera = PerspectiveCamera{}) noexcept;
   static void updateShadersCamera(const std::vector<SceneObject> &sceneObjects,
                                   const BaseCamera               &camera) noexcept;
 };

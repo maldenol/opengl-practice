@@ -1,7 +1,7 @@
 #version 460 core
 
 const float kKernelOffset = 0.001f;
-const vec2 kKernelOffsets[] = {
+const vec2 kKernelOffsets[9] = {
   vec2(-kKernelOffset, kKernelOffset),
   vec2(0.0f, kKernelOffset),
   vec2(kKernelOffset, kKernelOffset),

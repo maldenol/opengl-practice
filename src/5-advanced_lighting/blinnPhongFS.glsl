@@ -1,11 +1,11 @@
 #version 460 core
 
 #define MAX_DIRECTIONAL_LIGHT_COUNT 8
-#define MAX_POINT_LIGHT_COUNT       1
+#define MAX_POINT_LIGHT_COUNT       8
 #define MAX_SPOT_LIGHT_COUNT        8
 
 const float kKernelOffset = 0.001f;
-const vec2 kKernelOffsets[] = {
+const vec2 kKernel2DOffsets[9] = {
   vec2(-kKernelOffset, kKernelOffset),
   vec2(0.0f, kKernelOffset),
   vec2(kKernelOffset, kKernelOffset),
@@ -15,6 +15,34 @@ const vec2 kKernelOffsets[] = {
   vec2(-kKernelOffset, -kKernelOffset),
   vec2(0.0f, -kKernelOffset),
   vec2(kKernelOffset, -kKernelOffset),
+};
+const vec3 kKernelCubeOffsets[26] = {
+  vec3(-kKernelOffset, -kKernelOffset, -kKernelOffset),
+  vec3(-kKernelOffset, -kKernelOffset, 0.0f),
+  vec3(-kKernelOffset, -kKernelOffset, kKernelOffset),
+  vec3(-kKernelOffset, 0.0f, -kKernelOffset),
+  vec3(-kKernelOffset, 0.0f, 0.0f),
+  vec3(-kKernelOffset, 0.0f, kKernelOffset),
+  vec3(-kKernelOffset, kKernelOffset, -kKernelOffset),
+  vec3(-kKernelOffset, kKernelOffset, 0.0f),
+  vec3(-kKernelOffset, kKernelOffset, kKernelOffset),
+  vec3(0.0f, -kKernelOffset, -kKernelOffset),
+  vec3(0.0f, -kKernelOffset, 0.0f),
+  vec3(0.0f, -kKernelOffset, kKernelOffset),
+  vec3(0.0f, 0.0f, -kKernelOffset),
+  vec3(0.0f, 0.0f, kKernelOffset),
+  vec3(0.0f, kKernelOffset, -kKernelOffset),
+  vec3(0.0f, kKernelOffset, 0.0f),
+  vec3(0.0f, kKernelOffset, kKernelOffset),
+  vec3(kKernelOffset, -kKernelOffset, -kKernelOffset),
+  vec3(kKernelOffset, -kKernelOffset, 0.0f),
+  vec3(kKernelOffset, -kKernelOffset, kKernelOffset),
+  vec3(kKernelOffset, 0.0f, -kKernelOffset),
+  vec3(kKernelOffset, 0.0f, 0.0f),
+  vec3(kKernelOffset, 0.0f, kKernelOffset),
+  vec3(kKernelOffset, kKernelOffset, -kKernelOffset),
+  vec3(kKernelOffset, kKernelOffset, 0.0f),
+  vec3(kKernelOffset, kKernelOffset, kKernelOffset),
 };
 
 uniform vec3 VIEW_POS;
@@ -176,7 +204,7 @@ void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint inde
     float fragmentDepth = lightSpaceFragCoords.z;
     float obstacleDepth = texture(
         DIRECTIONAL_LIGHTS[index].shadowMap,
-        lightSpaceFragCoords.xy + kKernelOffsets[i]
+        lightSpaceFragCoords.xy + kKernel2DOffsets[i]
     ).r;
 
     // Applying shadow bias
@@ -216,12 +244,12 @@ void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 
   // Calculating shadow coefficient (Percentage-Closer Filtering)
   float notInShadow = 0.0f;
-  for (uint i = 0; i < 9; ++i) {
+  for (uint i = 0; i < 26; ++i) {
     // Calculating fragment and obstacle depth
     float fragmentDepth = length(fragmentToLight) / POINT_LIGHTS[index].farPlane;
     float obstacleDepth = texture(
         POINT_LIGHTS[index].shadowMap,
-        fragmentToLight
+        fragmentToLight + kKernelCubeOffsets[i]
     ).r;
 
     // Applying shadow bias
@@ -272,7 +300,7 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
     float fragmentDepth = lightSpaceFragCoords.z;
     float obstacleDepth = texture(
         SPOT_LIGHTS[index].shadowMap,
-        lightSpaceFragCoords.xy + kKernelOffsets[i]
+        lightSpaceFragCoords.xy + kKernel2DOffsets[i]
     ).r;
 
     // Applying shadow bias

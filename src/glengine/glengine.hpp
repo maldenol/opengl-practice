@@ -8,4 +8,8 @@
 #include "./gldebug.hpp"
 #include "./glinit.hpp"
 
+// External linkage global variables
+GLuint gTextureBlack;
+GLuint gTextureWhite;
+
 #endif

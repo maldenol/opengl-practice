@@ -565,6 +565,10 @@ int main(int argc, char *argv[]) {
     dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
         ->setDirection(gCameraController.getCamera()->getForward());
 
+    // Updating scene objects shader programs uniform values
+    SceneObject::updateShadersLights(sceneObjects);
+    SceneObject::updateShadersCamera(sceneObjects, gCamera);
+
     // If postprocessing is enabled
     if (gEnablePostprocessing) {
       // Binding multisampling framebuffer
@@ -588,8 +592,6 @@ int main(int argc, char *argv[]) {
     glStencilMask(0x00);
 
     // Rendering scene objects
-    SceneObject::updateShadersLights(sceneObjects);
-    SceneObject::updateShadersCamera(sceneObjects, gCamera);
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);

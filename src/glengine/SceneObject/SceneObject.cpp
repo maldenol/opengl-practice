@@ -12,13 +12,17 @@
 using namespace glengine;
 
 // Global constants
-static constexpr size_t kMaxDirectionLightCount = 8;
-static constexpr size_t kMaxPointLightCount     = 8;
-static constexpr size_t kMaxSpotLightCount      = 8;
+static constexpr size_t kMaxDirectionalLightCount = 8;
+static constexpr size_t kMaxPointLightCount       = 8;
+static constexpr size_t kMaxSpotLightCount        = 8;
 
 static constexpr int kInitShadowMapTextureUnit = 7;
 
 static constexpr float kShadowMapDistance = 20.0f;
+
+// External linkage global variables
+extern GLuint gTextureBlack;
+extern GLuint gTextureWhite;
 
 // Local function headers
 
@@ -31,8 +35,8 @@ static void renderDirectionalLightShadowMap(const std::vector<SceneObject> &scen
                                             std::vector<glm::mat4> &directionalLightVPMatrices,
                                             const SceneObject      &directionalLightSceneObject,
                                             const DirectionalLight *directionalLightPtr,
-                                            GLuint           directionalLightShadowMapShaderProgram,
-                                            const glm::vec3 &viewPos);
+                                            GLuint directionalLightShadowMapShaderProgram,
+                                            const BaseCamera &camera);
 static void renderPointLightShadowMap(const std::vector<SceneObject> &sceneObjects,
                                       std::vector<float>             &pointLightFarPlanes,
                                       const SceneObject              &pointLightSceneObject,
@@ -203,10 +207,10 @@ void SceneObject::render() const noexcept {
 // Other static member functions
 
 void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjects,
-                                      GLuint           directionalLightShadowMapShaderProgram,
-                                      GLuint           pointLightShadowMapShaderProgram,
-                                      GLuint           spotLightShadowMapShaderProgram,
-                                      const glm::vec3 &viewPos) noexcept {
+                                      GLuint            directionalLightShadowMapShaderProgram,
+                                      GLuint            pointLightShadowMapShaderProgram,
+                                      GLuint            spotLightShadowMapShaderProgram,
+                                      const BaseCamera &camera) noexcept {
   // Getting shader programs, light sources and light cameras matrices
   std::vector<GLuint>              shaderPrograms{};
   std::vector<const SceneObject *> spotLightSceneObjectPtrs{};
@@ -271,7 +275,7 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
       if (directionalLightShadowMapShaderProgram > 0) {
         renderDirectionalLightShadowMap(sceneObjects, directionalLightVPMatrices, sceneObject,
                                         direcionalLightPtr, directionalLightShadowMapShaderProgram,
-                                        viewPos);
+                                        camera);
       }
     }
 
@@ -307,6 +311,8 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                  glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
     glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
 
+    glUseProgram(0);
+
     // Copying light VP matrices deques
     std::vector<glm::mat4> spotLightVPMatricesCopy{spotLightVPMatrices.crbegin(),
                                                    spotLightVPMatrices.crend()};
@@ -329,8 +335,6 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
     updateShaderProgramPointLights(shaderProgram, pointLightSceneObjectPtrs,
                                    pointLightShadowMapShaderProgram, currShadowMapTextureUnit,
                                    pointLightFarPlanesCopy);
-
-    glUseProgram(0);
   }
 }
 
@@ -425,8 +429,8 @@ static void renderDirectionalLightShadowMap(const std::vector<SceneObject> &scen
                                             std::vector<glm::mat4> &directionalLightVPMatrices,
                                             const SceneObject      &directionalLightSceneObject,
                                             const DirectionalLight *directionalLightPtr,
-                                            GLuint           directionalLightShadowMapShaderProgram,
-                                            const glm::vec3 &viewPos) {
+                                            GLuint directionalLightShadowMapShaderProgram,
+                                            const BaseCamera &camera) {
   // Setting shadow map viewport
   glViewport(0, 0, directionalLightPtr->getShadowMapTextureResolution(),
              directionalLightPtr->getShadowMapTextureResolution());
@@ -443,7 +447,11 @@ static void renderDirectionalLightShadowMap(const std::vector<SceneObject> &scen
                                   glm::radians(directionalLightSceneObject.getRotate().z)) *
       glm::vec4{directionalLightPtr->getDirection(), 0.0f}
   };
-  shadowMapCamera.setPosition(-glm::normalize(lightDir) * kShadowMapDistance + viewPos);
+  glm::vec3 cameraPos{
+      -glm::normalize(lightDir) * kShadowMapDistance + camera.getPosition() +
+      glm::normalize(camera.getForward() - lightDir * glm::dot(lightDir, camera.getForward())) *
+          kShadowMapDistance / 2.0f};
+  shadowMapCamera.setPosition(cameraPos);
   shadowMapCamera.setWorldUp(kUp);
   shadowMapCamera.look(lightDir);
   shadowMapCamera.setLeftBorder(-kShadowMapDistance);
@@ -581,6 +589,9 @@ void updateShaderProgramSpotLights(GLuint                                  shade
                                    GLuint                  spotLightShadowMapShaderProgram,
                                    int                    &currShadowMapTextureUnit,
                                    std::vector<glm::mat4> &spotLightVPMatrices) {
+  glUseProgram(shaderProgram);
+
+  // For each spot light
   for (size_t i = 0; i < spotLightSceneObjectPtrs.size() && i < kMaxSpotLightCount; ++i) {
     const SceneObject &sceneObject = *spotLightSceneObjectPtrs[i];
     const SpotLight   *spotLightPtr =
@@ -616,34 +627,53 @@ void updateShaderProgramSpotLights(GLuint                                  shade
     glUniform1f(glGetUniformLocation(
                     shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].smoothAngle").c_str()),
                 spotLightPtr->getSmoothAngle());
+    glUniform1i(glGetUniformLocation(shaderProgram,
+                                     ("SPOT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+                currShadowMapTextureUnit);
 
     // If shader program is specified
     if (spotLightShadowMapShaderProgram > 0) {
-      glUniform1i(glGetUniformLocation(
-                      shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
-                  currShadowMapTextureUnit);
       glUniformMatrix4fv(glGetUniformLocation(
                              shaderProgram, ("SPOT_LIGHTS[" + std::to_string(i) + "].VP").c_str()),
                          1, GL_FALSE, glm::value_ptr(spotLightVPMatrices.back()));
 
       // Deleting element from back
       spotLightVPMatrices.pop_back();
-
-      // Binding shadow map texture
-      glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-      glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
-
-      // Incrementing current shadow map texture unit
-      ++currShadowMapTextureUnit;
     }
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
   }
+
+  // For the rest of spot lights in shader program
+  for (size_t i = spotLightSceneObjectPtrs.size(); i < kMaxSpotLightCount; ++i) {
+    glUniform1i(glGetUniformLocation(shaderProgram,
+                                     ("SPOT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+                currShadowMapTextureUnit);
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, gTextureBlack);
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
+  }
+
+  glUseProgram(0);
 }
 
 void updateShaderProgramDirectionalLights(
     GLuint shaderProgram, const std::vector<const SceneObject *> &directionalLightSceneObjectPtrs,
     GLuint directionalLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<glm::mat4> &directionalLightVPMatrices) {
-  for (size_t i = 0; i < directionalLightSceneObjectPtrs.size() && i < kMaxDirectionLightCount;
+  glUseProgram(shaderProgram);
+
+  // For each directional light
+  for (size_t i = 0; i < directionalLightSceneObjectPtrs.size() && i < kMaxDirectionalLightCount;
        ++i) {
     const SceneObject      &sceneObject = *directionalLightSceneObjectPtrs[i];
     const DirectionalLight *directionalLightPtr =
@@ -666,13 +696,13 @@ void updateShaderProgramDirectionalLights(
     glUniform3fv(glGetUniformLocation(
                      shaderProgram, ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].dir").c_str()),
                  1, glm::value_ptr(dir));
+    glUniform1i(
+        glGetUniformLocation(shaderProgram,
+                             ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+        currShadowMapTextureUnit);
 
     // If shader program is specified
     if (directionalLightShadowMapShaderProgram > 0) {
-      glUniform1i(
-          glGetUniformLocation(shaderProgram,
-                               ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
-          currShadowMapTextureUnit);
       glUniformMatrix4fv(
           glGetUniformLocation(shaderProgram,
                                ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].VP").c_str()),
@@ -680,21 +710,41 @@ void updateShaderProgramDirectionalLights(
 
       // Deleting element from back
       directionalLightVPMatrices.pop_back();
-
-      // Binding shadow map texture
-      glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-      glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
-
-      // Incrementing current shadow map texture unit
-      ++currShadowMapTextureUnit;
     }
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
   }
+
+  // For the rest of directional lights in shader program
+  for (size_t i = directionalLightSceneObjectPtrs.size(); i < kMaxDirectionalLightCount; ++i) {
+    glUniform1i(
+        glGetUniformLocation(shaderProgram,
+                             ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+        currShadowMapTextureUnit);
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, gTextureBlack);
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
+  }
+
+  glUseProgram(0);
 }
 
 void updateShaderProgramPointLights(
     GLuint shaderProgram, const std::vector<const SceneObject *> &pointLightSceneObjectPtrs,
     GLuint pointLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<float> &pointLightFarPlanes) {
+  glUseProgram(shaderProgram);
+
+  // For each point light
   for (size_t i = 0; i < pointLightSceneObjectPtrs.size() && i < kMaxPointLightCount; ++i) {
     const SceneObject &sceneObject = *pointLightSceneObjectPtrs[i];
     const PointLight  *pointLightPtr =
@@ -715,25 +765,41 @@ void updateShaderProgramPointLights(
     glUniform1f(glGetUniformLocation(
                     shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].quadAttCoef").c_str()),
                 pointLightPtr->getQuadAttCoef());
+    glUniform1i(glGetUniformLocation(shaderProgram,
+                                     ("POINT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+                currShadowMapTextureUnit);
 
     // If shader program is specified
     if (pointLightShadowMapShaderProgram > 0) {
-      glUniform1i(glGetUniformLocation(
-                      shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
-                  currShadowMapTextureUnit);
       glUniform1f(glGetUniformLocation(
                       shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].farPlane").c_str()),
                   pointLightFarPlanes.back());
 
       // Deleting element from back
       pointLightFarPlanes.pop_back();
-
-      // Binding shadow map texture
-      glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-      glBindTexture(GL_TEXTURE_CUBE_MAP, sceneObject.getLightPtr()->getShadowMapTexture());
-
-      // Incrementing current shadow map texture unit
-      ++currShadowMapTextureUnit;
     }
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, sceneObject.getLightPtr()->getShadowMapTexture());
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
   }
+
+  // For the rest of point lights in shader program
+  for (size_t i = pointLightSceneObjectPtrs.size(); i < kMaxPointLightCount; ++i) {
+    glUniform1i(glGetUniformLocation(shaderProgram,
+                                     ("POINT_LIGHTS[" + std::to_string(i) + "].shadowMap").c_str()),
+                currShadowMapTextureUnit);
+
+    // Binding shadow map texture
+    glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, gTextureBlack);
+
+    // Incrementing current shadow map texture unit
+    ++currShadowMapTextureUnit;
+  }
+
+  glUseProgram(0);
 }
