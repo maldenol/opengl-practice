@@ -40,7 +40,7 @@ static constexpr std::chrono::duration kRenderCycleInterval = 16ms;
 static constexpr float                 kCameraVelocity      = 1.0f;
 static constexpr float                 kCameraSprintCoef    = 3.0f;
 static constexpr unsigned int          kOutlineMeshIndex    = 2;
-static constexpr unsigned int          kInstancingMeshIndex = 3;
+static constexpr unsigned int          kInstancedMeshIndex  = 3;
 static constexpr unsigned int          kInstanceCount       = 100;
 static constexpr float                 kInstanceMaxDistance = 15.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
@@ -458,7 +458,7 @@ int main(int argc, char *argv[]) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
-  // Generating instancing model matrices
+  // Generating instanced model matrices
   glm::mat4 modelMatrices[kInstanceCount];
   for (unsigned int i = 0; i < kInstanceCount; ++i) {
     modelMatrices[i] = glm::mat4{1.0f};
@@ -476,7 +476,7 @@ int main(int argc, char *argv[]) {
   glGenBuffers(1, &instanceVBO);
   glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(modelMatrices), &modelMatrices[0], GL_STATIC_DRAW);
-  glBindVertexArray(sceneObjects[kInstancingMeshIndex].getMeshPtr()->getVAO());
+  glBindVertexArray(sceneObjects[kInstancedMeshIndex].getMeshPtr()->getVAO());
   glEnableVertexAttribArray(4);
   glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
                         reinterpret_cast<void *>(0 * sizeof(float)));
