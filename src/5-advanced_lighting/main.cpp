@@ -204,19 +204,25 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("lenseFS.glsl"),
   };
-  std::vector<std::string> shadowMapShaderFilenames{
-      getAbsolutePathRelativeToExecutable("shadowMapVS.glsl"),
-      getAbsolutePathRelativeToExecutable("shadowMapFS.glsl"),
+  std::vector<std::string> shadowMap2DShaderFilenames{
+      getAbsolutePathRelativeToExecutable("shadowMap2DVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shadowMap2DFS.glsl"),
+  };
+  std::vector<std::string> shadowMapCubeShaderFilenames{
+      getAbsolutePathRelativeToExecutable("shadowMapCubeVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shadowMapCubeGS.glsl"),
+      getAbsolutePathRelativeToExecutable("shadowMapCubeFS.glsl"),
   };
   // Creating shader programs
-  GLuint blinnPhongSP = glCreateProgram();
-  GLuint lightSP      = glCreateProgram();
-  GLuint screenSP     = glCreateProgram();
-  GLuint normalSP     = glCreateProgram();
-  GLuint skyboxSP     = glCreateProgram();
-  GLuint mirrorSP     = glCreateProgram();
-  GLuint lenseSP      = glCreateProgram();
-  GLuint shadowMapSP  = glCreateProgram();
+  GLuint blinnPhongSP    = glCreateProgram();
+  GLuint lightSP         = glCreateProgram();
+  GLuint screenSP        = glCreateProgram();
+  GLuint normalSP        = glCreateProgram();
+  GLuint skyboxSP        = glCreateProgram();
+  GLuint mirrorSP        = glCreateProgram();
+  GLuint lenseSP         = glCreateProgram();
+  GLuint shadowMap2DSP   = glCreateProgram();
+  GLuint shadowMapCubeSP = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -289,16 +295,26 @@ int main(int argc, char *argv[]) {
                                        lenseSP,
                                        std::cref(shaderTypes[0]),
                                        std::cref(lenseShaderFilenames)};
-  std::atomic<bool> shadowMapShaderWatcherIsRunning = true;
-  std::atomic<bool> shadowMapShadersAreRecompiled   = false;
-  std::thread       shadowMapShaderWatcherThread{shaderWatcher,
-                                           std::cref(shadowMapShaderWatcherIsRunning),
-                                           std::ref(shadowMapShadersAreRecompiled),
-                                           window,
-                                           std::ref(glfwContextMutex),
-                                           shadowMapSP,
-                                           std::cref(shaderTypes[0]),
-                                           std::cref(shadowMapShaderFilenames)};
+  std::atomic<bool> shadowMap2DShaderWatcherIsRunning = true;
+  std::atomic<bool> shadowMap2DShadersAreRecompiled   = false;
+  std::thread       shadowMap2DShaderWatcherThread{shaderWatcher,
+                                             std::cref(shadowMap2DShaderWatcherIsRunning),
+                                             std::ref(shadowMap2DShadersAreRecompiled),
+                                             window,
+                                             std::ref(glfwContextMutex),
+                                             shadowMap2DSP,
+                                             std::cref(shaderTypes[0]),
+                                             std::cref(shadowMap2DShaderFilenames)};
+  std::atomic<bool> shadowMapCubeShaderWatcherIsRunning = true;
+  std::atomic<bool> shadowMapCubeShadersAreRecompiled   = false;
+  std::thread       shadowMapCubeShaderWatcherThread{shaderWatcher,
+                                               std::cref(shadowMapCubeShaderWatcherIsRunning),
+                                               std::ref(shadowMapCubeShadersAreRecompiled),
+                                               window,
+                                               std::ref(glfwContextMutex),
+                                               shadowMapCubeSP,
+                                               std::cref(shaderTypes[1]),
+                                               std::cref(shadowMapCubeShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -590,7 +606,8 @@ int main(int argc, char *argv[]) {
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // Updating scene objects shader programs uniform values
-    SceneObject::updateShadersLights(sceneObjects, shadowMapSP, gCamera.getPosition());
+    SceneObject::updateShadersLights(sceneObjects, shadowMap2DSP, shadowMapCubeSP, shadowMap2DSP,
+                                     gCamera.getPosition());
     SceneObject::updateShadersCamera(sceneObjects, gCamera);
 
     // If postprocessing is enabled

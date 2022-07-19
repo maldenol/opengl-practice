@@ -1,7 +1,7 @@
 #version 460 core
 
 #define MAX_DIRECTIONAL_LIGHT_COUNT 8
-#define MAX_POINT_LIGHT_COUNT       8
+#define MAX_POINT_LIGHT_COUNT       1
 #define MAX_SPOT_LIGHT_COUNT        8
 
 const float kKernelOffset = 0.001f;
@@ -40,6 +40,9 @@ uniform struct {
 
   float linAttCoef;
   float quadAttCoef;
+
+  samplerCube shadowMap;
+  float       farPlane;
 } POINT_LIGHTS[MAX_POINT_LIGHT_COUNT];
 uniform struct {
   vec3 worldPos;
@@ -205,6 +208,35 @@ void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
 
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color);
+
+  // Calculating light to fragment vector
+  vec3 fragmentToLight = POINT_LIGHTS[index].worldPos - i.worldPos;
+  // Fixing negative X-axis
+  fragmentToLight.x *= -1.0f;
+
+  // Calculating shadow coefficient (Percentage-Closer Filtering)
+  float notInShadow = 0.0f;
+  for (uint i = 0; i < 9; ++i) {
+    // Calculating fragment and obstacle depth
+    float fragmentDepth = length(fragmentToLight) / POINT_LIGHTS[index].farPlane;
+    float obstacleDepth = texture(
+        POINT_LIGHTS[index].shadowMap,
+        fragmentToLight
+    ).r;
+
+    // Applying shadow bias
+    float LdotN    = max(dot(L, N), 0.0f);
+    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    obstacleDepth += bias;
+
+    // Calculating if fragment is not in shadow
+    notInShadow += float(fragmentDepth <= obstacleDepth || fragmentDepth >= 1.0f);
+  }
+  notInShadow /= 9.0f;
+
+  // Applying shadow
+  diffuse  *= notInShadow;
+  specular *= notInShadow;
 }
 
 void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index) {
