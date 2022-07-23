@@ -295,6 +295,14 @@ int main(int argc, char *argv[]) {
 
     // Rendering scene objects
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
+      if (sceneObjects[i].getLightPtr() != nullptr && sceneObjects[i].getMeshPtr() != nullptr) {
+        const GLuint shaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
+        glUseProgram(shaderProgram);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
+                     glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
+        glUseProgram(0);
+      }
+
       sceneObjects[i].render();
     }
 

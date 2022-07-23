@@ -183,6 +183,10 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("lightVS.glsl"),
       getAbsolutePathRelativeToExecutable("lightFS.glsl"),
   };
+  std::vector<std::string> outlineShaderFilenames{
+      getAbsolutePathRelativeToExecutable("outlineVS.glsl"),
+      getAbsolutePathRelativeToExecutable("outlineFS.glsl"),
+  };
   std::vector<std::string> screenShaderFilenames{
       getAbsolutePathRelativeToExecutable("screenVS.glsl"),
       getAbsolutePathRelativeToExecutable("screenFS.glsl"),
@@ -207,6 +211,7 @@ int main(int argc, char *argv[]) {
   // Creating shader programs
   GLuint blinnPhongSP = glCreateProgram();
   GLuint lightSP      = glCreateProgram();
+  GLuint outlineSP    = glCreateProgram();
   GLuint screenSP     = glCreateProgram();
   GLuint normalSP     = glCreateProgram();
   GLuint skyboxSP     = glCreateProgram();
@@ -234,6 +239,16 @@ int main(int argc, char *argv[]) {
                                        lightSP,
                                        std::cref(shaderTypes[0]),
                                        std::cref(lightShaderFilenames)};
+  std::atomic<bool> outlineShaderWatcherIsRunning = true;
+  std::atomic<bool> outlineShadersAreRecompiled   = false;
+  std::thread       outlineShaderWatcherThread{shaderWatcher,
+                                         std::cref(outlineShaderWatcherIsRunning),
+                                         std::ref(outlineShadersAreRecompiled),
+                                         window,
+                                         std::ref(glfwContextMutex),
+                                         outlineSP,
+                                         std::cref(shaderTypes[0]),
+                                         std::cref(outlineShaderFilenames)};
   std::atomic<bool> screenShaderWatcherIsRunning = true;
   std::atomic<bool> screenShadersAreRecompiled   = false;
   std::thread       screenShaderWatcherThread{shaderWatcher,
@@ -597,6 +612,14 @@ int main(int argc, char *argv[]) {
 
     // Rendering scene objects
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
+      if (sceneObjects[i].getLightPtr() != nullptr && sceneObjects[i].getMeshPtr() != nullptr) {
+        const GLuint shaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
+        glUseProgram(shaderProgram);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
+                     glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
+        glUseProgram(0);
+      }
+
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
       }
@@ -611,14 +634,14 @@ int main(int argc, char *argv[]) {
     // Drawing outline
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
     glStencilMask(0x00);
-    const glm::vec3 initScale{sceneObjects[kOutlineMeshIndex].getScale()};
-    const GLuint    initShaderProgram =
-        sceneObjects[kOutlineMeshIndex].getMeshPtr()->getShaderProgram();
-    sceneObjects[kOutlineMeshIndex].setScale(initScale * 1.1f);
-    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(lightSP);
-    sceneObjects[kOutlineMeshIndex].render();
-    sceneObjects[kOutlineMeshIndex].getMeshPtr()->setShaderProgram(initShaderProgram);
-    sceneObjects[kOutlineMeshIndex].setScale(initScale);
+    if (sceneObjects[kOutlineMeshIndex].getMeshPtr() != nullptr) {
+      SceneObject &sceneObject       = sceneObjects[kOutlineMeshIndex];
+      const GLuint initShaderProgram = sceneObject.getMeshPtr()->getShaderProgram();
+      sceneObject.getMeshPtr()->setShaderProgram(outlineSP);
+      SceneObject::updateShadersCamera(std::vector<SceneObject>{sceneObject}, gCamera);
+      sceneObject.render();
+      sceneObject.getMeshPtr()->setShaderProgram(initShaderProgram);
+    }
     glStencilFunc(GL_ALWAYS, 1, 0xff);
 
     // Rendering normals
@@ -698,8 +721,28 @@ int main(int argc, char *argv[]) {
   blinnPhongShaderWatcherThread.join();
   lightShaderWatcherIsRunning = false;
   lightShaderWatcherThread.join();
+  outlineShaderWatcherIsRunning = false;
+  outlineShaderWatcherThread.join();
+  screenShaderWatcherIsRunning = false;
+  screenShaderWatcherThread.join();
+  normalShaderWatcherIsRunning = false;
+  normalShaderWatcherThread.join();
+  skyboxShaderWatcherIsRunning = false;
+  skyboxShaderWatcherThread.join();
+  mirrorShaderWatcherIsRunning = false;
+  mirrorShaderWatcherThread.join();
+  lenseShaderWatcherIsRunning = false;
+  lenseShaderWatcherThread.join();
 
   // Deleting OpenGL objects
+  glDeleteProgram(lenseSP);
+  glDeleteProgram(mirrorSP);
+  glDeleteProgram(skyboxSP);
+  glDeleteProgram(normalSP);
+  glDeleteProgram(screenSP);
+  glDeleteProgram(outlineSP);
+  glDeleteProgram(lightSP);
+  glDeleteProgram(blinnPhongSP);
   glDeleteBuffers(1, &screenEBO);
   glDeleteBuffers(1, &screenVBO);
   glDeleteVertexArrays(1, &screenVAO);
