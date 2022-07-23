@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", false), 0, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("heightMap.png", false), 2, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
                                                             3, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  2.0f, 0.0f},
@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setMaxHeight(0.5f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Central cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -343,6 +343,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Instance cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -353,6 +354,7 @@ int main(int argc, char *argv[]) {
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setInstanceCount(kInstanceCount);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(15.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Mirror cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{  -3.0f, 0.0f, -10.0f},
@@ -361,6 +363,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Lense cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   3.0f, 0.0f, -10.0f},
@@ -369,6 +372,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, lenseSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  0.0f, 0.0f},

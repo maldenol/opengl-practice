@@ -7,11 +7,11 @@ uniform struct {
 
   float glossiness;
 
-  float maxHeight;
+  float parallaxStrength;
 
   sampler2D albedoMap;
   sampler2D normalMap;
-  sampler2D heightMap;
+  sampler2D depthMap;
   sampler2D ambOccMap;
   sampler2D roughMap;
   sampler2D emissMap;

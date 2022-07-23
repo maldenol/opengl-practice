@@ -80,14 +80,15 @@ class Mesh {
 
     float _glossiness{};
 
-    float _maxHeight{};
+    float _parallaxStrength{};
 
     std::vector<std::shared_ptr<Texture>> _texturePtrs{};
 
    public:
     // Constructors, assignment operators and destructor
     Material() noexcept;
-    Material(float ambCoef, float diffCoef, float specCoef, float glossiness, float maxHeight,
+    Material(float ambCoef, float diffCoef, float specCoef, float glossiness,
+             float                                        parallaxStrength,
              const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
     Material(const Material &material) noexcept;
     Material &operator=(const Material &material) noexcept;
@@ -100,7 +101,7 @@ class Mesh {
     void setDiffCoef(float diffCoef) noexcept;
     void setSpecCoef(float specCoef) noexcept;
     void setGlossiness(float glossiness) noexcept;
-    void setMaxHeight(float maxHeight) noexcept;
+    void setParallaxStrength(float parallaxStrength) noexcept;
     void setTexturePtrs(const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
 
     // Getters
@@ -112,8 +113,8 @@ class Mesh {
     float                                       &getSpecCoef() noexcept;
     float                                        getGlossiness() const noexcept;
     float                                       &getGlossiness() noexcept;
-    float                                        getMaxHeight() const noexcept;
-    float                                       &getMaxHeight() noexcept;
+    float                                        getParallaxStrength() const noexcept;
+    float                                       &getParallaxStrength() noexcept;
     const std::vector<std::shared_ptr<Texture>> &getTexturePtrs() const noexcept;
     std::vector<std::shared_ptr<Texture>>       &getTexturePtrs() noexcept;
   };

@@ -196,11 +196,11 @@ void Mesh::render() const noexcept {
               _materialPtr->getSpecCoef());
   glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.glossiness"),
               _materialPtr->getGlossiness());
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.maxHeight"),
-              _materialPtr->getMaxHeight());
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.parallaxStrength"),
+              _materialPtr->getParallaxStrength());
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.albedoMap"), 0);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.normalMap"), 1);
-  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.heightMap"), 2);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.depthMap"), 2);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.ambOccMap"), 3);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.roughMap"), 4);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);

@@ -13,13 +13,13 @@ Mesh::Material::Material() noexcept {}
 
 // Parameterized constructor
 Mesh::Material::Material(float ambCoef, float diffCoef, float specCoef, float glossiness,
-                         float                                        maxHeight,
+                         float                                        parallaxStrength,
                          const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept
     : _ambCoef{ambCoef},
       _diffCoef{diffCoef},
       _specCoef{specCoef},
       _glossiness{glossiness},
-      _maxHeight{maxHeight},
+      _parallaxStrength{parallaxStrength},
       _texturePtrs{texturePtrs} {}
 
 // Copy constructor
@@ -28,17 +28,17 @@ Mesh::Material::Material(const Material &material) noexcept
       _diffCoef{material._diffCoef},
       _specCoef{material._specCoef},
       _glossiness{material._glossiness},
-      _maxHeight{material._maxHeight},
+      _parallaxStrength{material._parallaxStrength},
       _texturePtrs{material._texturePtrs} {}
 
 // Copy assignment operator
 Mesh::Material &Mesh::Material::operator=(const Material &material) noexcept {
-  _ambCoef     = material._ambCoef;
-  _diffCoef    = material._diffCoef;
-  _specCoef    = material._specCoef;
-  _glossiness  = material._glossiness;
-  _maxHeight   = material._maxHeight;
-  _texturePtrs = material._texturePtrs;
+  _ambCoef          = material._ambCoef;
+  _diffCoef         = material._diffCoef;
+  _specCoef         = material._specCoef;
+  _glossiness       = material._glossiness;
+  _parallaxStrength = material._parallaxStrength;
+  _texturePtrs      = material._texturePtrs;
 
   return *this;
 }
@@ -49,7 +49,7 @@ Mesh::Material::Material(Material &&material) noexcept
       _diffCoef{std::exchange(material._diffCoef, 0.0f)},
       _specCoef{std::exchange(material._specCoef, 0.0f)},
       _glossiness{std::exchange(material._glossiness, 0.0f)},
-      _maxHeight{std::exchange(material._maxHeight, 0.0f)},
+      _parallaxStrength{std::exchange(material._parallaxStrength, 0.0f)},
       _texturePtrs{std::exchange(material._texturePtrs, std::vector<std::shared_ptr<Texture>>{})} {}
 
 // Move assignment operator
@@ -58,7 +58,7 @@ Mesh::Material &Mesh::Material::operator=(Material &&material) noexcept {
   std::swap(_diffCoef, material._diffCoef);
   std::swap(_specCoef, material._specCoef);
   std::swap(_glossiness, material._glossiness);
-  std::swap(_maxHeight, material._maxHeight);
+  std::swap(_parallaxStrength, material._parallaxStrength);
   std::swap(_texturePtrs, material._texturePtrs);
 
   return *this;
@@ -77,7 +77,9 @@ void Mesh::Material::setSpecCoef(float specCoef) noexcept { _specCoef = specCoef
 
 void Mesh::Material::setGlossiness(float glossiness) noexcept { _glossiness = glossiness; }
 
-void Mesh::Material::setMaxHeight(float maxHeight) noexcept { _maxHeight = maxHeight; }
+void Mesh::Material::setParallaxStrength(float parallaxStrength) noexcept {
+  _parallaxStrength = parallaxStrength;
+}
 
 void Mesh::Material::setTexturePtrs(
     const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept {
@@ -102,9 +104,9 @@ float Mesh::Material::getGlossiness() const noexcept { return _glossiness; }
 
 float &Mesh::Material::getGlossiness() noexcept { return _glossiness; }
 
-float Mesh::Material::getMaxHeight() const noexcept { return _maxHeight; }
+float Mesh::Material::getParallaxStrength() const noexcept { return _parallaxStrength; }
 
-float &Mesh::Material::getMaxHeight() noexcept { return _maxHeight; }
+float &Mesh::Material::getParallaxStrength() noexcept { return _parallaxStrength; }
 
 const std::vector<std::shared_ptr<Mesh::Material::Texture>> &Mesh::Material::getTexturePtrs()
     const noexcept {
