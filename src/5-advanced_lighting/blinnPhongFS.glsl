@@ -413,13 +413,13 @@ void main() {
     specular += max(deltaSpecular, vec3(0.0f));
   }
 
-  // Add together all light components
-  vec4 light = vec4(ambient + diffuse + specular, 1.0f);
+  // Adding together all the light components
+  vec3 light = ambient + diffuse + specular;
 
   // Getting albedo and emission maps texels
-  vec4 albedoTexel   = texture(MATERIAL.albedoMap, texCoords);
-  vec4 emissionTexel = texture(MATERIAL.emissMap, texCoords);
+  vec3 albedoTexel   = texture(MATERIAL.albedoMap, texCoords).xyz;
+  vec3 emissionTexel = texture(MATERIAL.emissMap, texCoords).xyz;
 
   // Calculating fragment color by albedo map, light and also emission map
-  FragColor = albedoTexel * light + emissionTexel;
+  FragColor = vec4(albedoTexel * light + emissionTexel, 1.0f);
 }

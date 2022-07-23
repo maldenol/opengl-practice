@@ -55,6 +55,18 @@ void main() {
   //   color += texture(texture0, fTexCoords + kKernelOffsets[i]) * kKernelSharpen[i];
   // }
 
+  // Applying tone mapping (Reinhard algorithm)
+  float luminanceIn     = dot(color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
+  //float luminanceOut    = luminanceIn / (1.0f + luminanceIn);
+  float biggestRadiance = 1.0f;
+  float luminanceOut    = luminanceIn / (1.0f + luminanceIn)
+                        * (1.0f + luminanceIn / (biggestRadiance * biggestRadiance));
+  color.rgb             = color.rgb * luminanceOut / luminanceIn;
+
+  // Applying tone mapping (exposure)
+  //float exposure = 1.0f;
+  //color.rgb      = vec3(1.0f) - exp(-color.rgb * exposure);
+
   // Applying gamma correction
   float gammaR = 2.2f;
   float gammaG = 2.2f;

@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   // Creating and binding texture to postprocessing framebuffer
   glGenTextures(1, &gPostprocessingTexture);
   glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
   // Creating and binding texture to multisampling framebuffer
   glGenTextures(1, &gMultisamplingTexture);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gMultisamplingTexture);
-  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB, gWidth, gHeight,
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB16F, gWidth, gHeight,
                           GL_TRUE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE,
                          gMultisamplingTexture, 0);
@@ -774,13 +774,13 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, gWidth, gHeight);
   // Setting postprocessing and multisampling framebuffers sizes
   glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, gWidth, gHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindRenderbuffer(GL_RENDERBUFFER, gPostprocessingRBO);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, gWidth, gHeight);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gMultisamplingTexture);
-  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB, gWidth, gHeight,
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, kMSAASampleCount, GL_RGB16F, gWidth, gHeight,
                           GL_TRUE);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
   glBindRenderbuffer(GL_RENDERBUFFER, gMultisamplingRBO);
