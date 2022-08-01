@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   gCamera.setVerticalFOV(glm::radians(60.0f));
   gCamera.setAspectRatio(static_cast<float>(kWidth) / static_cast<float>(kHeight));
-  gCamera.setNearPlane(0.1f);
+  gCamera.setNearPlane(0.01f);
   gCamera.setFarPlane(100.0f);
   // If cameraController is Controller5DoF
   Controller5DoF *camera5DoFControllerPtr = dynamic_cast<Controller5DoF *>(&gCameraController);

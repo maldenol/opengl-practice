@@ -35,19 +35,20 @@ out vec4 FragColor;
 uniform sampler2D texture0;
 
 void main() {
-  // vec4 color = texture(texture0, fTexCoords);
+  // Getting post-processing texture texel
+  //vec4 color = texture(texture0, fTexCoords);
 
   // Negative
-  // color.r = 1.0f - color.r;
-  // color.g = 1.0f - color.g;
-  // color.b = 1.0f - color.b;
+  //color.r = 1.0f - color.r;
+  //color.g = 1.0f - color.g;
+  //color.b = 1.0f - color.b;
 
   // Black and white
-  // float avr = (color.r + color.g + color.b) / 3.0f;
-  // float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
-  // color.r   = avr;
-  // color.g   = avr;
-  // color.b   = avr;
+  //float avr = (color.r + color.g + color.b) / 3.0f;
+  //float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+  //color.r   = avr;
+  //color.g   = avr;
+  //color.b   = avr;
 
   // Applying postprocessing kernels
   vec4 color = vec4(0.0f);

@@ -204,9 +204,9 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("mirrorFS.glsl"),
   };
-  std::vector<std::string> lenseShaderFilenames{
+  std::vector<std::string> lensShaderFilenames{
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
-      getAbsolutePathRelativeToExecutable("lenseFS.glsl"),
+      getAbsolutePathRelativeToExecutable("lensFS.glsl"),
   };
   // Creating shader programs
   GLuint blinnPhongSP = glCreateProgram();
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
   GLuint normalSP     = glCreateProgram();
   GLuint skyboxSP     = glCreateProgram();
   GLuint mirrorSP     = glCreateProgram();
-  GLuint lenseSP      = glCreateProgram();
+  GLuint lensSP       = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -289,16 +289,16 @@ int main(int argc, char *argv[]) {
                                         mirrorSP,
                                         std::cref(shaderTypes[0]),
                                         std::cref(mirrorShaderFilenames)};
-  std::atomic<bool> lenseShaderWatcherIsRunning = true;
-  std::atomic<bool> lenseShadersAreRecompiled   = false;
-  std::thread       lenseShaderWatcherThread{shaderWatcher,
-                                       std::cref(lenseShaderWatcherIsRunning),
-                                       std::ref(lenseShadersAreRecompiled),
-                                       window,
-                                       std::ref(glfwContextMutex),
-                                       lenseSP,
-                                       std::cref(shaderTypes[0]),
-                                       std::cref(lenseShaderFilenames)};
+  std::atomic<bool> lensShaderWatcherIsRunning = true;
+  std::atomic<bool> lensShadersAreRecompiled   = false;
+  std::thread       lensShaderWatcherThread{shaderWatcher,
+                                      std::cref(lensShaderWatcherIsRunning),
+                                      std::ref(lensShadersAreRecompiled),
+                                      window,
+                                      std::ref(glfwContextMutex),
+                                      lensSP,
+                                      std::cref(shaderTypes[0]),
+                                      std::cref(lensShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -379,13 +379,13 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
-  // Lense cube
+  // Lens cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   3.0f, 0.0f, -10.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   3.0f, 3.0f, 3.0f},
       std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, lenseSP, texturePtrVectors[1]))
+      std::make_shared<Mesh>(generateCube(0.5f, 10, false, lensSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
@@ -535,7 +535,7 @@ int main(int argc, char *argv[]) {
   gCamera.lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
   gCamera.setVerticalFOV(glm::radians(60.0f));
   gCamera.setAspectRatio(static_cast<float>(gWidth) / static_cast<float>(gHeight));
-  gCamera.setNearPlane(0.1f);
+  gCamera.setNearPlane(0.01f);
   gCamera.setFarPlane(100.0f);
   // If cameraController is Controller5DoF
   Controller5DoF *camera5DoFControllerPtr = dynamic_cast<Controller5DoF *>(&gCameraController);
@@ -731,11 +731,11 @@ int main(int argc, char *argv[]) {
   skyboxShaderWatcherThread.join();
   mirrorShaderWatcherIsRunning = false;
   mirrorShaderWatcherThread.join();
-  lenseShaderWatcherIsRunning = false;
-  lenseShaderWatcherThread.join();
+  lensShaderWatcherIsRunning = false;
+  lensShaderWatcherThread.join();
 
   // Deleting OpenGL objects
-  glDeleteProgram(lenseSP);
+  glDeleteProgram(lensSP);
   glDeleteProgram(mirrorSP);
   glDeleteProgram(skyboxSP);
   glDeleteProgram(normalSP);

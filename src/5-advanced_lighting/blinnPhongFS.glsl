@@ -420,6 +420,9 @@ void main() {
   vec3 albedoTexel   = texture(MATERIAL.albedoMap, texCoords).xyz;
   vec3 emissionTexel = texture(MATERIAL.emissMap, texCoords).xyz;
 
-  // Calculating fragment color by albedo map, light and also emission map
-  FragColor = vec4(albedoTexel * light + emissionTexel, 1.0f);
+  // Calculating color by albedo map, light and also emission map
+  vec3 color = albedoTexel * light + emissionTexel;
+
+  // Setting fragment color
+  FragColor = vec4(color, 1.0f);
 }

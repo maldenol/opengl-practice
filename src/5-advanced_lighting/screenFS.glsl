@@ -35,25 +35,26 @@ out vec4 FragColor;
 uniform sampler2D texture0;
 
 void main() {
+  // Getting post-processing texture texel
   vec4 color = texture(texture0, fTexCoords);
 
   // Negative
-  // color.r = 1.0f - color.r;
-  // color.g = 1.0f - color.g;
-  // color.b = 1.0f - color.b;
+  //color.r = 1.0f - color.r;
+  //color.g = 1.0f - color.g;
+  //color.b = 1.0f - color.b;
 
   // Black and white
-  // float avr = (color.r + color.g + color.b) / 3.0f;
-  // float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
-  // color.r   = avr;
-  // color.g   = avr;
-  // color.b   = avr;
+  //float avr = (color.r + color.g + color.b) / 3.0f;
+  //float avr = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+  //color.r   = avr;
+  //color.g   = avr;
+  //color.b   = avr;
 
   // Applying postprocessing kernels
-  // vec4 color = vec4(0.0f);
-  // for (uint i = 0; i < 9; ++i) {
-  //   color += texture(texture0, fTexCoords + kKernelOffsets[i]) * kKernelSharpen[i];
-  // }
+  //vec4 color = vec4(0.0f);
+  //for (uint i = 0; i < 9; ++i) {
+  //  color += texture(texture0, fTexCoords + kKernelOffsets[i]) * kKernelSharpen[i];
+  //}
 
   // Applying tone mapping (Reinhard algorithm)
   float luminanceIn     = dot(color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
