@@ -132,8 +132,6 @@ int main(int argc, char *argv[]) {
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{     },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", false), 0, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
                                                             3, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
@@ -300,6 +298,8 @@ int main(int argc, char *argv[]) {
         glUseProgram(shaderProgram);
         glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
                      glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
+        glUniform1f(glGetUniformLocation(shaderProgram, "lightIntensity"),
+                    sceneObjects[i].getLightPtr()->getIntensity());
         glUseProgram(0);
       }
 

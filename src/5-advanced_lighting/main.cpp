@@ -660,6 +660,8 @@ int main(int argc, char *argv[]) {
         glUseProgram(shaderProgram);
         glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
                      glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
+        glUniform1f(glGetUniformLocation(shaderProgram, "lightIntensity"),
+                    sceneObjects[i].getLightPtr()->getIntensity());
         glUseProgram(0);
       }
 
