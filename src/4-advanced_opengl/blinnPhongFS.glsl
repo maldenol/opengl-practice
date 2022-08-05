@@ -186,6 +186,7 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index, vec2
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color, texCoords);
 }
+
 vec2 calcParallaxCoords() {
   // Calculating parallax mapping depth layer count
   int depthLayerCount = int(mix(
@@ -222,6 +223,15 @@ vec2 calcParallaxCoords() {
   vec2  texCoords           = mix(prevLayerTexCoords, currLayerTexCoords, interpolationWeight);
 
   return texCoords;
+}
+
+vec4 triplanarMap(sampler2D map, vec3 worldPos, vec3 normal) {
+  vec3 triplanarWeights = abs(normal);
+  triplanarWeights      = triplanarWeights
+                        / (triplanarWeights.x + triplanarWeights.y + triplanarWeights.z);
+  return   texture(map, worldPos.yz) * triplanarWeights.x
+         + texture(map, worldPos.xz) * triplanarWeights.y
+         + texture(map, worldPos.xy) * triplanarWeights.z;
 }
 
 // Fragment shader
@@ -278,9 +288,12 @@ void main() {
   // Adding together all the light components
   vec3 light = ambient + diffuse + specular;
 
-  // Getting albedo and emission maps texels
+  // Getting albedo and emission maps texels (UV-mapping)
   vec3 albedoTexel   = texture(MATERIAL.albedoMap, texCoords).xyz;
   vec3 emissionTexel = texture(MATERIAL.emissMap, texCoords).xyz;
+  // Getting albedo and emission maps texels (triplanar mapping)
+  //vec3 albedoTexel   = triplanarMap(MATERIAL.albedoMap, i.worldPos, N).xyz;
+  //vec3 emissionTexel = triplanarMap(MATERIAL.emissMap, i.worldPos, N).xyz;
 
   // Calculating fragment color by albedo map, light and also emission map
   FragColor = vec4(albedoTexel * light + emissionTexel, 1.0f);

@@ -362,6 +362,15 @@ vec2 calcParallaxCoords() {
   return texCoords;
 }
 
+vec4 triplanarMap(sampler2D map, vec3 worldPos, vec3 normal) {
+  vec3 triplanarWeights = abs(normal);
+  triplanarWeights      = triplanarWeights
+                        / (triplanarWeights.x + triplanarWeights.y + triplanarWeights.z);
+  return   texture(map, worldPos.yz) * triplanarWeights.x
+         + texture(map, worldPos.xz) * triplanarWeights.y
+         + texture(map, worldPos.xy) * triplanarWeights.z;
+}
+
 // Fragment shader
 void main() {
   // Calculating texel coordinates using parallax mapping
@@ -416,9 +425,12 @@ void main() {
   // Adding together all the light components
   vec3 light = ambient + diffuse + specular;
 
-  // Getting albedo and emission maps texels
+  // Getting albedo and emission maps texels (UV-mapping)
   vec3 albedoTexel   = texture(MATERIAL.albedoMap, texCoords).xyz;
   vec3 emissionTexel = texture(MATERIAL.emissMap, texCoords).xyz;
+  // Getting albedo and emission maps texels (triplanar mapping)
+  //vec3 albedoTexel   = triplanarMap(MATERIAL.albedoMap, i.worldPos, N).xyz;
+  //vec3 emissionTexel = triplanarMap(MATERIAL.emissMap, i.worldPos, N).xyz;
 
   // Calculating color by albedo map, light and also emission map
   vec3 color = albedoTexel * light + emissionTexel;
