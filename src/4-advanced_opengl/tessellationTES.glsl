@@ -36,7 +36,7 @@ out Interpolators {
   vec3 viewDirTangent;
 } o;
 
-layout (quads, fractional_odd_spacing, cw) in;
+layout (quads, equal_spacing, cw) in;
 
 // Actual vertex shader
 void vertex(vec3 normal, mat3 TBN, vec2 texCoords, vec3 pos) {
