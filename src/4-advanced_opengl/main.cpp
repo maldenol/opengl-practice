@@ -170,9 +170,12 @@ int main(int argc, char *argv[]) {
   // Creating vectors of vectors of types of shaders
   std::vector<std::vector<GLuint>> shaderTypes{
       std::vector<GLuint>{
-                          GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,                     },
+                          GL_VERTEX_SHADER,    GL_FRAGMENT_SHADER,                  },
       std::vector<GLuint>{
-                          GL_VERTEX_SHADER,  GL_GEOMETRY_SHADER,               GL_FRAGMENT_SHADER, },
+                          GL_VERTEX_SHADER,     GL_GEOMETRY_SHADER,GL_FRAGMENT_SHADER, },
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER,                    GL_TESS_EVALUATION_SHADER, GL_FRAGMENT_SHADER,
+                          },
   };
   // Creating vectors of filenames of shaders
   std::vector<std::string> blinnPhongShaderFilenames{
@@ -208,15 +211,22 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("lensFS.glsl"),
   };
+  std::vector<std::string> tessellationShaderFilenames{
+      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("tessellationTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("tessellationTES.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+  };
   // Creating shader programs
-  GLuint blinnPhongSP = glCreateProgram();
-  GLuint lightSP      = glCreateProgram();
-  GLuint outlineSP    = glCreateProgram();
-  GLuint screenSP     = glCreateProgram();
-  GLuint normalSP     = glCreateProgram();
-  GLuint skyboxSP     = glCreateProgram();
-  GLuint mirrorSP     = glCreateProgram();
-  GLuint lensSP       = glCreateProgram();
+  GLuint blinnPhongSP   = glCreateProgram();
+  GLuint lightSP        = glCreateProgram();
+  GLuint outlineSP      = glCreateProgram();
+  GLuint screenSP       = glCreateProgram();
+  GLuint normalSP       = glCreateProgram();
+  GLuint skyboxSP       = glCreateProgram();
+  GLuint mirrorSP       = glCreateProgram();
+  GLuint lensSP         = glCreateProgram();
+  GLuint tessellationSP = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -299,6 +309,16 @@ int main(int argc, char *argv[]) {
                                       lensSP,
                                       std::cref(shaderTypes[0]),
                                       std::cref(lensShaderFilenames)};
+  std::atomic<bool> tessellationShaderWatcherIsRunning = true;
+  std::atomic<bool> tessellationShadersAreRecompiled   = false;
+  std::thread       tessellationShaderWatcherThread{shaderWatcher,
+                                              std::cref(tessellationShaderWatcherIsRunning),
+                                              std::ref(tessellationShadersAreRecompiled),
+                                              window,
+                                              std::ref(glfwContextMutex),
+                                              tessellationSP,
+                                              std::cref(shaderTypes[2]),
+                                              std::cref(tessellationShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -330,14 +350,15 @@ int main(int argc, char *argv[]) {
 
   // Creating and configuring scene objects
   std::vector<SceneObject> sceneObjects{};
-  // Lower plane
+  // Lower plane (tessellated)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  -1.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, tessellationSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(4);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
@@ -359,7 +380,7 @@ int main(int argc, char *argv[]) {
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
-  // Instance cube
+  // Instanced cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
@@ -735,8 +756,11 @@ int main(int argc, char *argv[]) {
   mirrorShaderWatcherThread.join();
   lensShaderWatcherIsRunning = false;
   lensShaderWatcherThread.join();
+  tessellationShaderWatcherIsRunning = false;
+  tessellationShaderWatcherThread.join();
 
   // Deleting OpenGL objects
+  glDeleteProgram(tessellationSP);
   glDeleteProgram(lensSP);
   glDeleteProgram(mirrorSP);
   glDeleteProgram(skyboxSP);

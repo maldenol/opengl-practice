@@ -38,9 +38,9 @@ void main() {
   vec4 worldPos = MODEL * vec4(aPos, 1.0f);
 
   // Passing interpolators to rasterizer
-  fWorldPos       = vec3(worldPos);
-  fNormal         = N;
-  fTexCoords      = aTexCoords;
+  fWorldPos  = vec3(worldPos);
+  fNormal    = N;
+  fTexCoords = aTexCoords;
 
   // Setting vertex position
   gl_Position = PROJ * VIEW * worldPos;

@@ -395,7 +395,7 @@ int main(int argc, char *argv[]) {
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
-  // Instance cube
+  // Instanced cube
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},

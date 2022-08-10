@@ -2,23 +2,6 @@
 
 uniform mat4 MODEL;
 
-uniform struct {
-  float ambCoef;
-  float diffCoef;
-  float specCoef;
-
-  float glossiness;
-
-  float parallaxStrength;
-
-  sampler2D albedoMap;
-  sampler2D normalMap;
-  sampler2D depthMap;
-  sampler2D ambOccMap;
-  sampler2D roughMap;
-  sampler2D emissMap;
-} MATERIAL;
-
 uniform bool INSTANCED;
 
 layout (location = 0) in vec3 aPos;
@@ -26,6 +9,12 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aTangent;
 layout (location = 3) in vec2 aTexCoords;
 layout (location = 4) in mat4 aModel;
+
+out Vertex {
+  vec3 normal;
+  mat3 TBN;
+  vec2 texCoords;
+} o;
 
 // Vertex shader
 void main() {
@@ -40,10 +29,9 @@ void main() {
   vec3 bitangent = cross(normal, tangent);
   mat3 TBN       = mat3(tangent, bitangent, normal);
 
-  // Using normal map and TBN matrix to get world space normal
-  vec3 N = normalize(TBN * (texture(MATERIAL.normalMap, aTexCoords).xyz * 2.0f - 1.0f));
-  //vec3 N = normalize(mat3(transpose(inverse(model))) * aNormal);
+  o.normal    = aNormal;
+  o.TBN       = TBN;
+  o.texCoords = aTexCoords;
 
-  // Setting vertex position
   gl_Position = model * vec4(aPos, 1.0f);
 }

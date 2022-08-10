@@ -13,12 +13,14 @@ Mesh::Mesh() noexcept {}
 
 // Parameterized constructor
 Mesh::Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLsizei instanceCount,
-           GLuint shaderProgram, const std::shared_ptr<Material> &materialPtr) noexcept
+           GLint patchVertices, GLuint shaderProgram,
+           const std::shared_ptr<Material> &materialPtr) noexcept
     : _vao{vao},
       _vbo{vbo},
       _ebo{ebo},
       _indexCount{indexCount},
       _instanceCount{instanceCount},
+      _patchVertices{patchVertices},
       _shaderProgram{shaderProgram},
       _materialPtr{materialPtr} {}
 
@@ -28,6 +30,7 @@ Mesh::Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<flo
            const std::shared_ptr<Material> &materialPtr)
     : _indexCount{static_cast<GLsizei>(indices.size())},
       _instanceCount{1},
+      _patchVertices{},
       _shaderProgram{shaderProgram},
       _materialPtr{materialPtr} {
   // Creating VAO, VBO and EBO
@@ -68,6 +71,7 @@ Mesh::Mesh(const Mesh &mesh) noexcept
       _ebo{mesh._ebo},
       _indexCount{mesh._indexCount},
       _instanceCount{mesh._instanceCount},
+      _patchVertices{mesh._patchVertices},
       _shaderProgram{mesh._shaderProgram},
       _materialPtr{mesh._materialPtr} {}
 
@@ -78,6 +82,7 @@ Mesh &Mesh::operator=(const Mesh &mesh) noexcept {
   _ebo           = mesh._ebo;
   _indexCount    = mesh._indexCount;
   _instanceCount = mesh._instanceCount;
+  _patchVertices = mesh._patchVertices;
   _shaderProgram = mesh._shaderProgram;
   _materialPtr   = mesh._materialPtr;
 
@@ -91,6 +96,7 @@ Mesh::Mesh(Mesh &&mesh) noexcept
       _ebo{std::exchange(mesh._ebo, 0)},
       _indexCount{std::exchange(mesh._indexCount, 0)},
       _instanceCount{std::exchange(mesh._instanceCount, 0)},
+      _patchVertices{std::exchange(mesh._patchVertices, 0)},
       _shaderProgram{std::exchange(mesh._shaderProgram, 0)},
       _materialPtr{std::exchange(mesh._materialPtr, std::shared_ptr<Material>{})} {}
 
@@ -101,6 +107,7 @@ Mesh &Mesh::operator=(Mesh &&mesh) noexcept {
   std::swap(_ebo, mesh._ebo);
   std::swap(_indexCount, mesh._indexCount);
   std::swap(_instanceCount, mesh._instanceCount);
+  std::swap(_patchVertices, mesh._patchVertices);
   std::swap(_shaderProgram, mesh._shaderProgram);
   std::swap(_materialPtr, mesh._materialPtr);
 
@@ -125,6 +132,8 @@ void Mesh::setEBO(GLuint ebo) noexcept { _ebo = ebo; }
 void Mesh::setIndexCount(GLsizei indexCount) noexcept { _indexCount = indexCount; }
 
 void Mesh::setInstanceCount(GLsizei instanceCount) noexcept { _instanceCount = instanceCount; }
+
+void Mesh::setPatchVertices(GLint patchVertices) noexcept { _patchVertices = patchVertices; }
 
 void Mesh::setShaderProgram(GLuint shaderProgram) noexcept { _shaderProgram = shaderProgram; }
 
@@ -153,6 +162,10 @@ GLsizei &Mesh::getIndexCount() noexcept { return _indexCount; }
 GLsizei Mesh::getInstanceCount() const noexcept { return _instanceCount; }
 
 GLsizei &Mesh::getInstanceCount() noexcept { return _instanceCount; }
+
+GLint Mesh::getPatchVertices() const noexcept { return _patchVertices; }
+
+GLint &Mesh::getPatchVertices() noexcept { return _patchVertices; }
 
 GLuint Mesh::getShaderProgram() const noexcept { return _shaderProgram; }
 
@@ -210,7 +223,22 @@ void Mesh::render() const noexcept {
               static_cast<int>(_instanceCount > 1));
 
   // Drawing mesh
-  glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, _instanceCount);
+  // If tessellation is required
+  if (_patchVertices > 0) {
+    glPatchParameteri(GL_PATCH_VERTICES, _patchVertices);
+    // If patch is triangle
+    if (_patchVertices == 3) {
+      glDrawElementsInstanced(GL_PATCHES, _indexCount, GL_UNSIGNED_INT, nullptr, _instanceCount);
+    }
+    // If patch is quad or anything else
+    else {
+      glDrawArraysInstanced(GL_PATCHES, 0, _indexCount / 6 * _patchVertices, _instanceCount);
+    }
+  }
+  // If tessellation is not required
+  else {
+    glDrawElementsInstanced(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, nullptr, _instanceCount);
+  }
 
   // Unbinding shader program
   glUseProgram(0);
@@ -232,5 +260,6 @@ void Mesh::render() const noexcept {
 
 bool Mesh::isComplete() const noexcept {
   return _vao > 0 && _vbo > 0 && _ebo > 0 && _indexCount > 0 && _instanceCount > 0 &&
-         _shaderProgram > 0 && _materialPtr != nullptr;
+         _shaderProgram > 0 && _materialPtr != nullptr &&
+         (_patchVertices == 0 || _patchVertices == 3 || _patchVertices == 4);
 }

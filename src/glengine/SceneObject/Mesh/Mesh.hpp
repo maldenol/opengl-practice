@@ -127,6 +127,8 @@ class Mesh {
 
   GLsizei _instanceCount{};
 
+  GLint _patchVertices{};
+
   GLuint _shaderProgram{};
 
   std::shared_ptr<Material> _materialPtr{};
@@ -135,7 +137,8 @@ class Mesh {
   // Constructors, assignment operators and destructor
   Mesh() noexcept;
   Mesh(GLuint vao, GLuint vbo, GLuint ebo, GLsizei indexCount, GLsizei instanceCount,
-       GLuint shaderProgram, const std::shared_ptr<Material> &materialPtr) noexcept;
+       GLint _patchVertices, GLuint shaderProgram,
+       const std::shared_ptr<Material> &materialPtr) noexcept;
   Mesh(const std::vector<VBOAttribute> &vboAttributes, const std::vector<float> &vertexBuffer,
        const std::vector<GLuint> &indices, GLuint shaderProgram,
        const std::shared_ptr<Material> &materialPtr);
@@ -151,6 +154,7 @@ class Mesh {
   void setEBO(GLuint ebo) noexcept;
   void setIndexCount(GLsizei indexCount) noexcept;
   void setInstanceCount(GLsizei instanceCount) noexcept;
+  void setPatchVertices(GLint patchVertices) noexcept;
   void setShaderProgram(GLuint shaderProgram) noexcept;
   void setMaterialPtr(const std::shared_ptr<Material> &materialPtr) noexcept;
 
@@ -165,6 +169,8 @@ class Mesh {
   GLsizei                         &getIndexCount() noexcept;
   GLsizei                          getInstanceCount() const noexcept;
   GLsizei                         &getInstanceCount() noexcept;
+  GLint                            getPatchVertices() const noexcept;
+  GLint                           &getPatchVertices() noexcept;
   GLuint                           getShaderProgram() const noexcept;
   GLuint                          &getShaderProgram() noexcept;
   const std::shared_ptr<Material> &getMaterialPtr() const noexcept;

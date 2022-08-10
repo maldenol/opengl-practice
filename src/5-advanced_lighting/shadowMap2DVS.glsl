@@ -43,7 +43,7 @@ void main() {
   mat3 TBN       = mat3(tangent, bitangent, normal);
 
   // Using normal map and TBN matrix to get world space normal
-  vec3 N = normalize(TBN * (vec3(texture(MATERIAL.normalMap, aTexCoords)) * 2.0f - 1.0f));
+  vec3 N = normalize(TBN * (texture(MATERIAL.normalMap, aTexCoords).xyz * 2.0f - 1.0f));
   //vec3 N = normalize(mat3(transpose(inverse(model))) * aNormal);
 
   // Setting vertex position
