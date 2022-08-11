@@ -1,6 +1,6 @@
 #version 460 core
 
-const float MAGNITUDE = 0.05f;
+const float kMagnitude = 0.05f;
 
 uniform mat4 MODEL;
 uniform mat4 VIEW;
@@ -38,7 +38,7 @@ void generateNormal(uint index) {
   gl_Position = PROJ * VIEW * gl_in[index].gl_Position;
   EmitVertex();
   vec3 N      = normalize(mat3(transpose(inverse(MODEL))) * i[index].normal);
-  gl_Position = PROJ * VIEW * (gl_in[index].gl_Position + vec4(MAGNITUDE * N, 0.0f));
+  gl_Position = PROJ * VIEW * (gl_in[index].gl_Position + vec4(kMagnitude * N, 0.0f));
   EmitVertex();
   EndPrimitive();
 }

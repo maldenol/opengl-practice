@@ -60,7 +60,7 @@ void vertex(vec3 normal, mat3 TBN, vec2 texCoords, vec3 pos) {
   gl_Position = PROJ * VIEW * worldPos;
 }
 
-// Function to interpolate intermediate point by its coordinates relative to control points
+// Interpolates intermediate point by its coordinates relative to control points
 vec2 interpolateVec2(vec2 cp00, vec2 cp01, vec2 cp10, vec2 cp11) {
   // Bilinearly interpolating
   vec2 ip0x = (cp01 - cp00) * gl_TessCoord.x + cp00;
@@ -70,7 +70,7 @@ vec2 interpolateVec2(vec2 cp00, vec2 cp01, vec2 cp10, vec2 cp11) {
   return ip;
 }
 
-// Function to interpolate intermediate point by its coordinates relative to control points
+// Interpolates intermediate point by its coordinates relative to control points
 vec3 interpolateVec3(vec3 cp00, vec3 cp01, vec3 cp10, vec3 cp11) {
   // Bilinearly interpolating
   vec3 ip0x = (cp01 - cp00) * gl_TessCoord.x + cp00;
@@ -80,7 +80,7 @@ vec3 interpolateVec3(vec3 cp00, vec3 cp01, vec3 cp10, vec3 cp11) {
   return ip;
 }
 
-// Function to interpolate intermediate point by its coordinates relative to control points
+// Interpolates intermediate point by its coordinates relative to control points
 mat3 interpolateMat3(mat3 cp00, mat3 cp01, mat3 cp10, mat3 cp11) {
   // Bilinearly interpolating
   mat3 ip0x = (cp01 - cp00) * gl_TessCoord.x + cp00;
@@ -93,17 +93,17 @@ mat3 interpolateMat3(mat3 cp00, mat3 cp01, mat3 cp10, mat3 cp11) {
 // Tessellation evaluation shader
 void main() {
   // Setting vertex indices
-  const uint indices[4] = {0, 1, 2, 3};
+  const uint kIndices[4] = {0, 1, 2, 3};
 
   // Getting intermediate point attributes
-  vec3 normal    = interpolateVec3(i[indices[0]].normal, i[indices[1]].normal, i[indices[2]].normal, i[indices[3]].normal);
-  mat3 TBN       = interpolateMat3(i[indices[0]].TBN, i[indices[1]].TBN, i[indices[2]].TBN, i[indices[3]].TBN);
-  vec2 texCoords = interpolateVec2(i[indices[0]].texCoords, i[indices[1]].texCoords, i[indices[2]].texCoords, i[indices[3]].texCoords);
+  vec3 normal    = interpolateVec3(i[kIndices[0]].normal, i[kIndices[1]].normal, i[kIndices[2]].normal, i[kIndices[3]].normal);
+  mat3 TBN       = interpolateMat3(i[kIndices[0]].TBN, i[kIndices[1]].TBN, i[kIndices[2]].TBN, i[kIndices[3]].TBN);
+  vec2 texCoords = interpolateVec2(i[kIndices[0]].texCoords, i[kIndices[1]].texCoords, i[kIndices[2]].texCoords, i[kIndices[3]].texCoords);
   vec3 pos       = interpolateVec3(
-      gl_in[indices[0]].gl_Position.xyz,
-      gl_in[indices[1]].gl_Position.xyz,
-      gl_in[indices[2]].gl_Position.xyz,
-      gl_in[indices[3]].gl_Position.xyz
+      gl_in[kIndices[0]].gl_Position.xyz,
+      gl_in[kIndices[1]].gl_Position.xyz,
+      gl_in[kIndices[2]].gl_Position.xyz,
+      gl_in[kIndices[3]].gl_Position.xyz
   );
 
   // Executing actual vertex shader

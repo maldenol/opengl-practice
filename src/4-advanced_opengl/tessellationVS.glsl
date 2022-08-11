@@ -33,5 +33,6 @@ void main() {
   o.TBN       = TBN;
   o.texCoords = aTexCoords;
 
+  // Passing position in world space
   gl_Position = model * vec4(aPos, 1.0f);
 }

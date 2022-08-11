@@ -1,10 +1,10 @@
 #version 460 core
 
-const float MIN_TESS_LEVEL = 1.0f;
-const float MAX_TESS_LEVEL = 16.0f;
+const float kTessLevelMin = 1.0f;
+const float kTessLevelMax = 16.0f;
 
-const float MIN_DISTANCE = 1.0f;
-const float MAX_DISTANCE = 20.0f;
+const float KDistanceMin = 1.0f;
+const float KDistanceMax = 20.0f;
 
 uniform mat4 VIEW;
 
@@ -26,12 +26,12 @@ layout (vertices = 4) out;
 float calculateEdgeTessLevel(vec4 p1, vec4 p2) {
   float closerDistance = -min(p1.z, p2.z);
   float closerDistanceClamped = clamp(
-    (closerDistance - MIN_DISTANCE) / (MAX_DISTANCE - MIN_DISTANCE),
+    (closerDistance - KDistanceMin) / (KDistanceMax - KDistanceMin),
     0.0f,
     1.0f
   );
 
-  return mix(MAX_TESS_LEVEL, MIN_TESS_LEVEL, closerDistanceClamped);
+  return mix(kTessLevelMax, kTessLevelMin, closerDistanceClamped);
 }
 
 // Tessellation control shader

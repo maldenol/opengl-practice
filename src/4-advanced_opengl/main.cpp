@@ -211,22 +211,29 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("lensFS.glsl"),
   };
-  std::vector<std::string> tessellationShaderFilenames{
+  std::vector<std::string> dynamicLODQuadShaderFilenames{
       getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
-      getAbsolutePathRelativeToExecutable("tessellationTCS.glsl"),
-      getAbsolutePathRelativeToExecutable("tessellationTES.glsl"),
+      getAbsolutePathRelativeToExecutable("dynamicLODQuadTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("dynamicLODQuadTES.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+  };
+  std::vector<std::string> silhouetteSmoothingShaderFilenames{
+      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTES.glsl"),
       getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
   // Creating shader programs
-  GLuint blinnPhongSP   = glCreateProgram();
-  GLuint lightSP        = glCreateProgram();
-  GLuint outlineSP      = glCreateProgram();
-  GLuint screenSP       = glCreateProgram();
-  GLuint normalSP       = glCreateProgram();
-  GLuint skyboxSP       = glCreateProgram();
-  GLuint mirrorSP       = glCreateProgram();
-  GLuint lensSP         = glCreateProgram();
-  GLuint tessellationSP = glCreateProgram();
+  GLuint blinnPhongSP          = glCreateProgram();
+  GLuint lightSP               = glCreateProgram();
+  GLuint outlineSP             = glCreateProgram();
+  GLuint screenSP              = glCreateProgram();
+  GLuint normalSP              = glCreateProgram();
+  GLuint skyboxSP              = glCreateProgram();
+  GLuint mirrorSP              = glCreateProgram();
+  GLuint lensSP                = glCreateProgram();
+  GLuint dynamicLODQuadSP      = glCreateProgram();
+  GLuint silhouetteSmoothingSP = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -309,16 +316,27 @@ int main(int argc, char *argv[]) {
                                       lensSP,
                                       std::cref(shaderTypes[0]),
                                       std::cref(lensShaderFilenames)};
-  std::atomic<bool> tessellationShaderWatcherIsRunning = true;
-  std::atomic<bool> tessellationShadersAreRecompiled   = false;
-  std::thread       tessellationShaderWatcherThread{shaderWatcher,
-                                              std::cref(tessellationShaderWatcherIsRunning),
-                                              std::ref(tessellationShadersAreRecompiled),
-                                              window,
-                                              std::ref(glfwContextMutex),
-                                              tessellationSP,
-                                              std::cref(shaderTypes[2]),
-                                              std::cref(tessellationShaderFilenames)};
+  std::atomic<bool> dynamicLODQuadShaderWatcherIsRunning = true;
+  std::atomic<bool> dynamicLODQuadShadersAreRecompiled   = false;
+  std::thread       dynamicLODQuadShaderWatcherThread{shaderWatcher,
+                                                std::cref(dynamicLODQuadShaderWatcherIsRunning),
+                                                std::ref(dynamicLODQuadShadersAreRecompiled),
+                                                window,
+                                                std::ref(glfwContextMutex),
+                                                dynamicLODQuadSP,
+                                                std::cref(shaderTypes[2]),
+                                                std::cref(dynamicLODQuadShaderFilenames)};
+  std::atomic<bool> silhouetteSmoothingShaderWatcherIsRunning = true;
+  std::atomic<bool> silhouetteSmoothingShadersAreRecompiled   = false;
+  std::thread       silhouetteSmoothingShaderWatcherThread{
+      shaderWatcher,
+      std::cref(silhouetteSmoothingShaderWatcherIsRunning),
+      std::ref(silhouetteSmoothingShadersAreRecompiled),
+      window,
+      std::ref(glfwContextMutex),
+      silhouetteSmoothingSP,
+      std::cref(shaderTypes[2]),
+      std::cref(silhouetteSmoothingShaderFilenames)};
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -356,7 +374,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, tessellationSP, texturePtrVectors[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, dynamicLODQuadSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(4);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
@@ -393,21 +411,42 @@ int main(int argc, char *argv[]) {
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Mirror cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{  -3.0f, 0.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   3.0f, 3.0f, 3.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
+      glm::vec3{  -3.0f, -1.0f, -10.0f},
+      glm::vec3{   0.0f,  0.0f, 0.0f},
+      glm::vec3{   3.0f,  3.0f, 3.0f},
+      std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, mirrorSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Lens cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   3.0f, 0.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   3.0f, 3.0f, 3.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
+      glm::vec3{   3.0f, -1.0f, -10.0f},
+      glm::vec3{   0.0f,  0.0f, 0.0f},
+      glm::vec3{   3.0f,  3.0f, 3.0f},
+      std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, lensSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  // Quad sphere without silhouette smoothing
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{  -3.0f, 2.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(
+          generateQuadSphere(1.0f, 3, false, blinnPhongSP, texturePtrVectors[1]))
+  });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  // Quad sphere with silhouette smoothing (tessellated)
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   3.0f, 2.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(
+          generateQuadSphere(1.0f, 3, false, silhouetteSmoothingSP, texturePtrVectors[1]))
+  });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(3);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
@@ -756,11 +795,14 @@ int main(int argc, char *argv[]) {
   mirrorShaderWatcherThread.join();
   lensShaderWatcherIsRunning = false;
   lensShaderWatcherThread.join();
-  tessellationShaderWatcherIsRunning = false;
-  tessellationShaderWatcherThread.join();
+  dynamicLODQuadShaderWatcherIsRunning = false;
+  dynamicLODQuadShaderWatcherThread.join();
+  silhouetteSmoothingShaderWatcherIsRunning = false;
+  silhouetteSmoothingShaderWatcherThread.join();
 
   // Deleting OpenGL objects
-  glDeleteProgram(tessellationSP);
+  glDeleteProgram(silhouetteSmoothingSP);
+  glDeleteProgram(dynamicLODQuadSP);
   glDeleteProgram(lensSP);
   glDeleteProgram(mirrorSP);
   glDeleteProgram(skyboxSP);
