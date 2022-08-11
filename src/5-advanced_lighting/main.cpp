@@ -170,9 +170,16 @@ int main(int argc, char *argv[]) {
   // Creating vectors of vectors of types of shaders
   std::vector<std::vector<GLuint>> shaderTypes{
       std::vector<GLuint>{
-                          GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,                     },
+                          GL_VERTEX_SHADER,    GL_FRAGMENT_SHADER,
+                          },
       std::vector<GLuint>{
-                          GL_VERTEX_SHADER,  GL_GEOMETRY_SHADER,               GL_FRAGMENT_SHADER, },
+                          GL_VERTEX_SHADER,     GL_GEOMETRY_SHADER,
+                          GL_FRAGMENT_SHADER, },
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER,
+                          GL_TESS_EVALUATION_SHADER, GL_FRAGMENT_SHADER,
+                          },
+      std::vector<GLuint>{GL_COMPUTE_SHADER                       },
   };
   // Creating vectors of filenames of shaders
   std::vector<std::string> blinnPhongShaderFilenames{
@@ -208,6 +215,21 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
       getAbsolutePathRelativeToExecutable("lensFS.glsl"),
   };
+  std::vector<std::string> dynamicLODQuadShaderFilenames{
+      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("dynamicLODQuadTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("dynamicLODQuadTES.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+  };
+  std::vector<std::string> silhouetteSmoothingShaderFilenames{
+      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTES.glsl"),
+      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+  };
+  std::vector<std::string> proceduralTextureShaderFilenames{
+      getAbsolutePathRelativeToExecutable("proceduralTextureCS.glsl"),
+  };
   std::vector<std::string> shadowMap2DShaderFilenames{
       getAbsolutePathRelativeToExecutable("shadowMap2DVS.glsl"),
       getAbsolutePathRelativeToExecutable("shadowMap2DFS.glsl"),
@@ -218,16 +240,19 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("shadowMapCubeFS.glsl"),
   };
   // Creating shader programs
-  GLuint blinnPhongSP    = glCreateProgram();
-  GLuint lightSP         = glCreateProgram();
-  GLuint outlineSP       = glCreateProgram();
-  GLuint screenSP        = glCreateProgram();
-  GLuint normalSP        = glCreateProgram();
-  GLuint skyboxSP        = glCreateProgram();
-  GLuint mirrorSP        = glCreateProgram();
-  GLuint lensSP          = glCreateProgram();
-  GLuint shadowMap2DSP   = glCreateProgram();
-  GLuint shadowMapCubeSP = glCreateProgram();
+  GLuint blinnPhongSP          = glCreateProgram();
+  GLuint lightSP               = glCreateProgram();
+  GLuint outlineSP             = glCreateProgram();
+  GLuint screenSP              = glCreateProgram();
+  GLuint normalSP              = glCreateProgram();
+  GLuint skyboxSP              = glCreateProgram();
+  GLuint mirrorSP              = glCreateProgram();
+  GLuint lensSP                = glCreateProgram();
+  GLuint dynamicLODQuadSP      = glCreateProgram();
+  GLuint silhouetteSmoothingSP = glCreateProgram();
+  GLuint proceduralTextureSP   = glCreateProgram();
+  GLuint shadowMap2DSP         = glCreateProgram();
+  GLuint shadowMapCubeSP       = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -310,6 +335,38 @@ int main(int argc, char *argv[]) {
                                       lensSP,
                                       std::cref(shaderTypes[0]),
                                       std::cref(lensShaderFilenames)};
+  std::atomic<bool> dynamicLODQuadShaderWatcherIsRunning = true;
+  std::atomic<bool> dynamicLODQuadShadersAreRecompiled   = false;
+  std::thread       dynamicLODQuadShaderWatcherThread{shaderWatcher,
+                                                std::cref(dynamicLODQuadShaderWatcherIsRunning),
+                                                std::ref(dynamicLODQuadShadersAreRecompiled),
+                                                window,
+                                                std::ref(glfwContextMutex),
+                                                dynamicLODQuadSP,
+                                                std::cref(shaderTypes[2]),
+                                                std::cref(dynamicLODQuadShaderFilenames)};
+  std::atomic<bool> silhouetteSmoothingShaderWatcherIsRunning = true;
+  std::atomic<bool> silhouetteSmoothingShadersAreRecompiled   = false;
+  std::thread       silhouetteSmoothingShaderWatcherThread{
+      shaderWatcher,
+      std::cref(silhouetteSmoothingShaderWatcherIsRunning),
+      std::ref(silhouetteSmoothingShadersAreRecompiled),
+      window,
+      std::ref(glfwContextMutex),
+      silhouetteSmoothingSP,
+      std::cref(shaderTypes[2]),
+      std::cref(silhouetteSmoothingShaderFilenames)};
+  std::atomic<bool> proceduralTextureShaderWatcherIsRunning = true;
+  std::atomic<bool> proceduralTextureShadersAreRecompiled   = false;
+  std::thread       proceduralTextureShaderWatcherThread{
+      shaderWatcher,
+      std::cref(proceduralTextureShaderWatcherIsRunning),
+      std::ref(proceduralTextureShadersAreRecompiled),
+      window,
+      std::ref(glfwContextMutex),
+      proceduralTextureSP,
+      std::cref(shaderTypes[3]),
+      std::cref(proceduralTextureShaderFilenames)};
   std::atomic<bool> shadowMap2DShaderWatcherIsRunning = true;
   std::atomic<bool> shadowMap2DShadersAreRecompiled   = false;
   std::thread       shadowMap2DShaderWatcherThread{shaderWatcher,
@@ -331,6 +388,19 @@ int main(int argc, char *argv[]) {
                                                std::cref(shaderTypes[1]),
                                                std::cref(shadowMapCubeShaderFilenames)};
 
+  // Creating texture for procedural generation by compute shader
+  constexpr GLsizei kProceduralTextureSize[2]      = {1024, 1024};
+  constexpr GLsizei kComputeShaderWorkGroupSize[2] = {8, 8};
+  GLuint            proceduralTexture{};
+  glGenTextures(1, &proceduralTexture);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, proceduralTexture);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, kProceduralTextureSize[0], kProceduralTextureSize[1]);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  // Waiting for compute shader to link
+  while (!proceduralTextureShadersAreRecompiled)
+    ;
+
   // Loading textures
   gTextureBlack = loadTexture("black.png", false);
   gTextureWhite = loadTexture("white.png", false);
@@ -345,7 +415,8 @@ int main(int argc, char *argv[]) {
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
                                                             false),
                                                             //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", true), 5, false),
-          std::make_shared<Mesh::Material::Texture>(loadCubemap(
+          std::make_shared<Mesh::Material::Texture>(proceduralTexture, 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadCubemap(
                                                         std::vector<std::string>{
                                                             "cubemapXP.png",
                                                             "cubemapXN.png",
@@ -363,14 +434,15 @@ int main(int argc, char *argv[]) {
 
   // Creating and configuring scene objects
   std::vector<SceneObject> sceneObjects{};
-  // Lower plane
+  // Lower plane (tessellated)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f,  -1.0f, 0.0f},
       glm::vec3{  90.0f, 180.0f, 0.0f},
       glm::vec3{  20.0f,  10.0f, 30.0f},
       std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+      std::make_shared<Mesh>(generatePlane(1.0f, 10, dynamicLODQuadSP, texturePtrVectors[1]))
   });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(4);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Upper plane
@@ -426,6 +498,27 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generateCube(0.5f, 1, false, lensSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  // Quad sphere without silhouette smoothing
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{  -3.0f, 2.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(
+          generateQuadSphere(1.0f, 3, false, blinnPhongSP, texturePtrVectors[1]))
+  });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  // Quad sphere with silhouette smoothing (tessellated)
+  sceneObjects.push_back(SceneObject{
+      glm::vec3{   3.0f, 2.0f, -10.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      glm::vec3{   1.0f, 1.0f, 1.0f},
+      std::shared_ptr<BaseLight>{nullptr     },
+      std::make_shared<Mesh>(
+          generateQuadSphere(1.0f, 3, false, silhouetteSmoothingSP, texturePtrVectors[1]))
+  });
+  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(3);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
@@ -616,6 +709,18 @@ int main(int argc, char *argv[]) {
     // Processing user input
     processUserInput(window);
 
+    // Executing compute shader
+    glUseProgram(proceduralTextureSP);
+    glUniform1i(glGetUniformLocation(proceduralTextureSP, "outputTexture"), 0);
+    glUniform1f(glGetUniformLocation(proceduralTextureSP, "time"), glfwGetTime());
+    glBindImageTexture(0, proceduralTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+    glDispatchCompute(kProceduralTextureSize[0] / kComputeShaderWorkGroupSize[0],
+                      kProceduralTextureSize[1] / kComputeShaderWorkGroupSize[1], 1);
+    glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+    glUseProgram(0);
+    // Making sure writing to the texture has finished
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
     // Making scene objects float
     if (gEnableSceneObjectsFloating) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
@@ -780,14 +885,24 @@ int main(int argc, char *argv[]) {
   mirrorShaderWatcherThread.join();
   lensShaderWatcherIsRunning = false;
   lensShaderWatcherThread.join();
+  dynamicLODQuadShaderWatcherIsRunning = false;
+  dynamicLODQuadShaderWatcherThread.join();
+  silhouetteSmoothingShaderWatcherIsRunning = false;
+  silhouetteSmoothingShaderWatcherThread.join();
+  proceduralTextureShaderWatcherIsRunning = false;
+  proceduralTextureShaderWatcherThread.join();
   shadowMap2DShaderWatcherIsRunning = false;
   shadowMap2DShaderWatcherThread.join();
   shadowMapCubeShaderWatcherIsRunning = false;
   shadowMapCubeShaderWatcherThread.join();
 
   // Deleting OpenGL objects
+  glDeleteTextures(1, &proceduralTexture);
   glDeleteProgram(shadowMapCubeSP);
   glDeleteProgram(shadowMap2DSP);
+  glDeleteProgram(proceduralTextureSP);
+  glDeleteProgram(silhouetteSmoothingSP);
+  glDeleteProgram(dynamicLODQuadSP);
   glDeleteProgram(lensSP);
   glDeleteProgram(mirrorSP);
   glDeleteProgram(skyboxSP);
