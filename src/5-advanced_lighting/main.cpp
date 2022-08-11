@@ -358,7 +358,7 @@ int main(int argc, char *argv[]) {
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("cubemap.png", true), 0, false),
-                                                            }
+                                                            },
   };
 
   // Creating and configuring scene objects

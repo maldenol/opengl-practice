@@ -170,12 +170,16 @@ int main(int argc, char *argv[]) {
   // Creating vectors of vectors of types of shaders
   std::vector<std::vector<GLuint>> shaderTypes{
       std::vector<GLuint>{
-                          GL_VERTEX_SHADER,    GL_FRAGMENT_SHADER,                  },
-      std::vector<GLuint>{
-                          GL_VERTEX_SHADER,     GL_GEOMETRY_SHADER,GL_FRAGMENT_SHADER, },
-      std::vector<GLuint>{
-                          GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER,                    GL_TESS_EVALUATION_SHADER, GL_FRAGMENT_SHADER,
+                          GL_VERTEX_SHADER,    GL_FRAGMENT_SHADER,
                           },
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER,     GL_GEOMETRY_SHADER,
+                          GL_FRAGMENT_SHADER, },
+      std::vector<GLuint>{
+                          GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER,
+                          GL_TESS_EVALUATION_SHADER, GL_FRAGMENT_SHADER,
+                          },
+      std::vector<GLuint>{GL_COMPUTE_SHADER                       },
   };
   // Creating vectors of filenames of shaders
   std::vector<std::string> blinnPhongShaderFilenames{
@@ -223,6 +227,9 @@ int main(int argc, char *argv[]) {
       getAbsolutePathRelativeToExecutable("silhouetteSmoothingTES.glsl"),
       getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
   };
+  std::vector<std::string> proceduralTextureShaderFilenames{
+      getAbsolutePathRelativeToExecutable("proceduralTextureCS.glsl"),
+  };
   // Creating shader programs
   GLuint blinnPhongSP          = glCreateProgram();
   GLuint lightSP               = glCreateProgram();
@@ -234,6 +241,7 @@ int main(int argc, char *argv[]) {
   GLuint lensSP                = glCreateProgram();
   GLuint dynamicLODQuadSP      = glCreateProgram();
   GLuint silhouetteSmoothingSP = glCreateProgram();
+  GLuint proceduralTextureSP   = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
@@ -337,6 +345,30 @@ int main(int argc, char *argv[]) {
       silhouetteSmoothingSP,
       std::cref(shaderTypes[2]),
       std::cref(silhouetteSmoothingShaderFilenames)};
+  std::atomic<bool> proceduralTextureShaderWatcherIsRunning = true;
+  std::atomic<bool> proceduralTextureShadersAreRecompiled   = false;
+  std::thread       proceduralTextureShaderWatcherThread{
+      shaderWatcher,
+      std::cref(proceduralTextureShaderWatcherIsRunning),
+      std::ref(proceduralTextureShadersAreRecompiled),
+      window,
+      std::ref(glfwContextMutex),
+      proceduralTextureSP,
+      std::cref(shaderTypes[3]),
+      std::cref(proceduralTextureShaderFilenames)};
+
+  // Creating texture for procedural generation by compute shader
+  constexpr GLsizei kProceduralTextureSize[2]      = {1024, 1024};
+  constexpr GLsizei kComputeShaderWorkGroupSize[2] = {8, 8};
+  GLuint            proceduralTexture{};
+  glGenTextures(1, &proceduralTexture);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, proceduralTexture);
+  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, kProceduralTextureSize[0], kProceduralTextureSize[1]);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  // Waiting for compute shader to link
+  while (!proceduralTextureShadersAreRecompiled)
+    ;
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -350,7 +382,8 @@ int main(int argc, char *argv[]) {
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
                                                             false),
                                                             //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", false), 5, false),
-          std::make_shared<Mesh::Material::Texture>(loadCubemap(
+          std::make_shared<Mesh::Material::Texture>(proceduralTexture, 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadCubemap(
                                                         std::vector<std::string>{
                                                             "cubemapXP.png",
                                                             "cubemapXN.png",
@@ -363,7 +396,7 @@ int main(int argc, char *argv[]) {
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("cubemap.png", false), 0, false),
-                                                            }
+                                                            },
   };
 
   // Creating and configuring scene objects
@@ -634,6 +667,18 @@ int main(int argc, char *argv[]) {
     // Processing user input
     processUserInput(window);
 
+    // Executing compute shader
+    glUseProgram(proceduralTextureSP);
+    glUniform1i(glGetUniformLocation(proceduralTextureSP, "outputTexture"), 0);
+    glUniform1f(glGetUniformLocation(proceduralTextureSP, "time"), glfwGetTime());
+    glBindImageTexture(0, proceduralTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+    glDispatchCompute(kProceduralTextureSize[0] / kComputeShaderWorkGroupSize[0],
+                      kProceduralTextureSize[1] / kComputeShaderWorkGroupSize[1], 1);
+    glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+    glUseProgram(0);
+    // Making sure writing to the texture has finished
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
     // Making scene objects float
     if (gEnableSceneObjectsFloating) {
       floatSceneObjects(sceneObjects, 0, sceneObjects.size() - 1);
@@ -799,8 +844,12 @@ int main(int argc, char *argv[]) {
   dynamicLODQuadShaderWatcherThread.join();
   silhouetteSmoothingShaderWatcherIsRunning = false;
   silhouetteSmoothingShaderWatcherThread.join();
+  proceduralTextureShaderWatcherIsRunning = false;
+  proceduralTextureShaderWatcherThread.join();
 
   // Deleting OpenGL objects
+  glDeleteTextures(1, &proceduralTexture);
+  glDeleteProgram(proceduralTextureSP);
   glDeleteProgram(silhouetteSmoothingSP);
   glDeleteProgram(dynamicLODQuadSP);
   glDeleteProgram(lensSP);

@@ -222,10 +222,12 @@ void main() {
   // Adding together all the light components
   vec3 light = ambient + diffuse + specular;
 
-  // Getting albedo and emission maps texels
-  vec3 albedoTexel   = texture(MATERIAL.albedoMap, fTexCoords).xyz;
-  vec3 emissionTexel = texture(MATERIAL.emissMap, fTexCoords).xyz;
+  // Getting albedo and emission maps texels (UV-mapping)
+  vec4 albedoTexel   = texture(MATERIAL.albedoMap, fTexCoords);
+  vec4 emissionTexel = texture(MATERIAL.emissMap, fTexCoords);
 
   // Calculating fragment color by albedo map, light and also emission map
-  FragColor = vec4(albedoTexel * light + emissionTexel, 1.0f);
+  vec3  color   = albedoTexel.rgb * light + emissionTexel.rgb * emissionTexel.a;
+
+  FragColor = vec4(color, 1.0f);
 }

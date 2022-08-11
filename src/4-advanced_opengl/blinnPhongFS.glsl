@@ -289,12 +289,14 @@ void main() {
   vec3 light = ambient + diffuse + specular;
 
   // Getting albedo and emission maps texels (UV-mapping)
-  vec3 albedoTexel   = texture(MATERIAL.albedoMap, texCoords).xyz;
-  vec3 emissionTexel = texture(MATERIAL.emissMap, texCoords).xyz;
+  vec4 albedoTexel   = texture(MATERIAL.albedoMap, texCoords);
+  vec4 emissionTexel = texture(MATERIAL.emissMap, texCoords);
   // Getting albedo and emission maps texels (triplanar mapping)
-  //vec3 albedoTexel   = triplanarMap(MATERIAL.albedoMap, i.worldPos, N).xyz;
-  //vec3 emissionTexel = triplanarMap(MATERIAL.emissMap, i.worldPos, N).xyz;
+  //vec4 albedoTexel   = triplanarMap(MATERIAL.albedoMap, i.worldPos, N);
+  //veс4 emissionTexel = triplanarMap(MATERIAL.emissMap, i.worldPos, N);
 
   // Calculating fragment color by albedo map, light and also emission map
-  FragColor = vec4(albedoTexel * light + emissionTexel, 1.0f);
+  vec3  color   = albedoTexel.rgb * light + emissionTexel.rgb * emissionTexel.a;
+
+  FragColor = vec4(color, 1.0f);
 }
