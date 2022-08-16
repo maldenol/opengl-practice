@@ -57,18 +57,24 @@ Controller6DoF::~Controller6DoF() noexcept {}
 
 void Controller6DoF::rotateForward(float angle) {
   // Precision dependent method
-  _camera->_right = glm::rotate(_camera->_right, angle, _camera->_forward);
-  _camera->_up    = glm::rotate(_camera->_up, angle, _camera->_forward);
+  _camera->getRight() = glm::rotate(_camera->getRight(), angle, _camera->getForward());
+  _camera->getUp()    = glm::rotate(_camera->getUp(), angle, _camera->getForward());
+
+  _camera->recalculateViewMatrix();
 }
 
 void Controller6DoF::rotateRight(float angle) {
   // Precision dependent method
-  _camera->_up      = glm::rotate(_camera->_up, angle, _camera->_right);
-  _camera->_forward = glm::rotate(_camera->_forward, angle, _camera->_right);
+  _camera->getUp()      = glm::rotate(_camera->getUp(), angle, _camera->getRight());
+  _camera->getForward() = glm::rotate(_camera->getForward(), angle, _camera->getRight());
+
+  _camera->recalculateViewMatrix();
 }
 
 void Controller6DoF::rotateUp(float angle) {
   // Precision dependent method
-  _camera->_forward = glm::rotate(_camera->_forward, angle, _camera->_up);
-  _camera->_right   = glm::rotate(_camera->_right, angle, _camera->_up);
+  _camera->getForward() = glm::rotate(_camera->getForward(), angle, _camera->getUp());
+  _camera->getRight()   = glm::rotate(_camera->getRight(), angle, _camera->getUp());
+
+  _camera->recalculateViewMatrix();
 }

@@ -8,16 +8,22 @@ namespace glengine {
 
 class BaseCamera {
  private:
-  glm::vec3 _pos{};
+  glm::vec3 _position{};
   glm::vec3 _worldUp{};
   glm::vec3 _forward{};
   glm::vec3 _right{};
   glm::vec3 _up{};
 
+  glm::mat4 _viewMatrix{};
+
+ protected:
+  glm::mat4 _projectionMatrix{};
+
  protected:
   // Constructors, assignment operators and destructor
   BaseCamera() noexcept;
-  BaseCamera(const glm::vec3 &pos, const glm::vec3 &worldUp, const glm::vec3 &lookDir) noexcept;
+  BaseCamera(const glm::vec3 &position, const glm::vec3 &worldUp,
+             const glm::vec3 &lookDir) noexcept;
   BaseCamera(const BaseCamera &camera) noexcept;
   BaseCamera &operator=(const BaseCamera &camera) noexcept;
   BaseCamera(BaseCamera &&camera) noexcept;
@@ -26,11 +32,13 @@ class BaseCamera {
 
  public:
   // Setters
-  void setPosition(const glm::vec3 &pos) noexcept;
+  void setPosition(const glm::vec3 &position) noexcept;
   void setWorldUp(const glm::vec3 &worldUp) noexcept;
   void setForward(const glm::vec3 &forward) noexcept;
   void setRight(const glm::vec3 &right) noexcept;
   void setUp(const glm::vec3 &up) noexcept;
+  void setViewMatrix(const glm::mat4 &viewMatrix) noexcept;
+  void setProjectionMatrix(const glm::mat4 &projectionMatrix) noexcept;
 
   // Getters
   const glm::vec3 &getPosition() const noexcept;
@@ -43,18 +51,17 @@ class BaseCamera {
   glm::vec3       &getRight() noexcept;
   const glm::vec3 &getUp() const noexcept;
   glm::vec3       &getUp() noexcept;
+  const glm::mat4 &getViewMatrix() const noexcept;
+  glm::mat4       &getViewMatrix() noexcept;
+  const glm::mat4 &getProjectionMatrix() const noexcept;
+  glm::mat4       &getProjectionMatrix() noexcept;
 
   // Other member functions
+  void         recalculateViewMatrix() noexcept;
+  virtual void recalculateProjectionMatrix() noexcept = 0;
+
   void look(const glm::vec3 &look) noexcept;
   void lookAt(const glm::vec3 &lookAt) noexcept;
-
-  glm::mat4         getViewMatrix() const noexcept;
-  virtual glm::mat4 getProjectionMatrix() const noexcept = 0;
-
-  // Friend classes
-  friend class Controller3DoF;
-  friend class Controller5DoF;
-  friend class Controller6DoF;
 };
 
 }  // namespace glengine

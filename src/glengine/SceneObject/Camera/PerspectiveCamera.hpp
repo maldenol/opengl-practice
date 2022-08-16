@@ -41,7 +41,7 @@ class PerspectiveCamera : public BaseCamera {
   float &getFarPlane() noexcept;
 
   // Other member functions
-  glm::mat4 getProjectionMatrix() const noexcept override;
+  void recalculateProjectionMatrix() noexcept override;
 };
 
 }  // namespace glengine

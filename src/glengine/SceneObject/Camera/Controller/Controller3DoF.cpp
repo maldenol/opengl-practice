@@ -51,14 +51,26 @@ BaseCamera *Controller3DoF::getCamera() noexcept { return _camera; }
 
 // Other member functions
 
-void Controller3DoF::move(const glm::vec3 &deltaPos) noexcept { _camera->_pos += deltaPos; }
+void Controller3DoF::move(const glm::vec3 &deltaPos) noexcept {
+  _camera->getPosition() += deltaPos;
+
+  _camera->recalculateViewMatrix();
+}
 
 void Controller3DoF::moveForward(float distance) noexcept {
-  _camera->_pos += _camera->_forward * distance;
+  _camera->getPosition() += _camera->getForward() * distance;
+
+  _camera->recalculateViewMatrix();
 }
 
 void Controller3DoF::moveRight(float distance) noexcept {
-  _camera->_pos += _camera->_right * distance;
+  _camera->getPosition() += _camera->getRight() * distance;
+
+  _camera->recalculateViewMatrix();
 }
 
-void Controller3DoF::moveUp(float distance) noexcept { _camera->_pos += _camera->_up * distance; }
+void Controller3DoF::moveUp(float distance) noexcept {
+  _camera->getPosition() += _camera->getUp() * distance;
+
+  _camera->recalculateViewMatrix();
+}

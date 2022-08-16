@@ -22,6 +22,7 @@ class SceneObject {
   glm::vec3 _translate{};
   glm::vec3 _rotate{};
   glm::vec3 _scale{};
+
   glm::mat4 _modelMatrix{};
 
   // Unity-like components

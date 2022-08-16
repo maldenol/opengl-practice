@@ -119,16 +119,19 @@ SceneObject::~SceneObject() noexcept {}
 
 void SceneObject::setTranslate(const glm::vec3 &translate) noexcept {
   _translate = translate;
+
   recalculateModelMatrix();
 }
 
 void SceneObject::setRotate(const glm::vec3 &rotate) noexcept {
   _rotate = rotate;
+
   recalculateModelMatrix();
 }
 
 void SceneObject::setScale(const glm::vec3 &scale) noexcept {
   _scale = scale;
+
   recalculateModelMatrix();
 }
 

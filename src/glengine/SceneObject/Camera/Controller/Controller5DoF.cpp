@@ -102,17 +102,19 @@ void Controller5DoF::setCamera(BaseCamera *camera) noexcept {
 // Other member functions
 
 void Controller5DoF::updateLook() noexcept {
-  glm::vec3 look                          = _camera->_forward;
-  float     absoluteAngleBetweenLookAndUp = glm::angle(look, _camera->_worldUp);
+  glm::vec3 look                          = _camera->getForward();
+  float     absoluteAngleBetweenLookAndUp = glm::angle(look, _camera->getWorldUp());
   float     rotationAngle                 = absoluteAngleBetweenLookAndUp - glm::radians(90.0f);
-  glm::vec3 rotationAxis{glm::cross(look, _camera->_worldUp)};
+  glm::vec3 rotationAxis{glm::cross(look, _camera->getWorldUp())};
   _baseLookDirection = glm::rotate(look, rotationAngle, rotationAxis);
 
   setAngles(0.0f, -rotationAngle);
 }
 
 void Controller5DoF::moveUp(float distance) noexcept {
-  _camera->_pos += _camera->_worldUp * distance;
+  _camera->getPosition() += _camera->getWorldUp() * distance;
+
+  _camera->recalculateViewMatrix();
 }
 
 void Controller5DoF::setAngles(float angleUp, float angleRight) noexcept {
@@ -151,8 +153,8 @@ void Controller5DoF::addAngles(float angleUp, float angleRight) noexcept {
   _angleRight = angleIntoBounds(_angleRight, _angleRightLimitMin, _angleRightLimitMax);
 
   glm::vec3 look{_baseLookDirection};
-  look = glm::rotate(look, _angleRight, _camera->_right);
-  look = glm::rotate(look, _angleUp, _camera->_worldUp);
+  look = glm::rotate(look, _angleRight, _camera->getRight());
+  look = glm::rotate(look, _angleUp, _camera->getWorldUp());
   _camera->look(look);
 }
 

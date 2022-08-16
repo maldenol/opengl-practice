@@ -12,14 +12,18 @@ using namespace glengine;
 // Constructors, assignment operators and destructor
 
 // Default constructor
-PerspectiveCamera::PerspectiveCamera() noexcept : BaseCamera{} {}
+PerspectiveCamera::PerspectiveCamera() noexcept : BaseCamera{} { recalculateProjectionMatrix(); }
 
 // Copy constructor (base class)
-PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept : BaseCamera{camera} {}
+PerspectiveCamera::PerspectiveCamera(const BaseCamera &camera) noexcept : BaseCamera{camera} {
+  recalculateProjectionMatrix();
+}
 
 // Copy assignment operator (base class)
 PerspectiveCamera &PerspectiveCamera::operator=(const BaseCamera &camera) noexcept {
   this->BaseCamera::operator=(camera);
+
+  recalculateProjectionMatrix();
 
   return *this;
 }
@@ -69,13 +73,29 @@ PerspectiveCamera::~PerspectiveCamera() noexcept {}
 
 // Setters
 
-void PerspectiveCamera::setVerticalFOV(float verticalVOF) noexcept { _verticalFOV = verticalVOF; }
+void PerspectiveCamera::setVerticalFOV(float verticalVOF) noexcept {
+  _verticalFOV = verticalVOF;
 
-void PerspectiveCamera::setAspectRatio(float aspectRatio) noexcept { _aspectRatio = aspectRatio; }
+  recalculateProjectionMatrix();
+}
 
-void PerspectiveCamera::setNearPlane(float nearPlane) noexcept { _nearPlane = nearPlane; }
+void PerspectiveCamera::setAspectRatio(float aspectRatio) noexcept {
+  _aspectRatio = aspectRatio;
 
-void PerspectiveCamera::setFarPlane(float farPlane) noexcept { _farPlane = farPlane; }
+  recalculateProjectionMatrix();
+}
+
+void PerspectiveCamera::setNearPlane(float nearPlane) noexcept {
+  _nearPlane = nearPlane;
+
+  recalculateProjectionMatrix();
+}
+
+void PerspectiveCamera::setFarPlane(float farPlane) noexcept {
+  _farPlane = farPlane;
+
+  recalculateProjectionMatrix();
+}
 
 // Getters
 
@@ -97,6 +117,6 @@ float &PerspectiveCamera::getFarPlane() noexcept { return _farPlane; }
 
 // Other member functions
 
-glm::mat4 PerspectiveCamera::getProjectionMatrix() const noexcept {
-  return glm::perspective(_verticalFOV, _aspectRatio, _nearPlane, _farPlane);
+void PerspectiveCamera::recalculateProjectionMatrix() noexcept {
+  _projectionMatrix = glm::perspective(_verticalFOV, _aspectRatio, _nearPlane, _farPlane);
 }

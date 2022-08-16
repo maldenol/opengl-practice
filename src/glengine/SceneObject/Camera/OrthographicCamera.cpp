@@ -12,14 +12,18 @@ using namespace glengine;
 // Constructors, assignment operators and destructor
 
 // Default constructor
-OrthographicCamera::OrthographicCamera() noexcept : BaseCamera{} {}
+OrthographicCamera::OrthographicCamera() noexcept : BaseCamera{} { recalculateProjectionMatrix(); }
 
 // Copy constructor
-OrthographicCamera::OrthographicCamera(const BaseCamera &camera) noexcept : BaseCamera{camera} {}
+OrthographicCamera::OrthographicCamera(const BaseCamera &camera) noexcept : BaseCamera{camera} {
+  recalculateProjectionMatrix();
+}
 
 // Copy assignment operator
 OrthographicCamera &OrthographicCamera::operator=(const BaseCamera &camera) noexcept {
   this->BaseCamera::operator=(camera);
+
+  recalculateProjectionMatrix();
 
   return *this;
 }
@@ -77,19 +81,41 @@ OrthographicCamera::~OrthographicCamera() noexcept {}
 
 // Setters
 
-void OrthographicCamera::setLeftBorder(float leftBorder) noexcept { _leftBorder = leftBorder; }
+void OrthographicCamera::setLeftBorder(float leftBorder) noexcept {
+  _leftBorder = leftBorder;
 
-void OrthographicCamera::setRightBorder(float rightBorder) noexcept { _rightBorder = rightBorder; }
+  recalculateProjectionMatrix();
+}
+
+void OrthographicCamera::setRightBorder(float rightBorder) noexcept {
+  _rightBorder = rightBorder;
+
+  recalculateProjectionMatrix();
+}
 
 void OrthographicCamera::setBottomBorder(float bottomBorder) noexcept {
   _bottomBorder = bottomBorder;
+
+  recalculateProjectionMatrix();
 }
 
-void OrthographicCamera::setTopBorder(float topBorder) noexcept { _topBorder = topBorder; }
+void OrthographicCamera::setTopBorder(float topBorder) noexcept {
+  _topBorder = topBorder;
 
-void OrthographicCamera::setNearPlane(float nearPlane) noexcept { _nearPlane = nearPlane; }
+  recalculateProjectionMatrix();
+}
 
-void OrthographicCamera::setFarPlane(float farPlane) noexcept { _farPlane = farPlane; }
+void OrthographicCamera::setNearPlane(float nearPlane) noexcept {
+  _nearPlane = nearPlane;
+
+  recalculateProjectionMatrix();
+}
+
+void OrthographicCamera::setFarPlane(float farPlane) noexcept {
+  _farPlane = farPlane;
+
+  recalculateProjectionMatrix();
+}
 
 // Getters
 
@@ -119,6 +145,7 @@ float &OrthographicCamera::getFarPlane() noexcept { return _farPlane; }
 
 // Other member functions
 
-glm::mat4 OrthographicCamera::getProjectionMatrix() const noexcept {
-  return glm::ortho(_leftBorder, _rightBorder, _bottomBorder, _topBorder, _nearPlane, _farPlane);
+void OrthographicCamera::recalculateProjectionMatrix() noexcept {
+  _projectionMatrix =
+      glm::ortho(_leftBorder, _rightBorder, _bottomBorder, _topBorder, _nearPlane, _farPlane);
 }
