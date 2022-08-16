@@ -21,12 +21,6 @@ static constexpr glm::vec3 kRight{1.0f, 0.0f, 0.0f};
 static constexpr glm::vec3 kUp{0.0f, 1.0f, 0.0f};
 static constexpr glm::vec3 kForward{0.0f, 0.0f, -1.0f};
 
-static constexpr float kInitAmbCoef    = 0.15f;
-static constexpr float kInitDiffCoef   = 0.6f;
-static constexpr float kInitSpecCoef   = 0.3f;
-static constexpr float kInitGlossiness = 1.0f;
-static constexpr float kInitMaxHeight  = 0.0f;
-
 // Mesh class
 class Mesh {
  public:
@@ -74,22 +68,15 @@ class Mesh {
     };
 
    private:
-    float _ambCoef{};
-    float _diffCoef{};
-    float _specCoef{};
-
-    float _glossiness{};
+    std::vector<std::shared_ptr<Texture>> _texturePtrs{};
 
     float _parallaxStrength{};
-
-    std::vector<std::shared_ptr<Texture>> _texturePtrs{};
 
    public:
     // Constructors, assignment operators and destructor
     Material() noexcept;
-    Material(float ambCoef, float diffCoef, float specCoef, float glossiness,
-             float                                        parallaxStrength,
-             const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
+    Material(const std::vector<std::shared_ptr<Texture>> &texturePtrs,
+             float                                        parallaxStrength = 0.0f) noexcept;
     Material(const Material &material) noexcept;
     Material &operator=(const Material &material) noexcept;
     Material(Material &&material) noexcept;
@@ -97,26 +84,14 @@ class Mesh {
     ~Material() noexcept;
 
     // Setters
-    void setAmbCoef(float ambCoef) noexcept;
-    void setDiffCoef(float diffCoef) noexcept;
-    void setSpecCoef(float specCoef) noexcept;
-    void setGlossiness(float glossiness) noexcept;
-    void setParallaxStrength(float parallaxStrength) noexcept;
     void setTexturePtrs(const std::vector<std::shared_ptr<Texture>> &texturePtrs) noexcept;
+    void setParallaxStrength(float parallaxStrength) noexcept;
 
     // Getters
-    float                                        getAmbCoef() const noexcept;
-    float                                       &getAmbCoef() noexcept;
-    float                                        getDiffCoef() const noexcept;
-    float                                       &getDiffCoef() noexcept;
-    float                                        getSpecCoef() const noexcept;
-    float                                       &getSpecCoef() noexcept;
-    float                                        getGlossiness() const noexcept;
-    float                                       &getGlossiness() noexcept;
-    float                                        getParallaxStrength() const noexcept;
-    float                                       &getParallaxStrength() noexcept;
     const std::vector<std::shared_ptr<Texture>> &getTexturePtrs() const noexcept;
     std::vector<std::shared_ptr<Texture>>       &getTexturePtrs() noexcept;
+    float                                        getParallaxStrength() const noexcept;
+    float                                       &getParallaxStrength() noexcept;
   };
 
  private:

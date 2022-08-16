@@ -66,11 +66,14 @@ class SceneObject {
   void recalculateModelMatrix() noexcept;
 
   void updateShaderModelMatrix() const noexcept;
+  void updateShaderLightColor() const noexcept;
+  void updateShaderExposure(float exposure) const noexcept;
 
-  void render() const noexcept;
+  void render(float exposure = 1.0f) const noexcept;
 
   // Other static member functions
   static void updateShadersLights(const std::vector<SceneObject> &sceneObjects,
+                                  const glm::vec3                &ambientColor = glm::vec3{},
                                   GLuint            directionalLightShadowMapShaderProgram = 0,
                                   GLuint            pointLightShadowMapShaderProgram       = 0,
                                   GLuint            spotLightShadowMapShaderProgram        = 0,

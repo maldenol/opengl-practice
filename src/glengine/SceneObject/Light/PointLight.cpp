@@ -21,9 +21,8 @@ PointLight::PointLight() noexcept : BaseLight{} {
 }
 
 // Parameterized constructor
-PointLight::PointLight(const glm::vec3 &color, float intensity, float linAttCoef,
-                       float quadAttCoef) noexcept
-    : BaseLight{color, intensity}, _linAttCoef{linAttCoef}, _quadAttCoef{quadAttCoef} {
+PointLight::PointLight(const glm::vec3 &color, float linAttCoef, float quadAttCoef) noexcept
+    : BaseLight{color}, _linAttCoef{linAttCoef}, _quadAttCoef{quadAttCoef} {
   configureShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture, _shadowMapTextureResolution);
 }
 

@@ -21,11 +21,11 @@ SpotLight::SpotLight() noexcept {
 }
 
 // Parameterized constructor
-SpotLight::SpotLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction,
-                     float linAttCoef, float quadAttCoef, float angle, float smoothAngle) noexcept
-    : BaseLight{color, intensity},
-      DirectionalLight{color, intensity, direction},
-      PointLight{color, intensity, linAttCoef, quadAttCoef},
+SpotLight::SpotLight(const glm::vec3 &color, const glm::vec3 &direction, float linAttCoef,
+                     float quadAttCoef, float angle, float smoothAngle) noexcept
+    : BaseLight{color},
+      DirectionalLight{color, direction},
+      PointLight{color, linAttCoef, quadAttCoef},
       _angle{angle},
       _smoothAngle{smoothAngle} {
   configureShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture, _shadowMapTextureResolution);

@@ -9,21 +9,16 @@ const int kParallaxMappingDepthLayerCountMax = 32;
 
 uniform vec3 VIEW_POS;
 
+uniform vec3 AMBIENT_LIGHT_COLOR;
 uniform struct {
-  vec3  color;
-  float intensity;
-} AMBIENT_LIGHT;
-uniform struct {
-  vec3  color;
-  float intensity;
+  vec3 color;
 
   vec3 dir;
 } DIRECTIONAL_LIGHTS[MAX_DIRECTIONAL_LIGHT_COUNT];
 uniform struct {
   vec3 worldPos;
 
-  vec3  color;
-  float intensity;
+  vec3 color;
 
   float linAttCoef;
   float quadAttCoef;
@@ -31,8 +26,7 @@ uniform struct {
 uniform struct {
   vec3 worldPos;
 
-  vec3  color;
-  float intensity;
+  vec3 color;
 
   vec3 dir;
 
@@ -44,20 +38,15 @@ uniform struct {
 } SPOT_LIGHTS[MAX_SPOT_LIGHT_COUNT];
 
 uniform struct {
-  float ambCoef;
-  float diffCoef;
-  float specCoef;
-
-  float glossiness;
+  sampler2D   albedoMap;
+  sampler2D   normalMap;
+  sampler2D   depthMap;
+  sampler2D   ambOccMap;
+  sampler2D   glossMap;
+  sampler2D   emissMap;
+  samplerCube envMap;
 
   float parallaxStrength;
-
-  sampler2D albedoMap;
-  sampler2D normalMap;
-  sampler2D depthMap;
-  sampler2D ambOccMap;
-  sampler2D roughMap;
-  sampler2D emissMap;
 } MATERIAL;
 
 in Interpolators {
@@ -80,8 +69,7 @@ void calcLambertianLight(out vec3 diffuse,
   // Calculating diffuse (Lambertian) light
   diffuse = color
           * LdotN
-          * attenuation
-          * MATERIAL.diffCoef;
+          * attenuation;
 }
 
 void calcPhongLight(out vec3 diffuse,
@@ -97,15 +85,14 @@ void calcPhongLight(out vec3 diffuse,
   vec3 R = reflect(-L, N); // 2.0f * dot(L, N) * N - L;
   vec3 V = normalize(VIEW_POS - i.worldPos);
 
-  float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, i.texCoords).r);
+  float gloss    = texture(MATERIAL.glossMap, texCoords).r;
   float glossExp = exp2(gloss);
   float VdotR    = max(dot(V, R), 0.0f);
 
   // Calculating specular (Phong) light
   specular = color
            * gloss * pow(VdotR, glossExp)
-           * attenuation
-           * MATERIAL.specCoef;
+           * attenuation;
 }
 
 void calcBlinnPhongLight(out vec3 diffuse,
@@ -118,7 +105,7 @@ void calcBlinnPhongLight(out vec3 diffuse,
   // Calculating diffuse (Lambertian) light
   calcLambertianLight(diffuse, N, L, attenuation, color);
 
-  float gloss    = MATERIAL.glossiness * (1.0f - texture(MATERIAL.roughMap, i.texCoords).r);
+  float gloss    = texture(MATERIAL.glossMap, texCoords).r;
   float glossExp = 2.0f * exp2(gloss);
   vec3  V        = normalize(VIEW_POS - i.worldPos);
   vec3  H        = normalize(L + V);
@@ -128,8 +115,7 @@ void calcBlinnPhongLight(out vec3 diffuse,
   // Calculating specular (Blinn-Phong) light
   specular = color
            * gloss * pow(HdotN, glossExp) * float(LdotN > 0.0f)
-           * attenuation
-           * MATERIAL.specCoef;
+           * attenuation;
 }
 
 float calcLightAttenuation(vec3 worldPos, float linAttCoef, float quadAttCoef) {
@@ -143,7 +129,7 @@ void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint inde
 
   float attenuation = 1.0f;
 
-  vec3 color = normalize(DIRECTIONAL_LIGHTS[index].color) * DIRECTIONAL_LIGHTS[index].intensity;
+  vec3 color = DIRECTIONAL_LIGHTS[index].color;
 
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color, texCoords);
@@ -159,7 +145,7 @@ void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index, vec
       POINT_LIGHTS[index].quadAttCoef
   );
 
-  vec3 color = normalize(POINT_LIGHTS[index].color) * POINT_LIGHTS[index].intensity;
+  vec3 color = POINT_LIGHTS[index].color;
 
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color, texCoords);
@@ -181,7 +167,7 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index, vec2
   //attenuation      *= 1.0f - min((1.0f - LdotD) / (1.0f - angle), 1.0f);
   attenuation      *= 1.0f - min((smoothAngle - LdotD) / (smoothAngle - angle), 1.0f);
 
-  vec3 color = normalize(SPOT_LIGHTS[index].color) * SPOT_LIGHTS[index].intensity;
+  vec3 color = SPOT_LIGHTS[index].color;
 
   // Calculation diffuse and specular light (Blinn-Phong)
   calcBlinnPhongLight(diffuse, specular, N, L, attenuation, color, texCoords);
@@ -243,9 +229,8 @@ void main() {
   if (texCoords.x < 0.0f || texCoords.x > 1.0f || texCoords.y < 0.0f || texCoords.y > 1.0f) discard;
 
   // Initializing Phong/Blinn-Phong light model components
-  vec3 ambient  = AMBIENT_LIGHT.color * AMBIENT_LIGHT.intensity
-                * texture(MATERIAL.ambOccMap, texCoords).r
-                * MATERIAL.ambCoef;
+  vec3 ambient  = AMBIENT_LIGHT_COLOR
+                * texture(MATERIAL.ambOccMap, texCoords).r;
   vec3 diffuse  = vec3(0.0f);
   vec3 specular = vec3(0.0f);
 
@@ -254,7 +239,7 @@ void main() {
 
   // Adding each directional light contribution
   for (uint i = 0; i < MAX_DIRECTIONAL_LIGHT_COUNT; ++i) {
-    vec3 deltaDiffuse = vec3(0.0f);
+    vec3 deltaDiffuse  = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 
     calcDirectionalLight(deltaDiffuse, deltaSpecular, N, i, texCoords);
@@ -265,7 +250,7 @@ void main() {
 
   // Adding each point light contribution
   for (uint i = 0; i < MAX_POINT_LIGHT_COUNT; ++i) {
-    vec3 deltaDiffuse = vec3(0.0f);
+    vec3 deltaDiffuse  = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 
     calcPointLight(deltaDiffuse, deltaSpecular, N, i, texCoords);
@@ -276,7 +261,7 @@ void main() {
 
   // Adding each spot light contribution
   for (uint i = 0; i < MAX_SPOT_LIGHT_COUNT; ++i) {
-    vec3 deltaDiffuse = vec3(0.0f);
+    vec3 deltaDiffuse  = vec3(0.0f);
     vec3 deltaSpecular = vec3(0.0f);
 
     calcSpotLight(deltaDiffuse, deltaSpecular, N, i, texCoords);
@@ -296,7 +281,7 @@ void main() {
   //veс4 emissionTexel = triplanarMap(MATERIAL.emissMap, i.worldPos, N);
 
   // Calculating fragment color by albedo map, light and also emission map
-  vec3  color   = albedoTexel.rgb * light + emissionTexel.rgb * emissionTexel.a;
+  vec3 color = albedoTexel.rgb * light + emissionTexel.rgb * emissionTexel.a;
 
   FragColor = vec4(color, 1.0f);
 }

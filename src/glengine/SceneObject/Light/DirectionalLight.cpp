@@ -24,9 +24,8 @@ DirectionalLight::DirectionalLight() noexcept {
 }
 
 // Parameterized constructor
-DirectionalLight::DirectionalLight(const glm::vec3 &color, float intensity,
-                                   const glm::vec3 &direction) noexcept
-    : BaseLight{color, intensity}, _direction{direction} {
+DirectionalLight::DirectionalLight(const glm::vec3 &color, const glm::vec3 &direction) noexcept
+    : BaseLight{color}, _direction{direction} {
   configureShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture, _shadowMapTextureResolution);
 }
 

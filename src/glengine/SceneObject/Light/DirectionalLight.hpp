@@ -14,7 +14,7 @@ class DirectionalLight : virtual public BaseLight {
  public:
   // Constructors, assignment operators and destructor
   DirectionalLight() noexcept;
-  DirectionalLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction) noexcept;
+  DirectionalLight(const glm::vec3 &color, const glm::vec3 &direction) noexcept;
   DirectionalLight(const BaseLight &light) noexcept;
   DirectionalLight &operator=(const BaseLight &light) noexcept;
   DirectionalLight(const DirectionalLight &light) noexcept;

@@ -15,7 +15,7 @@ class PointLight : virtual public BaseLight {
  public:
   // Constructors, assignment operators and destructor
   PointLight() noexcept;
-  PointLight(const glm::vec3 &color, float intensity, float linAttCoef, float quadAttCoef) noexcept;
+  PointLight(const glm::vec3 &color, float linAttCoef, float quadAttCoef) noexcept;
   PointLight(const BaseLight &light) noexcept;
   PointLight &operator=(const BaseLight &light) noexcept;
   PointLight(const PointLight &light) noexcept;

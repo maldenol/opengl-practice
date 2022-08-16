@@ -202,21 +202,15 @@ void Mesh::render() const noexcept {
   glUseProgram(_shaderProgram);
 
   // Updating object shader program uniform values
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.ambCoef"), _materialPtr->getAmbCoef());
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.diffCoef"),
-              _materialPtr->getDiffCoef());
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.specCoef"),
-              _materialPtr->getSpecCoef());
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.glossiness"),
-              _materialPtr->getGlossiness());
-  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.parallaxStrength"),
-              _materialPtr->getParallaxStrength());
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.albedoMap"), 0);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.normalMap"), 1);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.depthMap"), 2);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.ambOccMap"), 3);
-  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.roughMap"), 4);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.glossMap"), 4);
   glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.emissMap"), 5);
+  glUniform1i(glGetUniformLocation(_shaderProgram, "MATERIAL.envMap"), 6);
+  glUniform1f(glGetUniformLocation(_shaderProgram, "MATERIAL.parallaxStrength"),
+              _materialPtr->getParallaxStrength());
 
   // If instanced
   glUniform1i(glGetUniformLocation(_shaderProgram, "INSTANCED"),

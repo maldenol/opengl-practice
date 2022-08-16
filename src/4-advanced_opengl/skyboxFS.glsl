@@ -1,20 +1,15 @@
 #version 460 core
 
 uniform struct {
-  float ambCoef;
-  float diffCoef;
-  float specCoef;
-
-  float glossiness;
+  sampler2D   albedoMap;
+  sampler2D   normalMap;
+  sampler2D   depthMap;
+  sampler2D   ambOccMap;
+  sampler2D   glossMap;
+  sampler2D   emissMap;
+  samplerCube envMap;
 
   float parallaxStrength;
-
-  sampler2D albedoMap;
-  sampler2D normalMap;
-  sampler2D depthMap;
-  sampler2D ambOccMap;
-  sampler2D roughMap;
-  sampler2D emissMap;
 } MATERIAL;
 
 in Interpolators {

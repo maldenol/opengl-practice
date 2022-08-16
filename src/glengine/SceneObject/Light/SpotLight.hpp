@@ -16,8 +16,8 @@ class SpotLight : public DirectionalLight, public PointLight {
  public:
   // Constructors, assignment operators and destructor
   SpotLight() noexcept;
-  SpotLight(const glm::vec3 &color, float intensity, const glm::vec3 &direction, float linAttCoef,
-            float quadAttCoef, float angle, float smoothAngle) noexcept;
+  SpotLight(const glm::vec3 &color, const glm::vec3 &direction, float linAttCoef, float quadAttCoef,
+            float angle, float smoothAngle) noexcept;
   SpotLight(const BaseLight &light) noexcept;
   SpotLight &operator=(const BaseLight &light) noexcept;
   SpotLight(const DirectionalLight &light) noexcept;

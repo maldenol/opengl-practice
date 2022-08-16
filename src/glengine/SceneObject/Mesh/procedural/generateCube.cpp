@@ -256,7 +256,5 @@ glengine::Mesh glengine::generateCube(
 
   // Creating and returning the mesh
   return Mesh{vboAttributes, vertexBuffer, indices, shaderProgram,
-              std::make_shared<Mesh::Material>(Mesh::Material{kInitAmbCoef, kInitDiffCoef,
-                                                              kInitSpecCoef, kInitGlossiness,
-                                                              kInitMaxHeight, texturePtrs})};
+              std::make_shared<Mesh::Material>(Mesh::Material{texturePtrs})};
 }

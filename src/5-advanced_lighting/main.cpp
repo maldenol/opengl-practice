@@ -44,6 +44,7 @@ static constexpr unsigned int          kInstancedMeshIndex  = 3;
 static constexpr unsigned int          kInstanceCount       = 100;
 static constexpr float                 kInstanceMaxDistance = 15.0f;
 static constexpr float                 kInstanceMaxScale    = 5.0f;
+static constexpr float                 kExposure            = 0.2f;
 
 // Global variables
 unsigned int      gWidth{kInitWidth};
@@ -412,23 +413,22 @@ int main(int argc, char *argv[]) {
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
                                                             3, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
-                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTextureHDR("glossinessMap.hdr"), 4, false),
                                                             //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", true), 5, false),
           std::make_shared<Mesh::Material::Texture>(proceduralTexture, 5, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadCubemap(
                                                         std::vector<std::string>{
-                                                            "cubemapXP.png",
-                                                            "cubemapXN.png",
-                                                            "cubemapYP.png",
-                                                            "cubemapYN.png",
-                                                            "cubemapZP.png",
-                                                            "cubemapZN.png",
+                                                            "skyboxXP.png",
+                                                            "skyboxXN.png",
+                                                            "skyboxYP.png",
+                                                            "skyboxYN.png",
+                                                            "skyboxZP.png",
+                                                            "skyboxZN.png",
                                                         }, true),
                                                             6, true),
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("cubemap.png", true), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("skybox.png", true), 0, false),
                                                             },
   };
 
@@ -443,7 +443,6 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generatePlane(1.0f, 10, dynamicLODQuadSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(4);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
@@ -453,8 +452,6 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Central cube
   sceneObjects.push_back(SceneObject{
@@ -464,8 +461,6 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Instanced cube
   sceneObjects.push_back(SceneObject{
@@ -476,8 +471,6 @@ int main(int argc, char *argv[]) {
       std::make_shared<Mesh>(generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1]))
   });
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setInstanceCount(kInstanceCount);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(15.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Mirror cube
   sceneObjects.push_back(SceneObject{
@@ -487,7 +480,6 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 1, false, mirrorSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Lens cube
   sceneObjects.push_back(SceneObject{
@@ -497,7 +489,6 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr     },
       std::make_shared<Mesh>(generateCube(0.5f, 1, false, lensSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setAmbCoef(0.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Quad sphere without silhouette smoothing
   sceneObjects.push_back(SceneObject{
@@ -525,8 +516,7 @@ int main(int argc, char *argv[]) {
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
-      0.2f,
+      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
                                          glm::vec3{   0.5f, -2.0f, -0.5f}
       ),
       std::shared_ptr<Mesh>{nullptr      }
@@ -537,8 +527,8 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f, 0.8f, -1.0f},
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
-      std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      1.0f, 0.0f, 0.075f),
+      std::make_shared<PointLight>(glm::vec3{2.0f, 0.0f,  2.0f},
+      0.0f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 2, true, lightSP, texturePtrVectors[0]))
   });
   // Spot light (green)
@@ -546,9 +536,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{-0.1f, 0.75f, -0.1f},
       glm::vec3{ 0.0f, 90.0f,  0.0f},
       glm::vec3{ 1.0f,  1.0f,  1.0f},
-      std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
-      1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.0f, 0.075f, glm::radians(15.0f), glm::radians(13.0f)),
+      std::make_shared<SpotLight>(glm::vec3{ 0.0f, 10.0f,  0.0f},
+      glm::vec3{ 0.6f, -1.0f,  0.9f},
+      0.0f,
+                                  0.075f, glm::radians(15.0f), glm::radians(13.0f)),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 3, lightSP, texturePtrVectors[0]))
   });
   // Spot light (yellow)
@@ -556,9 +547,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.1f,  1.0f, 0.1f},
       glm::vec3{0.0f,  0.0f, 0.0f},
       glm::vec3{1.0f,  1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
-      1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.0f, 0.075f, glm::radians(30.0f), glm::radians(25.0f)),
+      std::make_shared<SpotLight>(glm::vec3{5.0f,  5.0f, 0.0f},
+      glm::vec3{0.3f, -1.0f, 0.6f},
+      0.0f,
+                                  0.075f, glm::radians(30.0f), glm::radians(25.0f)),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   // Flashlight
@@ -566,9 +558,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
-      1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.0f, 0.075f, glm::radians(20.0f), glm::radians(18.0f)),
+      std::make_shared<SpotLight>(glm::vec3{   7.0f, 7.0f, 7.0f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      0.0f,
+                                  0.075f, glm::radians(20.0f), glm::radians(18.0f)),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
@@ -732,8 +725,8 @@ int main(int argc, char *argv[]) {
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // Updating scene objects shader programs uniform values
-    SceneObject::updateShadersLights(sceneObjects, shadowMap2DSP, shadowMapCubeSP, shadowMap2DSP,
-                                     gCamera);
+    SceneObject::updateShadersLights(sceneObjects, glm::vec3{0.1f, 0.1f, 0.1f}, shadowMap2DSP,
+                                     shadowMapCubeSP, shadowMap2DSP, gCamera);
     SceneObject::updateShadersCamera(sceneObjects, gCamera);
 
     // If postprocessing is enabled
@@ -760,21 +753,11 @@ int main(int argc, char *argv[]) {
 
     // Rendering scene objects
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].getLightPtr() != nullptr && sceneObjects[i].getMeshPtr() != nullptr) {
-        const GLuint shaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
-        glUseProgram(shaderProgram);
-        glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
-                     glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
-        glUniform1f(glGetUniformLocation(shaderProgram, "lightIntensity"),
-                    sceneObjects[i].getLightPtr()->getIntensity());
-        glUseProgram(0);
-      }
-
       if (i == kOutlineMeshIndex) {
         glStencilMask(0xff);
       }
 
-      sceneObjects[i].render();
+      sceneObjects[i].render(kExposure);
 
       if (i == kOutlineMeshIndex) {
         glStencilMask(0x00);
@@ -823,7 +806,7 @@ int main(int argc, char *argv[]) {
     glCullFace(GL_FRONT);
     skyboxSceneObject.setTranslate(gCameraController.getCamera()->getPosition());
     SceneObject::updateShadersCamera(std::vector<SceneObject>{skyboxSceneObject}, gCamera);
-    skyboxSceneObject.render();
+    skyboxSceneObject.render(kExposure);
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
 
@@ -848,6 +831,7 @@ int main(int argc, char *argv[]) {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, gPostprocessingTexture);
       glUseProgram(screenSP);
+      glUniform1f(glGetUniformLocation(screenSP, "EXPOSURE"), kExposure);
       glUniform1i(glGetUniformLocation(screenSP, "texture0"), 0);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
       glUseProgram(0);
@@ -1072,7 +1056,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->getLightPtr()->getIntensity() *= -1.0f;
+      gFlashlightSceneObjectPtr->getLightPtr()->getColor() *= -1.0f;
     }
   }
 

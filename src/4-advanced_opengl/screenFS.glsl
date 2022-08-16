@@ -28,11 +28,11 @@ const float kKernelEdgeDetection[] = {
    1.0f,  1.0f,  1.0f,
 };
 
+uniform sampler2D texture0;
+
 in vec2 fTexCoords;
 
 out vec4 FragColor;
-
-uniform sampler2D texture0;
 
 void main() {
   // Getting post-processing texture texel

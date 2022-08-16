@@ -2,23 +2,16 @@
 
 uniform vec3 VIEW_POS;
 
-uniform samplerCube SKYBOX;
-
 uniform struct {
-  float ambCoef;
-  float diffCoef;
-  float specCoef;
-
-  float glossiness;
+  sampler2D   albedoMap;
+  sampler2D   normalMap;
+  sampler2D   depthMap;
+  sampler2D   ambOccMap;
+  sampler2D   glossMap;
+  sampler2D   emissMap;
+  samplerCube envMap;
 
   float parallaxStrength;
-
-  sampler2D albedoMap;
-  sampler2D normalMap;
-  sampler2D depthMap;
-  sampler2D ambOccMap;
-  sampler2D roughMap;
-  sampler2D emissMap;
 } MATERIAL;
 
 in Interpolators {
@@ -43,5 +36,5 @@ void main() {
   R.y *= -1.0f;
 
   // Getting texel from cubemap at reflected vector
-  FragColor = vec4(texture(SKYBOX, R).rgb, 1.0f);
+  FragColor = vec4(texture(MATERIAL.envMap, R).rgb, 1.0f);
 }

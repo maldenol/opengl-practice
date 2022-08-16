@@ -1,24 +1,19 @@
 #version 460 core
 
+uniform float EXPOSURE;
+
 uniform vec3 VIEW_POS;
 
-uniform samplerCube SKYBOX;
-
 uniform struct {
-  float ambCoef;
-  float diffCoef;
-  float specCoef;
-
-  float glossiness;
+  sampler2D   albedoMap;
+  sampler2D   normalMap;
+  sampler2D   depthMap;
+  sampler2D   ambOccMap;
+  sampler2D   glossMap;
+  sampler2D   emissMap;
+  samplerCube envMap;
 
   float parallaxStrength;
-
-  sampler2D albedoMap;
-  sampler2D normalMap;
-  sampler2D depthMap;
-  sampler2D ambOccMap;
-  sampler2D roughMap;
-  sampler2D emissMap;
 } MATERIAL;
 
 in Interpolators {
@@ -43,5 +38,10 @@ void main() {
   R.y *= -1.0f;
 
   // Getting texel from cubemap at reflected vector
-  FragColor = vec4(texture(SKYBOX, R).rgb, 1.0f);
+  vec3 color = texture(MATERIAL.envMap, R).rgb;
+
+  // Applying correction to cancel post-processing exposure tone mapping
+  color *= 1.0f / EXPOSURE;
+
+  FragColor = vec4(color, 1.0f);
 }

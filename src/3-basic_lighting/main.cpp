@@ -129,15 +129,17 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
-      std::vector<std::shared_ptr<Mesh::Material::Texture>>{     },
+      std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", false), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
                                                             3, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("roughnessMap.png", false), 4,
-                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadTextureHDR("glossinessMap.hdr"), 4, false),
                                                             //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", false), 5, false),
-      },
+                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("black.png", false), 5, false),
+                                                            },
   };
 
   // Creating and configuring scene objects
@@ -159,7 +161,6 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr      },
       std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(5.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Central cube
   sceneObjects.push_back(SceneObject{
@@ -169,16 +170,14 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<BaseLight>{nullptr       },
       std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setGlossiness(10.0f);
   sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
       glm::vec3{   0.0f, 10.0f, 0.0f},
       glm::vec3{   0.0f,  0.0f, 0.0f},
       glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<DirectionalLight>(glm::vec3{   1.0f,  1.0f, 1.0f},
-      0.2f,
-                                         glm::vec3{   0.5f, -1.0f, 0.0f}
+      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
+      glm::vec3{   0.5f, -1.0f, 0.0f}
       ),
       std::shared_ptr<Mesh>{nullptr      }
   });
@@ -187,8 +186,8 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.0f, 0.8f, -1.0f},
       glm::vec3{0.0f, 0.0f,  0.0f},
       glm::vec3{1.0f, 1.0f,  1.0f},
-      std::make_shared<PointLight>(glm::vec3{1.0f, 0.0f,  1.0f},
-      1.0f, 0.45f, 0.075f),
+      std::make_shared<PointLight>(glm::vec3{0.5f, 0.0f,  0.5f},
+      0.45f, 0.075f),
       std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
   });
   // Spot light (green)
@@ -196,9 +195,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{-0.1f, 0.75f, -0.1f},
       glm::vec3{ 0.0f, 90.0f,  0.0f},
       glm::vec3{ 1.0f,  1.0f,  1.0f},
-      std::make_shared<SpotLight>(glm::vec3{ 0.0f,  1.0f,  0.0f},
-      1.0f, glm::vec3{ 0.6f, -1.0f,  0.9f},
-                                  0.45f, 0.075f, glm::radians(15.0f), glm::radians(13.0f)),
+      std::make_shared<SpotLight>(glm::vec3{ 0.0f,  0.5f,  0.0f},
+      glm::vec3{ 0.6f, -1.0f,  0.9f},
+      0.45f,
+                                  0.075f, glm::radians(15.0f), glm::radians(13.0f)),
       std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
   });
   // Spot light (yellow)
@@ -206,9 +206,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{0.1f,  1.0f, 0.1f},
       glm::vec3{0.0f,  0.0f, 0.0f},
       glm::vec3{1.0f,  1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{1.0f,  1.0f, 0.0f},
-      1.0f, glm::vec3{0.3f, -1.0f, 0.6f},
-                                  0.45f, 0.075f, glm::radians(30.0f), glm::radians(25.0f)),
+      std::make_shared<SpotLight>(glm::vec3{0.5f,  0.5f, 0.0f},
+      glm::vec3{0.3f, -1.0f, 0.6f},
+      0.45f,
+                                  0.075f, glm::radians(30.0f), glm::radians(25.0f)),
       std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
   });
   // Flashlight
@@ -216,9 +217,10 @@ int main(int argc, char *argv[]) {
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   0.0f, 0.0f, 0.0f},
       glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{   1.0f, 1.0f, 1.0f},
-      1.5f, glm::vec3{   0.0f, 0.0f, 0.0f},
-                                  0.45f, 0.075f, glm::radians(20.0f), glm::radians(18.0f)),
+      std::make_shared<SpotLight>(glm::vec3{   0.7f, 0.7f, 0.7f},
+      glm::vec3{   0.0f, 0.0f, 0.0f},
+      0.45f,
+                                  0.075f, glm::radians(20.0f), glm::radians(18.0f)),
       std::shared_ptr<Mesh>{nullptr     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
@@ -285,7 +287,7 @@ int main(int argc, char *argv[]) {
         ->setDirection(gCameraController.getCamera()->getForward());
 
     // Updating scene objects shader programs uniform values
-    SceneObject::updateShadersLights(sceneObjects);
+    SceneObject::updateShadersLights(sceneObjects, glm::vec3{0.1f, 0.1f, 0.1f});
     SceneObject::updateShadersCamera(sceneObjects, gCamera);
 
     // Enabling Z-testing
@@ -293,16 +295,6 @@ int main(int argc, char *argv[]) {
 
     // Rendering scene objects
     for (size_t i = 0; i < sceneObjects.size(); ++i) {
-      if (sceneObjects[i].getLightPtr() != nullptr && sceneObjects[i].getMeshPtr() != nullptr) {
-        const GLuint shaderProgram = sceneObjects[i].getMeshPtr()->getShaderProgram();
-        glUseProgram(shaderProgram);
-        glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1,
-                     glm::value_ptr(sceneObjects[i].getLightPtr()->getColor()));
-        glUniform1f(glGetUniformLocation(shaderProgram, "lightIntensity"),
-                    sceneObjects[i].getLightPtr()->getIntensity());
-        glUseProgram(0);
-      }
-
       sceneObjects[i].render();
     }
 
@@ -458,7 +450,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->getLightPtr()->getIntensity() *= -1.0f;
+      gFlashlightSceneObjectPtr->getLightPtr()->getColor() *= -1.0f;
     }
   }
 

@@ -16,8 +16,6 @@ static constexpr size_t kMaxDirectionalLightCount = 8;
 static constexpr size_t kMaxPointLightCount       = 8;
 static constexpr size_t kMaxSpotLightCount        = 8;
 
-static constexpr int kInitShadowMapTextureUnit = 7;
-
 static constexpr float kShadowMapDistance = 20.0f;
 
 // External linkage global variables
@@ -194,10 +192,39 @@ void SceneObject::updateShaderModelMatrix() const noexcept {
   }
 }
 
-void SceneObject::render() const noexcept {
+void SceneObject::updateShaderLightColor() const noexcept {
+  if (_lightPtr != nullptr && _meshPtr != nullptr && _meshPtr->isComplete()) {
+    // Updating object shader program uniform values
+    const GLuint shaderProgram = _meshPtr->getShaderProgram();
+
+    glUseProgram(shaderProgram);
+
+    glUniform3fv(glGetUniformLocation(shaderProgram, "LIGHT_COLOR"), 1,
+                 glm::value_ptr(_lightPtr->getColor()));
+
+    glUseProgram(0);
+  }
+}
+
+void SceneObject::updateShaderExposure(float exposure) const noexcept {
+  if (_meshPtr != nullptr && _meshPtr->isComplete()) {
+    // Updating object shader program uniform values
+    const GLuint shaderProgram = _meshPtr->getShaderProgram();
+
+    glUseProgram(shaderProgram);
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "EXPOSURE"), exposure);
+
+    glUseProgram(0);
+  }
+}
+
+void SceneObject::render(float exposure) const noexcept {
   if (_meshPtr != nullptr && _meshPtr->isComplete()) {
     // Updating shader uniform variables
     updateShaderModelMatrix();
+    updateShaderLightColor();
+    updateShaderExposure(exposure);
 
     // Rendering mesh
     _meshPtr->render();
@@ -207,6 +234,7 @@ void SceneObject::render() const noexcept {
 // Other static member functions
 
 void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjects,
+                                      const glm::vec3                &ambientColor,
                                       GLuint            directionalLightShadowMapShaderProgram,
                                       GLuint            pointLightShadowMapShaderProgram,
                                       GLuint            spotLightShadowMapShaderProgram,
@@ -297,20 +325,14 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
   }
 
   // Updating shader programs uniform values
-  int currShadowMapTextureUnit = kInitShadowMapTextureUnit;
+  int currShadowMapTextureUnit = 7;
   for (size_t i = 0; i < shaderPrograms.size(); ++i) {
     const GLuint shaderProgram = shaderPrograms[i];
 
-    glUseProgram(shaderProgram);
-
-    // Skybox
-    glUniform1i(glGetUniformLocation(shaderProgram, "SKYBOX"), 6);
-
     // Ambient light
-    glUniform3fv(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.color"), 1,
-                 glm::value_ptr(glm::vec3{1.0f, 1.0f, 1.0f}));
-    glUniform1f(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT.intensity"), 1.0f);
-
+    glUseProgram(shaderProgram);
+    glUniform3fv(glGetUniformLocation(shaderProgram, "AMBIENT_LIGHT_COLOR"), 1,
+                 glm::value_ptr(ambientColor));
     glUseProgram(0);
 
     // Copying light VP matrices deques
@@ -603,9 +625,6 @@ void updateShaderProgramSpotLights(GLuint                                  shade
     glUniform3fv(glGetUniformLocation(shaderProgram,
                                       ("SPOT_LIGHTS[" + std::to_string(i) + "].color").c_str()),
                  1, glm::value_ptr(spotLightPtr->getColor()));
-    glUniform1f(glGetUniformLocation(shaderProgram,
-                                     ("SPOT_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
-                spotLightPtr->getIntensity());
     glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
                                               glm::radians(sceneObject.getRotate().y),
                                               glm::radians(sceneObject.getRotate().z))};
@@ -683,10 +702,6 @@ void updateShaderProgramDirectionalLights(
         glGetUniformLocation(shaderProgram,
                              ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].color").c_str()),
         1, glm::value_ptr(directionalLightPtr->getColor()));
-    glUniform1f(
-        glGetUniformLocation(shaderProgram,
-                             ("DIRECTIONAL_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
-        directionalLightPtr->getIntensity());
     glm::mat4 rotateMatrix{glm::eulerAngleXYZ(glm::radians(sceneObject.getRotate().x),
                                               glm::radians(sceneObject.getRotate().y),
                                               glm::radians(sceneObject.getRotate().z))};
@@ -756,9 +771,6 @@ void updateShaderProgramPointLights(
     glUniform3fv(glGetUniformLocation(shaderProgram,
                                       ("POINT_LIGHTS[" + std::to_string(i) + "].color").c_str()),
                  1, glm::value_ptr(pointLightPtr->getColor()));
-    glUniform1f(glGetUniformLocation(shaderProgram,
-                                     ("POINT_LIGHTS[" + std::to_string(i) + "].intensity").c_str()),
-                pointLightPtr->getIntensity());
     glUniform1f(glGetUniformLocation(
                     shaderProgram, ("POINT_LIGHTS[" + std::to_string(i) + "].linAttCoef").c_str()),
                 pointLightPtr->getLinAttCoef());

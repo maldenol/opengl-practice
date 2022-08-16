@@ -19,21 +19,18 @@ void createShadowMapFramebuffer(GLuint &shadowMapFBO, GLuint &shadowMapTexture);
 BaseLight::BaseLight() noexcept { createShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture); }
 
 // Parameterized constructor
-BaseLight::BaseLight(const glm::vec3 &color, float intensity) noexcept
-    : _color{color}, _intensity{intensity} {
+BaseLight::BaseLight(const glm::vec3 &color) noexcept : _color{color} {
   createShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture);
 }
 
 // Copy constructor
-BaseLight::BaseLight(const BaseLight &light) noexcept
-    : _color{light._color}, _intensity{light._intensity} {
+BaseLight::BaseLight(const BaseLight &light) noexcept : _color{light._color} {
   createShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture);
 }
 
 // Copy assignment operator
 BaseLight &BaseLight::operator=(const BaseLight &light) noexcept {
-  _color     = light._color;
-  _intensity = light._intensity;
+  _color = light._color;
 
   createShadowMapFramebuffer(_shadowMapFBO, _shadowMapTexture);
 
@@ -43,14 +40,12 @@ BaseLight &BaseLight::operator=(const BaseLight &light) noexcept {
 // Move constructor
 BaseLight::BaseLight(BaseLight &&light) noexcept
     : _color{std::exchange(light._color, glm::vec3{})},
-      _intensity{std::exchange(light._intensity, 0.0f)},
       _shadowMapFBO{std::exchange(light._shadowMapFBO, 0)},
       _shadowMapTexture{std::exchange(light._shadowMapTexture, 0)} {}
 
 // Move assignment operator
 BaseLight &BaseLight::operator=(BaseLight &&light) noexcept {
   std::swap(_color, light._color);
-  std::swap(_intensity, light._intensity);
   std::swap(_shadowMapFBO, light._shadowMapFBO);
   std::swap(_shadowMapTexture, light._shadowMapTexture);
 
@@ -67,8 +62,6 @@ BaseLight::~BaseLight() noexcept {
 
 void BaseLight::setColor(const glm::vec3 &color) noexcept { _color = color; }
 
-void BaseLight::setIntensity(float intensity) noexcept { _intensity = intensity; }
-
 void BaseLight::setShadowMapFBO(GLuint shadowMapFBO) noexcept { _shadowMapFBO = shadowMapFBO; }
 
 void BaseLight::setShadowMapTexture(GLuint shadowMapTexture) noexcept {
@@ -80,10 +73,6 @@ void BaseLight::setShadowMapTexture(GLuint shadowMapTexture) noexcept {
 const glm::vec3 &BaseLight::getColor() const noexcept { return _color; }
 
 glm::vec3 &BaseLight::getColor() noexcept { return _color; }
-
-float BaseLight::getIntensity() const noexcept { return _intensity; }
-
-float &BaseLight::getIntensity() noexcept { return _intensity; }
 
 GLuint BaseLight::getShadowMapFBO() const noexcept { return _shadowMapFBO; }
 

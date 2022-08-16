@@ -12,7 +12,6 @@ namespace glengine {
 
 // Initializes Qt Gui application
 QGuiApplication initQGuiApplication(int argc, char *argv[]);
-
 // Terminates Qt Gui application
 void terminateQGuiApplication(QGuiApplication &app);
 

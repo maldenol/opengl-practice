@@ -28,11 +28,14 @@ const float kKernelEdgeDetection[] = {
    1.0f,  1.0f,  1.0f,
 };
 
+//uniform float BIGGEST_RADIANCE;
+uniform float EXPOSURE;
+
+uniform sampler2D texture0;
+
 in vec2 fTexCoords;
 
 out vec4 FragColor;
-
-uniform sampler2D texture0;
 
 void main() {
   // Getting post-processing texture texel
@@ -57,16 +60,14 @@ void main() {
   //}
 
   // Applying tone mapping (Reinhard algorithm)
-  float luminanceIn     = dot(color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
-  //float luminanceOut    = luminanceIn / (1.0f + luminanceIn);
-  float biggestRadiance = 1.0f;
-  float luminanceOut    = luminanceIn / (1.0f + luminanceIn)
-                        * (1.0f + luminanceIn / (biggestRadiance * biggestRadiance));
-  color.rgb             = color.rgb * luminanceOut / luminanceIn;
+  //float luminanceIn  = dot(color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
+  ////float luminanceOut = luminanceIn / (1.0f + luminanceIn); // shortened
+  //float luminanceOut = luminanceIn / (1.0f + luminanceIn)
+  //                   * (1.0f + luminanceIn / (BIGGEST_RADIANCE * BIGGEST_RADIANCE));
+  //color.rgb          = color.rgb * luminanceOut / luminanceIn;
 
   // Applying tone mapping (exposure)
-  //float exposure = 1.0f;
-  //color.rgb      = vec3(1.0f) - exp(-color.rgb * exposure);
+  color.rgb = vec3(1.0f) - exp(-color.rgb * EXPOSURE);
 
   // Applying gamma correction
   float gammaR = 2.2f;
