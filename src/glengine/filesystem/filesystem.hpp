@@ -1,6 +1,9 @@
 #ifndef GLENGINE_FILESYSTEM_FILESYSTEM_HPP
 #define GLENGINE_FILESYSTEM_FILESYSTEM_HPP
 
+// All the headers
+#include "./loadMap.hpp"
+
 // STD
 #include <string>
 

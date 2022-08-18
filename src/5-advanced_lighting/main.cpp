@@ -403,20 +403,20 @@ int main(int argc, char *argv[]) {
     ;
 
   // Loading textures
-  gTextureBlack = loadTexture("black.png", false);
-  gTextureWhite = loadTexture("white.png", false);
+  gTextureBlack = loadMap2D("black.png", false);
+  gTextureWhite = loadMap2D("white.png", false);
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", true), 0, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
-                                                            3, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTextureHDR("glossinessMap.hdr"), 4, false),
-                                                            //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", true), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("albedoMap.png", true), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("normalMap.png", false), 1, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("depthMap.png", false), 2, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("ambientOcclusionMap.png", false), 3,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("glossinessMap.hdr"), 4, false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("emissionMap.png", true), 5, false),
           std::make_shared<Mesh::Material::Texture>(proceduralTexture, 5, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadCubemap(
+                                                            std::make_shared<Mesh::Material::Texture>(loadMapCube(
                                                         std::vector<std::string>{
                                                             "skyboxXP.png",
                                                             "skyboxXN.png",
@@ -428,7 +428,7 @@ int main(int argc, char *argv[]) {
                                                             6, true),
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("skybox.png", true), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("skybox.png", true), 0, false),
                                                             },
   };
 
@@ -436,143 +436,184 @@ int main(int argc, char *argv[]) {
   std::vector<SceneObject> sceneObjects{};
   // Lower plane (tessellated)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  -1.0f, 0.0f},
-      glm::vec3{  90.0f, 180.0f, 0.0f},
-      glm::vec3{  20.0f,  10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, dynamicLODQuadSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                0.0f,  -1.0f, 0.0f},
+      glm::vec3{                                                                               90.0f, 180.0f, 0.0f},
+      glm::vec3{                                                                               20.0f,  10.0f, 30.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generatePlane(1.0f, 10, dynamicLODQuadSP, texturePtrVectors[1])})       }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(4);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->setPatchVertices(4);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  2.0f, 0.0f},
-      glm::vec3{  90.0f,  0.0f, 0.0f},
-      glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                            0.0f,  2.0f, 0.0f},
+      glm::vec3{                                                                           90.0f,  0.0f, 0.0f},
+      glm::vec3{                                                                           20.0f, 10.0f, 30.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1])})      }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Central cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   2.0f, 2.0f, 2.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                 0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                 0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                 2.0f, 2.0f, 2.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Instanced cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                 0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                 0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                 1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(0.5f, 1, false, blinnPhongSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setInstanceCount(kInstanceCount);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->setInstanceCount(kInstanceCount);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Mirror cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{  -3.0f, 0.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   3.0f, 3.0f, 3.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 1, false, mirrorSP, texturePtrVectors[1]))
+      glm::vec3{                                                                            -3.0f, 0.0f, -10.0f},
+      glm::vec3{                                                                             0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                             3.0f, 3.0f, 3.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(0.5f, 1, false, mirrorSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Lens cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   3.0f, 0.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   3.0f, 3.0f, 3.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(0.5f, 1, false, lensSP, texturePtrVectors[1]))
+      glm::vec3{                                                                           3.0f, 0.0f, -10.0f},
+      glm::vec3{                                                                           0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                           3.0f, 3.0f, 3.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(0.5f, 1, false, lensSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Quad sphere without silhouette smoothing
   sceneObjects.push_back(SceneObject{
-      glm::vec3{  -3.0f, 2.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(
-          generateQuadSphere(1.0f, 3, false, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                      -3.0f, 2.0f, -10.0f},
+      glm::vec3{                                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                       1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateQuadSphere(1.0f, 3, false, blinnPhongSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Quad sphere with silhouette smoothing (tessellated)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   3.0f, 2.0f, -10.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(
-          generateQuadSphere(1.0f, 3, false, silhouetteSmoothingSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                       3.0f, 2.0f, -10.0f},
+      glm::vec3{                                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                       1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(new Mesh{
+generateQuadSphere(1.0f, 3, false, silhouetteSmoothingSP, texturePtrVectors[1])})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->setPatchVertices(3);
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->setPatchVertices(3);
+  dynamic_cast<Mesh *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Mesh)[0].get())
+      ->getMaterialPtr()
+      ->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  0.0f, 0.0f},
-      glm::vec3{   0.0f,  0.0f, 0.0f},
-      glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
-                                         glm::vec3{   0.5f, -2.0f, -0.5f}
-      ),
-      std::shared_ptr<Mesh>{nullptr      }
+      glm::vec3{                                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                       1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new DirectionalLight{glm::vec3{0.2f, 0.2f, 0.2f}, glm::vec3{0.5f, -2.0f, -0.5f}})     }
   });
-  sceneObjects[sceneObjects.size() - 1].getLightPtr()->setShadowMapTextureResolution(2048);
+  dynamic_cast<BaseLight *>(
+      sceneObjects[sceneObjects.size() - 1].getSpecificComponentPtrs(ComponentType::Light)[0].get())
+      ->setShadowMapTextureResolution(2048);
   // Point light (purple)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{0.0f, 0.8f, -1.0f},
-      glm::vec3{0.0f, 0.0f,  0.0f},
-      glm::vec3{1.0f, 1.0f,  1.0f},
-      std::make_shared<PointLight>(glm::vec3{2.0f, 0.0f,  2.0f},
-      0.0f, 0.075f),
-      std::make_shared<Mesh>(generateQuadSphere(0.1f, 2, true, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                 0.0f, 0.8f, -1.0f},
+      glm::vec3{                                                                                 0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                 1.0f, 1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{
+                dynamic_cast<Component *>(new PointLight{glm::vec3{2.0f, 0.0f, 2.0f}, 0.0f, 0.075f})     },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateQuadSphere(0.1f, 2, true, lightSP, texturePtrVectors[0])})     }
   });
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{-0.1f, 0.75f, -0.1f},
-      glm::vec3{ 0.0f, 90.0f,  0.0f},
-      glm::vec3{ 1.0f,  1.0f,  1.0f},
-      std::make_shared<SpotLight>(glm::vec3{ 0.0f, 10.0f,  0.0f},
-      glm::vec3{ 0.6f, -1.0f,  0.9f},
-      0.0f,
-                                  0.075f, glm::radians(15.0f), glm::radians(13.0f)),
-      std::make_shared<Mesh>(generateUVSphere(0.1f, 3, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                        -0.1f, 0.75f, -0.1f},
+      glm::vec3{                                                                         0.0f, 90.0f, 0.0f},
+      glm::vec3{                                                                         1.0f,  1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{           dynamic_cast<Component *>(
+           new SpotLight{glm::vec3{0.0f, 10.0f, 0.0f}, glm::vec3{0.6f, -1.0f, 0.9f}, 0.0f, 0.075f,
+           glm::radians(15.0f), glm::radians(13.0f)})      },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateUVSphere(0.1f, 3, lightSP, texturePtrVectors[0])})      }
   });
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{0.1f,  1.0f, 0.1f},
-      glm::vec3{0.0f,  0.0f, 0.0f},
-      glm::vec3{1.0f,  1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{5.0f,  5.0f, 0.0f},
-      glm::vec3{0.3f, -1.0f, 0.6f},
-      0.0f,
-                                  0.075f, glm::radians(30.0f), glm::radians(25.0f)),
-      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                       0.1f, 1.0f, 0.1f},
+      glm::vec3{                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                       1.0f, 1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{         dynamic_cast<Component *>(
+         new SpotLight{glm::vec3{5.0f, 5.0f, 0.0f}, glm::vec3{0.3f, -1.0f, 0.6f}, 0.0f, 0.075f,
+         glm::radians(30.0f), glm::radians(25.0f)})     },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateIcoSphere(0.1f, lightSP, texturePtrVectors[0])})     }
   });
   // Flashlight
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{   7.0f, 7.0f, 7.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      0.0f,
-                                  0.075f, glm::radians(20.0f), glm::radians(18.0f)),
-      std::shared_ptr<Mesh>{nullptr     }
+      glm::vec3{                                                              0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                              0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                              1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new SpotLight{glm::vec3{7.0f, 7.0f, 7.0f}, glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.075f,
+glm::radians(20.0f), glm::radians(18.0f)})     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
 
   // Skybox
   SceneObject skyboxSceneObject{
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::shared_ptr<BaseLight>{nullptr     },
-      std::make_shared<Mesh>(generateCube(1.0f, 1, true, skyboxSP, texturePtrVectors[2]))
+      glm::vec3{                                                                            0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                            0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                            1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(1.0f, 1, true, skyboxSP, texturePtrVectors[2])})     }
   };
 
   // Creating screen
@@ -621,25 +662,35 @@ int main(int argc, char *argv[]) {
   glGenBuffers(1, &instanceVBO);
   glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(modelMatrices), &modelMatrices[0], GL_STATIC_DRAW);
-  glBindVertexArray(sceneObjects[kInstancedMeshIndex].getMeshPtr()->getVAO());
-  glEnableVertexAttribArray(4);
-  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
-                        reinterpret_cast<void *>(0 * sizeof(float)));
-  glVertexAttribDivisor(4, 1);
-  glEnableVertexAttribArray(5);
-  glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
-                        reinterpret_cast<void *>(4 * sizeof(float)));
-  glVertexAttribDivisor(5, 1);
-  glEnableVertexAttribArray(6);
-  glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
-                        reinterpret_cast<void *>(8 * sizeof(float)));
-  glVertexAttribDivisor(6, 1);
-  glEnableVertexAttribArray(7);
-  glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
-                        reinterpret_cast<void *>(12 * sizeof(float)));
-  glVertexAttribDivisor(7, 1);
+  // Getting mesh component pointers
+  std::vector<std::shared_ptr<Component>> instanceMeshPtrs{
+      sceneObjects[kInstancedMeshIndex].getSpecificComponentPtrs(ComponentType::Mesh)};
+  // For each mesh component
+  for (size_t i = 0; i < instanceMeshPtrs.size(); ++i) {
+    const GLuint instanceMeshVAO = dynamic_cast<Mesh *>(instanceMeshPtrs[i].get())->getVAO();
+
+    glBindVertexArray(instanceMeshVAO);
+
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                          reinterpret_cast<void *>(0 * sizeof(float)));
+    glVertexAttribDivisor(4, 1);
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                          reinterpret_cast<void *>(4 * sizeof(float)));
+    glVertexAttribDivisor(5, 1);
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                          reinterpret_cast<void *>(8 * sizeof(float)));
+    glVertexAttribDivisor(6, 1);
+    glEnableVertexAttribArray(7);
+    glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float),
+                          reinterpret_cast<void *>(12 * sizeof(float)));
+    glVertexAttribDivisor(7, 1);
+
+    glBindVertexArray(0);
+  }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
 
   // Setting OpenGL clear color
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -721,8 +772,14 @@ int main(int argc, char *argv[]) {
 
     // Updating flashlight SceneObject fields
     gFlashlightSceneObjectPtr->setTranslate(gCameraController.getCamera()->getPosition());
-    dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
-        ->setDirection(gCameraController.getCamera()->getForward());
+    // Getting light component pointers
+    std::vector<std::shared_ptr<Component>> flashlightSceneObjectLightPtrs{
+        gFlashlightSceneObjectPtr->getSpecificComponentPtrs(ComponentType::Light)};
+    // For each light component
+    for (size_t i = 0; i < flashlightSceneObjectLightPtrs.size(); ++i) {
+      dynamic_cast<SpotLight *>(flashlightSceneObjectLightPtrs[i].get())
+          ->setDirection(gCameraController.getCamera()->getForward());
+    }
 
     // Updating scene objects shader programs uniform values
     SceneObject::updateShadersLights(sceneObjects, glm::vec3{0.1f, 0.1f, 0.1f}, shadowMap2DSP,
@@ -765,38 +822,78 @@ int main(int argc, char *argv[]) {
     }
 
     // Drawing outline
+    // Getting mesh component pointers
+    SceneObject                            &outlineSceneObject = sceneObjects[kOutlineMeshIndex];
+    std::vector<std::shared_ptr<Component>> outlineMeshPtrs{
+        outlineSceneObject.getSpecificComponentPtrs(ComponentType::Mesh)};
+    // Temporary changing scene object shader programs
+    std::vector<GLuint> initShaderPrograms{};
+    // For each mesh component
+    for (size_t i = 0; i < outlineMeshPtrs.size(); ++i) {
+      Mesh &outlineMesh = *dynamic_cast<Mesh *>(outlineMeshPtrs[i].get());
+
+      initShaderPrograms.push_back(outlineMesh.getShaderProgram());
+      outlineMesh.setShaderProgram(outlineSP);
+    }
+    // Rendering outline meshes
     glStencilFunc(GL_NOTEQUAL, 1, 0xff);
     glStencilMask(0x00);
-    if (sceneObjects[kOutlineMeshIndex].getMeshPtr() != nullptr) {
-      SceneObject &sceneObject       = sceneObjects[kOutlineMeshIndex];
-      const GLuint initShaderProgram = sceneObject.getMeshPtr()->getShaderProgram();
-      sceneObject.getMeshPtr()->setShaderProgram(outlineSP);
-      SceneObject::updateShadersCamera(std::vector<SceneObject>{sceneObject}, gCamera);
-      sceneObject.render();
-      sceneObject.getMeshPtr()->setShaderProgram(initShaderProgram);
-    }
+    SceneObject::updateShadersCamera(std::vector<SceneObject>{outlineSceneObject}, gCamera);
+    outlineSceneObject.render(kExposure);
     glStencilFunc(GL_ALWAYS, 1, 0xff);
+    // Reverting shader program changes
+    // For each mesh component
+    for (size_t i = 0; i < outlineMeshPtrs.size(); ++i) {
+      Mesh &outlineMesh = *dynamic_cast<Mesh *>(outlineMeshPtrs[i].get());
+
+      outlineMesh.setShaderProgram(initShaderPrograms[i]);
+    }
 
     // Rendering normals
     if (gEnableNormals) {
+      // Temporary changing scene object shader programs
       std::vector<GLuint> initShaderPrograms{};
-      initShaderPrograms.resize(sceneObjects.size());
-
-      // Temporary changing scene objects shader programs and updating shaders camera
-      // to render normals
+      // For each scene object
       for (size_t i = 0; i < sceneObjects.size(); ++i) {
-        if (sceneObjects[i].getMeshPtr() != nullptr) {
-          initShaderPrograms[i] = sceneObjects[i].getMeshPtr()->getShaderProgram();
-          sceneObjects[i].getMeshPtr()->setShaderProgram(normalSP);
+        std::vector<std::shared_ptr<Component>> meshPtrs{
+            const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+                ComponentType::Mesh)};
+
+        // For each mesh component
+        for (size_t i = 0; i < meshPtrs.size(); ++i) {
+          Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+          // If mesh is complete
+          if (mesh.isComplete()) {
+            initShaderPrograms.push_back(mesh.getShaderProgram());
+            mesh.setShaderProgram(normalSP);
+          }
         }
       }
+      // Temporary updating shader camera
       SceneObject::updateShadersCamera(sceneObjects, gCamera);
 
-      // Rendering normals and revering shader program changes
+      // Rendering scene object from camera point of view
+      // and reverting shader program changes for each scene object
+      std::vector<GLuint> initShaderProgramsReversed{initShaderPrograms.crbegin(),
+                                                     initShaderPrograms.crend()};
       for (size_t i = 0; i < sceneObjects.size(); ++i) {
-        if (sceneObjects[i].getMeshPtr() != nullptr) {
-          sceneObjects[i].render();
-          sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderPrograms[i]);
+        sceneObjects[i].render(kExposure);
+
+        // Getting mesh component pointers
+        std::vector<std::shared_ptr<Component>> meshPtrs{
+            const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+                ComponentType::Mesh)};
+
+        // For each mesh component
+        for (size_t i = 0; i < meshPtrs.size(); ++i) {
+          Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+          // If mesh is complete
+          if (mesh.isComplete()) {
+            mesh.setShaderProgram(initShaderProgramsReversed.back());
+            initShaderProgramsReversed.pop_back();
+          }
         }
       }
     }
@@ -1056,7 +1153,13 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->getLightPtr()->getColor() *= -1.0f;
+      // Getting light component pointers
+      std::vector<std::shared_ptr<Component>> lightPtrs{
+          gFlashlightSceneObjectPtr->getSpecificComponentPtrs(ComponentType::Light)};
+      // For each light component
+      for (size_t i = 0; i < lightPtrs.size(); ++i) {
+        dynamic_cast<BaseLight *>(lightPtrs[i].get())->getColor() *= -1.0f;
+      }
     }
   }
 

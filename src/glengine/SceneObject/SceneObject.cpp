@@ -3,6 +3,8 @@
 
 // STD
 #include <algorithm>
+#include <cstdarg>
+#include <string>
 #include <utility>
 
 // GLM
@@ -41,15 +43,18 @@ static void renderPointLightShadowMap(const std::vector<SceneObject> &sceneObjec
                                       const PointLight               *pointLightPtr,
                                       GLuint pointLightShadowMapShaderProgram);
 static void updateShaderProgramSpotLights(
-    GLuint shaderProgram, const std::vector<const SceneObject *> &spotLightSceneObjectPtrs,
+    GLuint shaderProgram, const std::vector<const SpotLight *> &spotLightPtrs,
+    const std::vector<const SceneObject *> &spotLightSceneObjectPtrs,
     GLuint spotLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<glm::mat4> &spotLightVPMatrices);
 static void updateShaderProgramDirectionalLights(
-    GLuint shaderProgram, const std::vector<const SceneObject *> &directionalLightSceneObjectPtrs,
+    GLuint shaderProgram, const std::vector<const DirectionalLight *> &directionalLightPtrs,
+    const std::vector<const SceneObject *> &directionalLightSceneObjectPtrs,
     GLuint directionalLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<glm::mat4> &directionalLightVPMatrices);
 static void updateShaderProgramPointLights(
-    GLuint shaderProgram, const std::vector<const SceneObject *> &pointLightSceneObjectPtrs,
+    GLuint shaderProgram, const std::vector<const PointLight *> &pointLightPtrs,
+    const std::vector<const SceneObject *> &pointLightSceneObjectPtrs,
     GLuint pointLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<float> &pointLightFarPlanes);
 
@@ -60,14 +65,25 @@ SceneObject::SceneObject() noexcept { recalculateModelMatrix(); }
 
 // Parameterized constructor
 SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
-                         const glm::vec3 &scale, const std::shared_ptr<BaseLight> &lightPtr,
-                         const std::shared_ptr<Mesh> &meshPtr) noexcept
-    : _translate{translate},
-      _rotate{rotate},
-      _scale{scale},
-      _lightPtr{lightPtr},
-      _meshPtr{meshPtr} {
+                         const glm::vec3                               &scale,
+                         const std::vector<std::shared_ptr<Component>> &componentPtrs) noexcept
+    : _translate{translate}, _rotate{rotate}, _scale{scale}, _componentPtrs{componentPtrs} {
   recalculateModelMatrix();
+}
+
+// Parameterized constructor
+SceneObject::SceneObject(const glm::vec3 &translate, const glm::vec3 &rotate,
+                         const glm::vec3 &scale, int initComponentsCount, ...)
+    : _translate{translate}, _rotate{rotate}, _scale{scale} {
+  recalculateModelMatrix();
+
+  // Adding components to components pointers vector
+  va_list componentPtrList{};
+  va_start(componentPtrList, initComponentsCount);
+  for (int i = 0; i < initComponentsCount; ++i) {
+    _componentPtrs.push_back(va_arg(componentPtrList, std::shared_ptr<Component>));
+  }
+  va_end(componentPtrList);
 }
 
 // Copy constructor
@@ -76,17 +92,15 @@ SceneObject::SceneObject(const SceneObject &sceneObject) noexcept
       _rotate{sceneObject._rotate},
       _scale{sceneObject._scale},
       _modelMatrix{sceneObject._modelMatrix},
-      _lightPtr{sceneObject._lightPtr},
-      _meshPtr{sceneObject._meshPtr} {}
+      _componentPtrs{sceneObject._componentPtrs} {}
 
 // Copy assignment operator
 SceneObject &SceneObject::operator=(const SceneObject &sceneObject) noexcept {
-  _translate   = sceneObject._translate;
-  _rotate      = sceneObject._rotate;
-  _scale       = sceneObject._scale;
-  _modelMatrix = sceneObject._modelMatrix;
-  _lightPtr    = sceneObject._lightPtr;
-  _meshPtr     = sceneObject._meshPtr;
+  _translate     = sceneObject._translate;
+  _rotate        = sceneObject._rotate;
+  _scale         = sceneObject._scale;
+  _modelMatrix   = sceneObject._modelMatrix;
+  _componentPtrs = sceneObject._componentPtrs;
 
   return *this;
 }
@@ -97,8 +111,8 @@ SceneObject::SceneObject(SceneObject &&sceneObject) noexcept
       _rotate{std::exchange(sceneObject._rotate, glm::vec3{})},
       _scale{std::exchange(sceneObject._scale, glm::vec3{})},
       _modelMatrix{std::exchange(sceneObject._modelMatrix, glm::mat4{})},
-      _lightPtr{std::exchange(sceneObject._lightPtr, std::shared_ptr<BaseLight>{})},
-      _meshPtr{std::exchange(sceneObject._meshPtr, std::shared_ptr<Mesh>{})} {}
+      _componentPtrs{
+          std::exchange(sceneObject._componentPtrs, std::vector<std::shared_ptr<Component>>{})} {}
 
 // Move assignment operator
 SceneObject &SceneObject::operator=(SceneObject &&sceneObject) noexcept {
@@ -106,8 +120,7 @@ SceneObject &SceneObject::operator=(SceneObject &&sceneObject) noexcept {
   std::swap(_rotate, sceneObject._rotate);
   std::swap(_scale, sceneObject._scale);
   std::swap(_modelMatrix, sceneObject._modelMatrix);
-  std::swap(_lightPtr, sceneObject._lightPtr);
-  std::swap(_meshPtr, sceneObject._meshPtr);
+  std::swap(_componentPtrs, sceneObject._componentPtrs);
 
   return *this;
 }
@@ -139,11 +152,10 @@ void SceneObject::setModelMatrix(const glm::mat4 &modelMatrix) noexcept {
   _modelMatrix = modelMatrix;
 }
 
-void SceneObject::setLightPtr(const std::shared_ptr<BaseLight> &lightPtr) noexcept {
-  _lightPtr = lightPtr;
+void SceneObject::setComponentPtrs(
+    const std::vector<std::shared_ptr<Component>> &componentPtrs) noexcept {
+  _componentPtrs = componentPtrs;
 }
-
-void SceneObject::setMeshPtr(const std::shared_ptr<Mesh> &meshPtr) noexcept { _meshPtr = meshPtr; }
 
 // Getters
 
@@ -163,13 +175,13 @@ const glm::mat4 &SceneObject::getModelMatrix() const noexcept { return _modelMat
 
 glm::mat4 &SceneObject::getModelMatrix() noexcept { return _modelMatrix; }
 
-const std::shared_ptr<BaseLight> &SceneObject::getLightPtr() const noexcept { return _lightPtr; }
+const std::vector<std::shared_ptr<Component>> &SceneObject::getComponentPtrs() const noexcept {
+  return _componentPtrs;
+}
 
-std::shared_ptr<BaseLight> &SceneObject::getLightPtr() noexcept { return _lightPtr; }
-
-const std::shared_ptr<Mesh> &SceneObject::getMeshPtr() const noexcept { return _meshPtr; }
-
-std::shared_ptr<Mesh> &SceneObject::getMeshPtr() noexcept { return _meshPtr; }
+std::vector<std::shared_ptr<Component>> &SceneObject::getComponentPtrs() noexcept {
+  return _componentPtrs;
+}
 
 // Other member functions
 
@@ -181,10 +193,43 @@ void SceneObject::recalculateModelMatrix() noexcept {
   _modelMatrix = glm::scale(_modelMatrix, _scale);
 }
 
-void SceneObject::updateShaderModelMatrix() const noexcept {
-  if (_meshPtr != nullptr && _meshPtr->isComplete()) {
+std::vector<std::shared_ptr<const Component>> SceneObject::getSpecificComponentPtrs(
+    ComponentType type) const noexcept {
+  std::vector<std::shared_ptr<const Component>> specificComponentPtrs{};
+
+  // For each component
+  for (size_t i = 0; i < _componentPtrs.size(); ++i) {
+    // If current component has specific component type
+    if (_componentPtrs[i]->getType() == type) {
+      // Pushing current component into the vector
+      specificComponentPtrs.push_back(std::shared_ptr<const Component>{_componentPtrs[i]});
+    }
+  }
+
+  return specificComponentPtrs;
+}
+
+std::vector<std::shared_ptr<Component>> SceneObject::getSpecificComponentPtrs(
+    ComponentType type) noexcept {
+  std::vector<std::shared_ptr<Component>> specificComponentPtrs{};
+
+  // For each component
+  for (size_t i = 0; i < _componentPtrs.size(); ++i) {
+    // If current component has specific component type
+    if (_componentPtrs[i]->getType() == type) {
+      // Pushing current component into the vector
+      specificComponentPtrs.push_back(_componentPtrs[i]);
+    }
+  }
+
+  return specificComponentPtrs;
+}
+
+void SceneObject::updateShaderModelMatrix(const Mesh &mesh) const noexcept {
+  // If mesh is complete
+  if (mesh.isComplete()) {
     // Updating object shader program uniform values
-    const GLuint shaderProgram = _meshPtr->getShaderProgram();
+    const GLuint shaderProgram = mesh.getShaderProgram();
 
     glUseProgram(shaderProgram);
 
@@ -195,24 +240,26 @@ void SceneObject::updateShaderModelMatrix() const noexcept {
   }
 }
 
-void SceneObject::updateShaderLightColor() const noexcept {
-  if (_lightPtr != nullptr && _meshPtr != nullptr && _meshPtr->isComplete()) {
+void SceneObject::updateShaderLightColor(const Mesh &mesh, const BaseLight &light) const noexcept {
+  // If mesh is complete
+  if (mesh.isComplete()) {
     // Updating object shader program uniform values
-    const GLuint shaderProgram = _meshPtr->getShaderProgram();
+    const GLuint shaderProgram = mesh.getShaderProgram();
 
     glUseProgram(shaderProgram);
 
     glUniform3fv(glGetUniformLocation(shaderProgram, "LIGHT_COLOR"), 1,
-                 glm::value_ptr(_lightPtr->getColor()));
+                 glm::value_ptr(light.getColor()));
 
     glUseProgram(0);
   }
 }
 
-void SceneObject::updateShaderExposure(float exposure) const noexcept {
-  if (_meshPtr != nullptr && _meshPtr->isComplete()) {
+void SceneObject::updateShaderExposure(const Mesh &mesh, float exposure) const noexcept {
+  // If mesh is complete
+  if (mesh.isComplete()) {
     // Updating object shader program uniform values
-    const GLuint shaderProgram = _meshPtr->getShaderProgram();
+    const GLuint shaderProgram = mesh.getShaderProgram();
 
     glUseProgram(shaderProgram);
 
@@ -223,14 +270,34 @@ void SceneObject::updateShaderExposure(float exposure) const noexcept {
 }
 
 void SceneObject::render(float exposure) const noexcept {
-  if (_meshPtr != nullptr && _meshPtr->isComplete()) {
-    // Updating shader uniform variables
-    updateShaderModelMatrix();
-    updateShaderLightColor();
-    updateShaderExposure(exposure);
+  // Getting mesh components pointers and light component pointer
+  std::vector<std::shared_ptr<const Component>> meshPtrs{
+      getSpecificComponentPtrs(ComponentType::Mesh)};
+  std::vector<std::shared_ptr<const Component>> lightPtrs{
+      getSpecificComponentPtrs(ComponentType::Light)};
 
-    // Rendering mesh
-    _meshPtr->render();
+  // Using the first light component if scene object has at least one
+  const BaseLight *lightPtr{};
+  if (lightPtrs.size() >= 1) {
+    lightPtr = dynamic_cast<const BaseLight *>(lightPtrs[0].get());
+  }
+
+  // For each mesh component
+  for (size_t i = 0; i < meshPtrs.size(); ++i) {
+    const Mesh &mesh = *dynamic_cast<const Mesh *>(meshPtrs[i].get());
+
+    // If mesh is complete
+    if (mesh.isComplete()) {
+      // Updating shader uniform variables
+      updateShaderModelMatrix(mesh);
+      if (lightPtr != nullptr) {
+        updateShaderLightColor(mesh, *lightPtr);
+      }
+      updateShaderExposure(mesh, exposure);
+
+      // Rendering mesh
+      mesh.render();
+    }
   }
 }
 
@@ -242,33 +309,46 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                                       GLuint            pointLightShadowMapShaderProgram,
                                       GLuint            spotLightShadowMapShaderProgram,
                                       const BaseCamera &camera) noexcept {
-  // Getting shader programs, light sources and light cameras matrices
-  std::vector<GLuint>              shaderPrograms{};
-  std::vector<const SceneObject *> spotLightSceneObjectPtrs{};
-  std::vector<const SceneObject *> directionalLightSceneObjectPtrs{};
-  std::vector<const SceneObject *> pointLightSceneObjectPtrs{};
-  std::vector<glm::mat4>           spotLightVPMatrices{};
-  std::vector<glm::mat4>           directionalLightVPMatrices{};
-  std::vector<float>               pointLightFarPlanes{};
+  // Getting shader programs, light sources, their scene objects and light cameras matrices
+  std::vector<GLuint>                   shaderPrograms{};
+  std::vector<const SpotLight *>        spotLightPtrs{};
+  std::vector<const DirectionalLight *> directionalLightPtrs{};
+  std::vector<const PointLight *>       pointLightPtrs{};
+  std::vector<const SceneObject *>      spotLightSceneObjectPtrs{};
+  std::vector<const SceneObject *>      directionalLightSceneObjectPtrs{};
+  std::vector<const SceneObject *>      pointLightSceneObjectPtrs{};
+  std::vector<glm::mat4>                spotLightVPMatrices{};
+  std::vector<glm::mat4>                directionalLightVPMatrices{};
+  std::vector<float>                    pointLightFarPlanes{};
+  // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
     const SceneObject &sceneObject = sceneObjects[i];
-    const Mesh        *meshPtr     = sceneObject.getMeshPtr().get();
-    const BaseLight   *lightPtr    = sceneObject.getLightPtr().get();
 
-    // If scene object has mesh
-    if (meshPtr != nullptr && meshPtr->isComplete()) {
-      const GLuint shaderProgram = meshPtr->getShaderProgram();
+    // Getting mesh and light component pointers
+    std::vector<std::shared_ptr<const Component>> meshPtrs{
+        sceneObject.getSpecificComponentPtrs(ComponentType::Mesh)};
+    std::vector<std::shared_ptr<const Component>> lightPtrs{
+        sceneObject.getSpecificComponentPtrs(ComponentType::Light)};
 
-      bool notInVector{true};
-      for (size_t i = 0; i < shaderPrograms.size(); ++i) {
-        if (shaderProgram == shaderPrograms[i]) {
-          notInVector = false;
-          break;
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      const Mesh &mesh = *dynamic_cast<const Mesh *>(meshPtrs[i].get());
+
+      // Adding shader program to the vector if mesh is complete
+      if (mesh.isComplete()) {
+        const GLuint shaderProgram = mesh.getShaderProgram();
+
+        bool notInVector{true};
+        for (size_t i = 0; i < shaderPrograms.size(); ++i) {
+          if (shaderProgram == shaderPrograms[i]) {
+            notInVector = false;
+            break;
+          }
         }
-      }
 
-      if (notInVector) {
-        shaderPrograms.push_back(shaderProgram);
+        if (notInVector) {
+          shaderPrograms.push_back(shaderProgram);
+        }
       }
     }
 
@@ -281,44 +361,52 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
     int viewport[4] = {0};
     glGetIntegerv(GL_VIEWPORT, &viewport[0]);
 
-    const SpotLight        *spotLightPtr       = dynamic_cast<const SpotLight *>(lightPtr);
-    const DirectionalLight *direcionalLightPtr = dynamic_cast<const DirectionalLight *>(lightPtr);
-    const PointLight       *pointLightPtr      = dynamic_cast<const PointLight *>(lightPtr);
+    // For each light component
+    for (size_t i = 0; i < lightPtrs.size(); ++i) {
+      const BaseLight *lightPtr = dynamic_cast<const BaseLight *>(lightPtrs[i].get());
 
-    // If light is spot (must be before directional and point lights)
-    if (spotLightPtr != nullptr) {
-      // Adding scene object to spot light vector
-      spotLightSceneObjectPtrs.push_back(&sceneObject);
+      const SpotLight        *spotLightPtr       = dynamic_cast<const SpotLight *>(lightPtr);
+      const DirectionalLight *direcionalLightPtr = dynamic_cast<const DirectionalLight *>(lightPtr);
+      const PointLight       *pointLightPtr      = dynamic_cast<const PointLight *>(lightPtr);
 
-      // Rendering shadow map if shader program is specified
-      if (spotLightShadowMapShaderProgram > 0) {
-        renderSpotLightShadowMap(sceneObjects, spotLightVPMatrices, sceneObject, spotLightPtr,
-                                 spotLightShadowMapShaderProgram);
+      // If light is spot (must be before directional and point lights)
+      if (spotLightPtr != nullptr) {
+        // Adding light and scene object to appropriate vectors
+        spotLightPtrs.push_back(spotLightPtr);
+        spotLightSceneObjectPtrs.push_back(&sceneObject);
+
+        // Rendering shadow map if shader program is specified
+        if (spotLightShadowMapShaderProgram > 0) {
+          renderSpotLightShadowMap(sceneObjects, spotLightVPMatrices, sceneObject, spotLightPtr,
+                                   spotLightShadowMapShaderProgram);
+        }
       }
-    }
 
-    // If light is directional
-    else if (direcionalLightPtr != nullptr) {
-      // Adding scene object to directional light vector
-      directionalLightSceneObjectPtrs.push_back(&sceneObject);
+      // If light is directional
+      else if (direcionalLightPtr != nullptr) {
+        // Adding light and scene object to appropriate vectors
+        directionalLightPtrs.push_back(direcionalLightPtr);
+        directionalLightSceneObjectPtrs.push_back(&sceneObject);
 
-      // Rendering shadow map if shader program is specified
-      if (directionalLightShadowMapShaderProgram > 0) {
-        renderDirectionalLightShadowMap(sceneObjects, directionalLightVPMatrices, sceneObject,
-                                        direcionalLightPtr, directionalLightShadowMapShaderProgram,
-                                        camera);
+        // Rendering shadow map if shader program is specified
+        if (directionalLightShadowMapShaderProgram > 0) {
+          renderDirectionalLightShadowMap(sceneObjects, directionalLightVPMatrices, sceneObject,
+                                          direcionalLightPtr,
+                                          directionalLightShadowMapShaderProgram, camera);
+        }
       }
-    }
 
-    // If light is point
-    else if (pointLightPtr != nullptr) {
-      // Adding scene object to point light vector
-      pointLightSceneObjectPtrs.push_back(&sceneObject);
+      // If light is point
+      else if (pointLightPtr != nullptr) {
+        // Adding light and scene object to appropriate vectors
+        pointLightPtrs.push_back(pointLightPtr);
+        pointLightSceneObjectPtrs.push_back(&sceneObject);
 
-      // Rendering shadow map if shader program is specified
-      if (pointLightShadowMapShaderProgram > 0) {
-        renderPointLightShadowMap(sceneObjects, pointLightFarPlanes, sceneObject, pointLightPtr,
-                                  pointLightShadowMapShaderProgram);
+        // Rendering shadow map if shader program is specified
+        if (pointLightShadowMapShaderProgram > 0) {
+          renderPointLightShadowMap(sceneObjects, pointLightFarPlanes, sceneObject, pointLightPtr,
+                                    pointLightShadowMapShaderProgram);
+        }
       }
     }
 
@@ -338,7 +426,7 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                  glm::value_ptr(ambientColor));
     glUseProgram(0);
 
-    // Copying light VP matrices deques
+    // Copying light VP matrices vectors
     std::vector<glm::mat4> spotLightVPMatricesCopy{spotLightVPMatrices.crbegin(),
                                                    spotLightVPMatrices.crend()};
     std::vector<glm::mat4> directionalLightVPMatricesCopy{directionalLightVPMatrices.crbegin(),
@@ -347,17 +435,18 @@ void SceneObject::updateShadersLights(const std::vector<SceneObject> &sceneObjec
                                                pointLightFarPlanes.crend()};
 
     // Spot lights
-    updateShaderProgramSpotLights(shaderProgram, spotLightSceneObjectPtrs,
+    updateShaderProgramSpotLights(shaderProgram, spotLightPtrs, spotLightSceneObjectPtrs,
                                   spotLightShadowMapShaderProgram, currShadowMapTextureUnit,
                                   spotLightVPMatricesCopy);
 
     // Directional lights
-    updateShaderProgramDirectionalLights(shaderProgram, directionalLightSceneObjectPtrs,
+    updateShaderProgramDirectionalLights(shaderProgram, directionalLightPtrs,
+                                         directionalLightSceneObjectPtrs,
                                          directionalLightShadowMapShaderProgram,
                                          currShadowMapTextureUnit, directionalLightVPMatricesCopy);
 
     // Point lights
-    updateShaderProgramPointLights(shaderProgram, pointLightSceneObjectPtrs,
+    updateShaderProgramPointLights(shaderProgram, pointLightPtrs, pointLightSceneObjectPtrs,
                                    pointLightShadowMapShaderProgram, currShadowMapTextureUnit,
                                    pointLightFarPlanesCopy);
   }
@@ -372,22 +461,28 @@ void SceneObject::updateShadersCamera(const std::vector<SceneObject> &sceneObjec
 
   // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    const Mesh *meshPtr = sceneObjects[i].getMeshPtr().get();
+    std::vector<std::shared_ptr<const Component>> meshPtrs{
+        sceneObjects[i].getSpecificComponentPtrs(ComponentType::Mesh)};
 
-    // If scene object has mesh
-    if (meshPtr != nullptr && meshPtr->isComplete()) {
-      // Updating object shader program uniform values
-      const GLuint shaderProgram = meshPtr->getShaderProgram();
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      const Mesh &mesh = *dynamic_cast<const Mesh *>(meshPtrs[i].get());
 
-      glUseProgram(shaderProgram);
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        // Updating object shader program uniform values
+        const GLuint shaderProgram = mesh.getShaderProgram();
 
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "VIEW"), 1, GL_FALSE,
-                         glm::value_ptr(viewMatrix));
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PROJ"), 1, GL_FALSE,
-                         glm::value_ptr(projMatrix));
-      glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1, glm::value_ptr(position));
+        glUseProgram(shaderProgram);
 
-      glUseProgram(0);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "VIEW"), 1, GL_FALSE,
+                           glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PROJ"), 1, GL_FALSE,
+                           glm::value_ptr(projMatrix));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "VIEW_POS"), 1, glm::value_ptr(position));
+
+        glUseProgram(0);
+      }
     }
   }
 }
@@ -426,23 +521,49 @@ void renderSpotLightShadowMap(const std::vector<SceneObject> &sceneObjects,
   spotLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
                                 shadowMapCamera.getViewMatrix());
 
+  // Temporary changing scene object shader programs
   std::vector<GLuint> initShaderPrograms{};
-  initShaderPrograms.resize(sceneObjects.size());
-
-  // Temporary changing scene objects shader programs and updating shaders camera
+  // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      initShaderPrograms[i] = sceneObjects[i].getMeshPtr()->getShaderProgram();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(spotLightShadowMapShaderProgram);
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        initShaderPrograms.push_back(mesh.getShaderProgram());
+        mesh.setShaderProgram(spotLightShadowMapShaderProgram);
+      }
     }
   }
+  // Temporary updating shader camera
   SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
 
-  // Rendering scene objects from camera point of view and reverting shader program changes
+  // Rendering scene object from camera point of view
+  // and reverting shader program changes for each scene object
+  std::vector<GLuint> initShaderProgramsReversed{initShaderPrograms.crbegin(),
+                                                 initShaderPrograms.crend()};
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      sceneObjects[i].render();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderPrograms[i]);
+    sceneObjects[i].render();
+
+    // Getting mesh component pointers
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        mesh.setShaderProgram(initShaderProgramsReversed.back());
+        initShaderProgramsReversed.pop_back();
+      }
     }
   }
 
@@ -490,23 +611,49 @@ static void renderDirectionalLightShadowMap(const std::vector<SceneObject> &scen
   directionalLightVPMatrices.push_back(shadowMapCamera.getProjectionMatrix() *
                                        shadowMapCamera.getViewMatrix());
 
+  // Temporary changing scene object shader programs
   std::vector<GLuint> initShaderPrograms{};
-  initShaderPrograms.resize(sceneObjects.size());
-
-  // Temporary changing scene objects shader programs and updating shaders camera
+  // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      initShaderPrograms[i] = sceneObjects[i].getMeshPtr()->getShaderProgram();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(directionalLightShadowMapShaderProgram);
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        initShaderPrograms.push_back(mesh.getShaderProgram());
+        mesh.setShaderProgram(directionalLightShadowMapShaderProgram);
+      }
     }
   }
+  // Temporary updating shader camera
   SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
 
-  // Rendering scene objects from camera point of view and reverting shader program changes
+  // Rendering scene object from camera point of view
+  // and reverting shader program changes for each scene object
+  std::vector<GLuint> initShaderProgramsReversed{initShaderPrograms.crbegin(),
+                                                 initShaderPrograms.crend()};
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      sceneObjects[i].render();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderPrograms[i]);
+    sceneObjects[i].render();
+
+    // Getting mesh component pointers
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        mesh.setShaderProgram(initShaderProgramsReversed.back());
+        initShaderProgramsReversed.pop_back();
+      }
     }
   }
 
@@ -585,23 +732,49 @@ static void renderPointLightShadowMap(const std::vector<SceneObject> &sceneObjec
   }
   glUseProgram(0);
 
+  // Temporary changing scene object shader programs
   std::vector<GLuint> initShaderPrograms{};
-  initShaderPrograms.resize(sceneObjects.size());
-
-  // Temporary changing scene objects shader programs and updating shaders camera
+  // For each scene object
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      initShaderPrograms[i] = sceneObjects[i].getMeshPtr()->getShaderProgram();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(pointLightShadowMapShaderProgram);
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        initShaderPrograms.push_back(mesh.getShaderProgram());
+        mesh.setShaderProgram(pointLightShadowMapShaderProgram);
+      }
     }
   }
+  // Temporary updating shader camera
   SceneObject::updateShadersCamera(sceneObjects, shadowMapCamera);
 
-  // Rendering scene objects from camera point of view and reverting shader program changes
+  // Rendering scene object from camera point of view
+  // and reverting shader program changes for each scene object
+  std::vector<GLuint> initShaderProgramsReversed{initShaderPrograms.crbegin(),
+                                                 initShaderPrograms.crend()};
   for (size_t i = 0; i < sceneObjects.size(); ++i) {
-    if (sceneObjects[i].getMeshPtr() != nullptr) {
-      sceneObjects[i].render();
-      sceneObjects[i].getMeshPtr()->setShaderProgram(initShaderPrograms[i]);
+    sceneObjects[i].render();
+
+    // Getting mesh component pointers
+    std::vector<std::shared_ptr<Component>> meshPtrs{
+        const_cast<std::vector<SceneObject> &>(sceneObjects)[i].getSpecificComponentPtrs(
+            ComponentType::Mesh)};
+
+    // For each mesh component
+    for (size_t i = 0; i < meshPtrs.size(); ++i) {
+      Mesh &mesh = *dynamic_cast<Mesh *>(meshPtrs[i].get());
+
+      // If mesh is complete
+      if (mesh.isComplete()) {
+        mesh.setShaderProgram(initShaderProgramsReversed.back());
+        initShaderProgramsReversed.pop_back();
+      }
     }
   }
 
@@ -610,6 +783,7 @@ static void renderPointLightShadowMap(const std::vector<SceneObject> &sceneObjec
 }
 
 void updateShaderProgramSpotLights(GLuint                                  shaderProgram,
+                                   const std::vector<const SpotLight *>   &spotLightPtrs,
                                    const std::vector<const SceneObject *> &spotLightSceneObjectPtrs,
                                    GLuint                  spotLightShadowMapShaderProgram,
                                    int                    &currShadowMapTextureUnit,
@@ -618,9 +792,8 @@ void updateShaderProgramSpotLights(GLuint                                  shade
 
   // For each spot light
   for (size_t i = 0; i < spotLightSceneObjectPtrs.size() && i < kMaxSpotLightCount; ++i) {
-    const SceneObject &sceneObject = *spotLightSceneObjectPtrs[i];
-    const SpotLight   *spotLightPtr =
-        dynamic_cast<const SpotLight *>(sceneObject.getLightPtr().get());
+    const SceneObject &sceneObject  = *spotLightSceneObjectPtrs[i];
+    const SpotLight   *spotLightPtr = spotLightPtrs[i];
 
     glUniform3fv(glGetUniformLocation(shaderProgram,
                                       ("SPOT_LIGHTS[" + std::to_string(i) + "].worldPos").c_str()),
@@ -665,7 +838,7 @@ void updateShaderProgramSpotLights(GLuint                                  shade
 
     // Binding shadow map texture
     glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-    glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+    glBindTexture(GL_TEXTURE_2D, spotLightPtr->getShadowMapTexture());
 
     // Incrementing current shadow map texture unit
     ++currShadowMapTextureUnit;
@@ -689,7 +862,8 @@ void updateShaderProgramSpotLights(GLuint                                  shade
 }
 
 void updateShaderProgramDirectionalLights(
-    GLuint shaderProgram, const std::vector<const SceneObject *> &directionalLightSceneObjectPtrs,
+    GLuint shaderProgram, const std::vector<const DirectionalLight *> &directionalLightPtrs,
+    const std::vector<const SceneObject *> &directionalLightSceneObjectPtrs,
     GLuint directionalLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<glm::mat4> &directionalLightVPMatrices) {
   glUseProgram(shaderProgram);
@@ -697,9 +871,8 @@ void updateShaderProgramDirectionalLights(
   // For each directional light
   for (size_t i = 0; i < directionalLightSceneObjectPtrs.size() && i < kMaxDirectionalLightCount;
        ++i) {
-    const SceneObject      &sceneObject = *directionalLightSceneObjectPtrs[i];
-    const DirectionalLight *directionalLightPtr =
-        dynamic_cast<const DirectionalLight *>(sceneObject.getLightPtr().get());
+    const SceneObject      &sceneObject         = *directionalLightSceneObjectPtrs[i];
+    const DirectionalLight *directionalLightPtr = directionalLightPtrs[i];
 
     glUniform3fv(
         glGetUniformLocation(shaderProgram,
@@ -732,7 +905,7 @@ void updateShaderProgramDirectionalLights(
 
     // Binding shadow map texture
     glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-    glBindTexture(GL_TEXTURE_2D, sceneObject.getLightPtr()->getShadowMapTexture());
+    glBindTexture(GL_TEXTURE_2D, directionalLightPtr->getShadowMapTexture());
 
     // Incrementing current shadow map texture unit
     ++currShadowMapTextureUnit;
@@ -757,16 +930,16 @@ void updateShaderProgramDirectionalLights(
 }
 
 void updateShaderProgramPointLights(
-    GLuint shaderProgram, const std::vector<const SceneObject *> &pointLightSceneObjectPtrs,
+    GLuint shaderProgram, const std::vector<const PointLight *> &pointLightPtrs,
+    const std::vector<const SceneObject *> &pointLightSceneObjectPtrs,
     GLuint pointLightShadowMapShaderProgram, int &currShadowMapTextureUnit,
     std::vector<float> &pointLightFarPlanes) {
   glUseProgram(shaderProgram);
 
   // For each point light
   for (size_t i = 0; i < pointLightSceneObjectPtrs.size() && i < kMaxPointLightCount; ++i) {
-    const SceneObject &sceneObject = *pointLightSceneObjectPtrs[i];
-    const PointLight  *pointLightPtr =
-        dynamic_cast<const PointLight *>(sceneObject.getLightPtr().get());
+    const SceneObject &sceneObject   = *pointLightSceneObjectPtrs[i];
+    const PointLight  *pointLightPtr = pointLightPtrs[i];
 
     glUniform3fv(glGetUniformLocation(shaderProgram,
                                       ("POINT_LIGHTS[" + std::to_string(i) + "].worldPos").c_str()),
@@ -796,7 +969,7 @@ void updateShaderProgramPointLights(
 
     // Binding shadow map texture
     glActiveTexture(GL_TEXTURE0 + currShadowMapTextureUnit);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, sceneObject.getLightPtr()->getShadowMapTexture());
+    glBindTexture(GL_TEXTURE_CUBE_MAP, pointLightPtr->getShadowMapTexture());
 
     // Incrementing current shadow map texture unit
     ++currShadowMapTextureUnit;

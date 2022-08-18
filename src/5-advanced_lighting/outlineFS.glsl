@@ -1,7 +1,13 @@
 #version 460 core
 
+uniform float EXPOSURE;
+
 out vec4 FragColor;
 
 void main() {
-  FragColor = vec4(gl_FragCoord.zzz * 10.0f, 0.5f);
+  vec3 color = gl_FragCoord.zzz;
+
+  color *= 1.0f / EXPOSURE;
+
+  FragColor = vec4(color, 0.5f);
 }

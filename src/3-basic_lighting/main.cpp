@@ -131,14 +131,14 @@ int main(int argc, char *argv[]) {
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("albedoMap.png", false), 0, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("depthMap.png", false), 2, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("ambientOcclusionMap.png", false),
-                                                            3, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTextureHDR("glossinessMap.hdr"), 4, false),
-                                                            //std::make_shared<Mesh::Material::Texture>(loadTexture("emissionMap.png", false), 5, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadTexture("black.png", false), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("albedoMap.png", false), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("normalMap.png", false), 1, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("depthMap.png", false), 2, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("ambientOcclusionMap.png", false), 3,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("glossinessMap.hdr"), 4, false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("emissionMap.png", false), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("black.png", false), 5, false),
                                                             },
   };
 
@@ -146,82 +146,84 @@ int main(int argc, char *argv[]) {
   // Lower plane
   std::vector<SceneObject> sceneObjects{};
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  -1.0f, 0.0f},
-      glm::vec3{  90.0f, 180.0f, 0.0f},
-      glm::vec3{  20.0f,  10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                            0.0f,  -1.0f, 0.0f},
+      glm::vec3{                                                                           90.0f, 180.0f, 0.0f},
+      glm::vec3{                                                                           20.0f,  10.0f, 30.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1])})       }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Upper plane
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,  2.0f, 0.0f},
-      glm::vec3{  90.0f,  0.0f, 0.0f},
-      glm::vec3{  20.0f, 10.0f, 30.0f},
-      std::shared_ptr<BaseLight>{nullptr      },
-      std::make_shared<Mesh>(generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                            0.0f,  2.0f, 0.0f},
+      glm::vec3{                                                                           90.0f,  0.0f, 0.0f},
+      glm::vec3{                                                                           20.0f, 10.0f, 30.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generatePlane(1.0f, 10, blinnPhongSP, texturePtrVectors[1])})      }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Central cube
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f,   0.0f, 0.0f},
-      glm::vec3{ 180.0f, 180.0f, 180.0f},
-      glm::vec3{   2.0f,   2.0f, 2.0f},
-      std::shared_ptr<BaseLight>{nullptr       },
-      std::make_shared<Mesh>(generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1]))
+      glm::vec3{                                                                                  0.0f,   0.0f, 0.0f},
+      glm::vec3{                                                                                180.0f, 180.0f, 180.0f},
+      glm::vec3{                                                                                  2.0f,   2.0f, 2.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateCube(0.5f, 10, false, blinnPhongSP, texturePtrVectors[1])})       }
   });
-  sceneObjects[sceneObjects.size() - 1].getMeshPtr()->getMaterialPtr()->setParallaxStrength(0.1f);
   // Directional light (white)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 10.0f, 0.0f},
-      glm::vec3{   0.0f,  0.0f, 0.0f},
-      glm::vec3{   1.0f,  1.0f, 1.0f},
-      std::make_shared<DirectionalLight>(glm::vec3{   0.2f,  0.2f, 0.2f},
-      glm::vec3{   0.5f, -1.0f, 0.0f}
-      ),
-      std::shared_ptr<Mesh>{nullptr      }
+      glm::vec3{                                                                                      0.0f, 10.0f, 0.0f},
+      glm::vec3{                                                                                      0.0f,  0.0f, 0.0f},
+      glm::vec3{                                                                                      1.0f,  1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new DirectionalLight{glm::vec3{0.2f, 0.2f, 0.2f}, glm::vec3{0.5f, -1.0f, 0.0f}})      }
   });
   // Point light (purple)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{0.0f, 0.8f, -1.0f},
-      glm::vec3{0.0f, 0.0f,  0.0f},
-      glm::vec3{1.0f, 1.0f,  1.0f},
-      std::make_shared<PointLight>(glm::vec3{0.5f, 0.0f,  0.5f},
-      0.45f, 0.075f),
-      std::make_shared<Mesh>(generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                  0.0f, 0.8f, -1.0f},
+      glm::vec3{                                                                                  0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                                  1.0f, 1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{
+                dynamic_cast<Component *>(new PointLight{glm::vec3{0.5f, 0.0f, 0.5f}, 0.45f, 0.075f})     },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateQuadSphere(0.1f, 10, true, lightSP, texturePtrVectors[0])})     }
   });
   // Spot light (green)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{-0.1f, 0.75f, -0.1f},
-      glm::vec3{ 0.0f, 90.0f,  0.0f},
-      glm::vec3{ 1.0f,  1.0f,  1.0f},
-      std::make_shared<SpotLight>(glm::vec3{ 0.0f,  0.5f,  0.0f},
-      glm::vec3{ 0.6f, -1.0f,  0.9f},
-      0.45f,
-                                  0.075f, glm::radians(15.0f), glm::radians(13.0f)),
-      std::make_shared<Mesh>(generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                         -0.1f, 0.75f, -0.1f},
+      glm::vec3{                                                                          0.0f, 90.0f, 0.0f},
+      glm::vec3{                                                                          1.0f,  1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{            dynamic_cast<Component *>(
+            new SpotLight{glm::vec3{0.0f, 0.5f, 0.0f}, glm::vec3{0.6f, -1.0f, 0.9f}, 0.45f, 0.075f,
+            glm::radians(15.0f), glm::radians(13.0f)})      },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateUVSphere(0.1f, 10, lightSP, texturePtrVectors[0])})      }
   });
   // Spot light (yellow)
   sceneObjects.push_back(SceneObject{
-      glm::vec3{0.1f,  1.0f, 0.1f},
-      glm::vec3{0.0f,  0.0f, 0.0f},
-      glm::vec3{1.0f,  1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{0.5f,  0.5f, 0.0f},
-      glm::vec3{0.3f, -1.0f, 0.6f},
-      0.45f,
-                                  0.075f, glm::radians(30.0f), glm::radians(25.0f)),
-      std::make_shared<Mesh>(generateIcoSphere(0.1f, lightSP, texturePtrVectors[0]))
+      glm::vec3{                                                                       0.1f, 1.0f, 0.1f},
+      glm::vec3{                                                                       0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                                       1.0f, 1.0f, 1.0f},
+      2,
+      std::shared_ptr<Component>{         dynamic_cast<Component *>(
+         new SpotLight{glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.3f, -1.0f, 0.6f}, 0.45f, 0.075f,
+         glm::radians(30.0f), glm::radians(25.0f)})     },
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new Mesh{generateIcoSphere(0.1f, lightSP, texturePtrVectors[0])})     }
   });
   // Flashlight
   sceneObjects.push_back(SceneObject{
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      glm::vec3{   1.0f, 1.0f, 1.0f},
-      std::make_shared<SpotLight>(glm::vec3{   0.7f, 0.7f, 0.7f},
-      glm::vec3{   0.0f, 0.0f, 0.0f},
-      0.45f,
-                                  0.075f, glm::radians(20.0f), glm::radians(18.0f)),
-      std::shared_ptr<Mesh>{nullptr     }
+      glm::vec3{                                                              0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                              0.0f, 0.0f, 0.0f},
+      glm::vec3{                                                              1.0f, 1.0f, 1.0f},
+      1,
+      std::shared_ptr<Component>{dynamic_cast<Component *>(
+new SpotLight{glm::vec3{0.7f, 0.7f, 0.7f}, glm::vec3{0.0f, 0.0f, 0.0f}, 0.45f, 0.075f,
+glm::radians(20.0f), glm::radians(18.0f)})     }
   });
   gFlashlightSceneObjectPtr = &sceneObjects[sceneObjects.size() - 1];
 
@@ -283,8 +285,14 @@ int main(int argc, char *argv[]) {
 
     // Updating flashlight SceneObject fields
     gFlashlightSceneObjectPtr->getTranslate() = gCameraController.getCamera()->getPosition();
-    dynamic_cast<SpotLight *>(gFlashlightSceneObjectPtr->getLightPtr().get())
-        ->setDirection(gCameraController.getCamera()->getForward());
+    // Getting light component pointers
+    std::vector<std::shared_ptr<Component>> flashlightSceneObjectLightPtrs{
+        gFlashlightSceneObjectPtr->getSpecificComponentPtrs(ComponentType::Light)};
+    // For each light component
+    for (size_t i = 0; i < flashlightSceneObjectLightPtrs.size(); ++i) {
+      dynamic_cast<SpotLight *>(flashlightSceneObjectLightPtrs[i].get())
+          ->setDirection(gCameraController.getCamera()->getForward());
+    }
 
     // Updating scene objects shader programs uniform values
     SceneObject::updateShadersLights(sceneObjects, glm::vec3{0.1f, 0.1f, 0.1f});
@@ -450,7 +458,13 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gFlashlightSceneObjectPtr->getLightPtr()->getColor() *= -1.0f;
+      // Getting light component pointers
+      std::vector<std::shared_ptr<Component>> lightPtrs{
+          gFlashlightSceneObjectPtr->getSpecificComponentPtrs(ComponentType::Light)};
+      // For each light component
+      for (size_t i = 0; i < lightPtrs.size(); ++i) {
+        dynamic_cast<BaseLight *>(lightPtrs[i].get())->getColor() *= -1.0f;
+      }
     }
   }
 
