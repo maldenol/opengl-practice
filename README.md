@@ -30,7 +30,7 @@ and also procedural Mesh generation algorithms with specific level of detail.
 </br>
 
 ### Demo
-[![Here must be demo](<image url>)](<video url> "opengl-practice demo")
+[![Here must be demo](https://img.youtube.com/vi/NycRm2xKYW4/maxresdefault.jpg)](https://youtu.be/NycRm2xKYW4 "opengl-practice demo")
 </br>
 </br>
 
@@ -58,10 +58,11 @@ and also procedural Mesh generation algorithms with specific level of detail.
   - Environment mapping
   - Framebuffers and postprocessing
   - Cubemaps
-  - Geometry shaders
+  - Geometry shaders (made objects normals visible)
   - Instancing
   - Anti-aliasing (MSAA)
-  - Tessellation and compute shaders
+  - Tessellation shaders (made dynamic level of detail and silhouette smoothing)
+  - Compute shaders (made procedurally generated textures)
 5. 5-advanced_lighting
   - Gamma correction
   - Shadow mapping
@@ -118,9 +119,8 @@ and place it in ```include/stb/```.
 To build the application run these commands from the project root:
 ```bash
 cmake .
-cmake --build . --target <project>
+cmake --build .
 ```
-, where <project> is name of any directory in ```src/```.  
 You will have your projects builded in ```bin/``` directory.
 
 </details>

@@ -201,7 +201,7 @@ void calcDirectionalLight(out vec3 diffuse, out vec3 specular, vec3 N, uint inde
 
     // Applying shadow bias
     float LdotN    = max(dot(L, N), 0.0f);
-    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    float bias     = 0.001f;
     obstacleDepth += bias;
 
     // Calculating if fragment is not in shadow
@@ -246,7 +246,7 @@ void calcPointLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index, vec
 
     // Applying shadow bias
     float LdotN    = max(dot(L, N), 0.0f);
-    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    float bias     = 0.001f;
     obstacleDepth += bias;
 
     // Calculating if fragment is not in shadow
@@ -297,7 +297,7 @@ void calcSpotLight(out vec3 diffuse, out vec3 specular, vec3 N, uint index, vec2
 
     // Applying shadow bias
     float LdotN    = max(dot(L, N), 0.0f);
-    float bias     = max(0.05f * (1.0f - LdotN), 0.001f);
+    float bias     = 0.001f;
     obstacleDepth += bias;
 
     // Calculating if fragment is not in shadow
