@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# External includes
+include/
+
 # Static and shared libraries
 lib/
 
