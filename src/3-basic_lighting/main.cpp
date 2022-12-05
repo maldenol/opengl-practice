@@ -11,7 +11,7 @@
 #include <vector>
 
 // Qt5
-#include <QGuiApplication>
+#include <QCoreApplication>
 
 // OpenGL
 #include <glad/glad.h>
@@ -62,7 +62,7 @@ void floatSceneObjects(std::vector<SceneObject> &sceneObjects, unsigned int star
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication app = initQGuiApplication(argc, argv);
+  QCoreApplication app = initQCoreApplication(argc, argv);
 
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
@@ -331,7 +331,7 @@ glm::radians(20.0f), glm::radians(18.0f)})     }
   terminateGLFW();
 
   // Terminating Qt Gui application
-  terminateQGuiApplication(app);
+  terminateQCoreApplication(app);
 
   return 0;
 }

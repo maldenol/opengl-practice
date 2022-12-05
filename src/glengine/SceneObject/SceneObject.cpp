@@ -487,7 +487,7 @@ void SceneObject::updateShadersCamera(const std::vector<SceneObject> &sceneObjec
   }
 }
 
-// Local function definition
+// Local function definitions
 
 void renderSpotLightShadowMap(const std::vector<SceneObject> &sceneObjects,
                               std::vector<glm::mat4>         &spotLightVPMatrices,

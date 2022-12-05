@@ -110,7 +110,7 @@ float PointLight::getQuadAttCoef() const noexcept { return _quadAttCoef; }
 
 float &PointLight::getQuadAttCoef() noexcept { return _quadAttCoef; }
 
-// Local function definition
+// Local function definitions
 
 static void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
                                           GLsizei shadowMapTextureResolution) {

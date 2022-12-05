@@ -8,14 +8,14 @@
 #include <glad/glad.h>
 
 // Initializes Qt Gui application
-QGuiApplication glengine::initQGuiApplication(int argc, char *argv[]) {
+QCoreApplication glengine::initQCoreApplication(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-  return QGuiApplication{argc, argv};
+  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  return QCoreApplication{argc, argv};
 }
 
 // Terminates Qt Gui application
-void glengine::terminateQGuiApplication(QGuiApplication &app) {
+void glengine::terminateQCoreApplication(QCoreApplication &app) {
   // Closing Qt Gui application
   app.quit();
 }

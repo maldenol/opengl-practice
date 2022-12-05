@@ -2,7 +2,7 @@
 #define GLENGINE_GLINIT_HPP
 
 // Qt5
-#include <QGuiApplication>
+#include <QCoreApplication>
 
 // OpenGL
 #define GLFW_INCLUDE_NONE
@@ -11,9 +11,9 @@
 namespace glengine {
 
 // Initializes Qt Gui application
-QGuiApplication initQGuiApplication(int argc, char *argv[]);
+QCoreApplication initQCoreApplication(int argc, char *argv[]);
 // Terminates Qt Gui application
-void terminateQGuiApplication(QGuiApplication &app);
+void terminateQCoreApplication(QCoreApplication &app);
 
 // Initializes GLFW
 int initGLFW();

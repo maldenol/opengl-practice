@@ -153,7 +153,7 @@ float SpotLight::getSmoothAngle() const noexcept { return _smoothAngle; }
 
 float &SpotLight::getSmoothAngle() noexcept { return _smoothAngle; }
 
-// Local function definition
+// Local function definitions
 
 static void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
                                           GLsizei shadowMapTextureResolution) {

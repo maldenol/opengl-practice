@@ -102,7 +102,7 @@ const glm::vec3 &DirectionalLight::getDirection() const noexcept { return _direc
 
 glm::vec3 &DirectionalLight::getDirection() noexcept { return _direction; }
 
-// Local function definition
+// Local function definitions
 
 static void configureShadowMapFramebuffer(GLuint shadowMapFBO, GLuint shadowMapTexture,
                                           GLsizei shadowMapTextureResolution) {

@@ -97,7 +97,7 @@ GLsizei BaseLight::getShadowMapTextureResolution() const noexcept {
 
 GLsizei &BaseLight::getShadowMapTextureResolution() noexcept { return _shadowMapTextureResolution; }
 
-// Local function definition
+// Local function definitions
 
 void createShadowMapFramebuffer(GLuint &shadowMapFBO, GLuint &shadowMapTexture) {
   // Creating shadow map FBO and depth texture

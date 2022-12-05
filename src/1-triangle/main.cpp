@@ -9,7 +9,7 @@
 #include <vector>
 
 // Qt5
-#include <QGuiApplication>
+#include <QCoreApplication>
 
 // OpenGL
 #include <glad/glad.h>
@@ -48,7 +48,7 @@ void   drawMesh(GLuint vao, GLsizei indexCount, GLuint shaderProgram,
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing Qt Gui application
-  QGuiApplication app = initQGuiApplication(argc, argv);
+  QCoreApplication app = initQCoreApplication(argc, argv);
 
   // Initializing GLFW and getting configured window with OpenGL context
   initGLFW();
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
   terminateGLFW();
 
   // Terminating Qt Gui application
-  terminateQGuiApplication(app);
+  terminateQCoreApplication(app);
 
   return 0;
 }
