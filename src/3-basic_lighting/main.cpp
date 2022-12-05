@@ -94,12 +94,12 @@ int main(int argc, char *argv[]) {
   };
   // Creating arrays of filenames of shaders
   std::vector<std::string> blinnPhongShaderFilenames{
-      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
-      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongFS.glsl"),
   };
   std::vector<std::string> lightShaderFilenames{
-      getAbsolutePathRelativeToExecutable("lightVS.glsl"),
-      getAbsolutePathRelativeToExecutable("lightFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/lightVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/lightFS.glsl"),
   };
   // Creating shader programs
   GLuint blinnPhongSP = glCreateProgram();
@@ -131,14 +131,19 @@ int main(int argc, char *argv[]) {
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("albedoMap.png", false), 0, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("depthMap.png", false), 2, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("ambientOcclusionMap.png", false), 3,
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/albedoMap.png", false), 0,
                                                             false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("glossinessMap.hdr"), 4, false),
-                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("emissionMap.png", false), 5, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("black.png", false), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/normalMap.png", false), 1,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/depthMap.png", false), 2,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(
+                                                            loadMap2D("resources/ambientOcclusionMap.png", false), 3, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("resources/glossinessMap.hdr"), 4,
+                                                            false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/emissionMap.png", false), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/black.png", false), 5,
+                                                            false),
                                                             },
   };
 

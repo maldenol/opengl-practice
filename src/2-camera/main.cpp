@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
       GL_FRAGMENT_SHADER,
   };
   std::vector<std::string> shaderFilenames{
-      getAbsolutePathRelativeToExecutable("cameraVS.glsl"),
-      getAbsolutePathRelativeToExecutable("cameraFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/cameraVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/cameraFS.glsl"),
   };
   // Creating a shader program
   GLuint shaderProgram = glCreateProgram();
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
   // Loading textures
   std::vector<GLuint> textures{
-      initTexture("texture1.png"),
+      initTexture("resources/texture1.png"),
   };
 
   // Vertices and their indices to make a mesh from triangles

@@ -184,61 +184,61 @@ int main(int argc, char *argv[]) {
   };
   // Creating vectors of filenames of shaders
   std::vector<std::string> blinnPhongShaderFilenames{
-      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
-      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongFS.glsl"),
   };
   std::vector<std::string> lightShaderFilenames{
-      getAbsolutePathRelativeToExecutable("lightVS.glsl"),
-      getAbsolutePathRelativeToExecutable("lightFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/lightVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/lightFS.glsl"),
   };
   std::vector<std::string> outlineShaderFilenames{
-      getAbsolutePathRelativeToExecutable("outlineVS.glsl"),
-      getAbsolutePathRelativeToExecutable("outlineFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/outlineVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/outlineFS.glsl"),
   };
   std::vector<std::string> screenShaderFilenames{
-      getAbsolutePathRelativeToExecutable("screenVS.glsl"),
-      getAbsolutePathRelativeToExecutable("screenFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/screenVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/screenFS.glsl"),
   };
   std::vector<std::string> normalShaderFilenames{
-      getAbsolutePathRelativeToExecutable("normalVS.glsl"),
-      getAbsolutePathRelativeToExecutable("normalGS.glsl"),
-      getAbsolutePathRelativeToExecutable("normalFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/normalVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/normalGS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/normalFS.glsl"),
   };
   std::vector<std::string> skyboxShaderFilenames{
-      getAbsolutePathRelativeToExecutable("skyboxVS.glsl"),
-      getAbsolutePathRelativeToExecutable("skyboxFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/skyboxVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/skyboxFS.glsl"),
   };
   std::vector<std::string> mirrorShaderFilenames{
-      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
-      getAbsolutePathRelativeToExecutable("mirrorFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/mirrorFS.glsl"),
   };
   std::vector<std::string> lensShaderFilenames{
-      getAbsolutePathRelativeToExecutable("blinnPhongVS.glsl"),
-      getAbsolutePathRelativeToExecutable("lensFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/lensFS.glsl"),
   };
   std::vector<std::string> dynamicLODQuadShaderFilenames{
-      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
-      getAbsolutePathRelativeToExecutable("dynamicLODQuadTCS.glsl"),
-      getAbsolutePathRelativeToExecutable("dynamicLODQuadTES.glsl"),
-      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/dynamicLODQuadTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/dynamicLODQuadTES.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongFS.glsl"),
   };
   std::vector<std::string> silhouetteSmoothingShaderFilenames{
-      getAbsolutePathRelativeToExecutable("tessellationVS.glsl"),
-      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTCS.glsl"),
-      getAbsolutePathRelativeToExecutable("silhouetteSmoothingTES.glsl"),
-      getAbsolutePathRelativeToExecutable("blinnPhongFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/tessellationVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/silhouetteSmoothingTCS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/silhouetteSmoothingTES.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/blinnPhongFS.glsl"),
   };
   std::vector<std::string> proceduralTextureShaderFilenames{
-      getAbsolutePathRelativeToExecutable("proceduralTextureCS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/proceduralTextureCS.glsl"),
   };
   std::vector<std::string> shadowMap2DShaderFilenames{
-      getAbsolutePathRelativeToExecutable("shadowMap2DVS.glsl"),
-      getAbsolutePathRelativeToExecutable("shadowMap2DFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/shadowMap2DVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/shadowMap2DFS.glsl"),
   };
   std::vector<std::string> shadowMapCubeShaderFilenames{
-      getAbsolutePathRelativeToExecutable("shadowMapCubeVS.glsl"),
-      getAbsolutePathRelativeToExecutable("shadowMapCubeGS.glsl"),
-      getAbsolutePathRelativeToExecutable("shadowMapCubeFS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/shadowMapCubeVS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/shadowMapCubeGS.glsl"),
+      getAbsolutePathRelativeToExecutable("shaders/shadowMapCubeFS.glsl"),
   };
   // Creating shader programs
   GLuint blinnPhongSP          = glCreateProgram();
@@ -403,32 +403,37 @@ int main(int argc, char *argv[]) {
     ;
 
   // Loading textures
-  gTextureBlack = loadMap2D("black.png", false);
-  gTextureWhite = loadMap2D("white.png", false);
+  gTextureBlack = loadMap2D("resources/black.png", false);
+  gTextureWhite = loadMap2D("resources/white.png", false);
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{ },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("albedoMap.png", true), 0, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("normalMap.png", false), 1, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("depthMap.png", false), 2, false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("ambientOcclusionMap.png", false), 3,
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/albedoMap.png", true), 0,
                                                             false),
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("glossinessMap.hdr"), 4, false),
-                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("emissionMap.png", true), 5, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/normalMap.png", false), 1,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/depthMap.png", false), 2,
+                                                            false),
+                                                            std::make_shared<Mesh::Material::Texture>(
+              loadMap2D("resources/ambientOcclusionMap.png", false), 3, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2DHDR("resources/glossinessMap.hdr"), 4,
+                                                            false),
+                                                            //std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/emissionMap.png", true), 5, false),
           std::make_shared<Mesh::Material::Texture>(proceduralTexture, 5, false),
                                                             std::make_shared<Mesh::Material::Texture>(loadMapCube(
                                                         std::vector<std::string>{
-                                                            "skyboxXP.png",
-                                                            "skyboxXN.png",
-                                                            "skyboxYP.png",
-                                                            "skyboxYN.png",
-                                                            "skyboxZP.png",
-                                                            "skyboxZN.png",
+                                                            "resources/skyboxXP.png",
+                                                            "resources/skyboxXN.png",
+                                                            "resources/skyboxYP.png",
+                                                            "resources/skyboxYN.png",
+                                                            "resources/skyboxZP.png",
+                                                            "resources/skyboxZN.png",
                                                         }, true),
                                                             6, true),
                                                             },
       std::vector<std::shared_ptr<Mesh::Material::Texture>>{
-                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("skybox.png", true), 0, false),
+                                                            std::make_shared<Mesh::Material::Texture>(loadMap2D("resources/skybox.png", true), 0,
+                                                            false),
                                                             },
   };
 
