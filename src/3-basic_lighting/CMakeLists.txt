@@ -10,10 +10,32 @@ SET_TARGET_PROPERTIES(${TARGET} PROPERTIES CXX_STANDARD 17)
 SET_TARGET_PROPERTIES(${TARGET} PROPERTIES CXX_STANDARD_REQUIRED ON)
 
 TARGET_COMPILE_OPTIONS(${TARGET} PUBLIC
-  $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wall -Wextra -Wpedantic -g -fsanitize=address,undefined>
+  $<$<PLATFORM_ID:Linux>:
+    $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>: -Wall -Wextra -Wpedantic -g -fsanitize=address,undefined>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>: -Wall -Wextra -Wpedantic -g -fsanitize=address,undefined>
+  >
+  $<$<PLATFORM_ID:Windows>:
+    $<$<COMPILE_LANG_AND_ID:C,GNU>: -Wall -Wextra -Wpedantic -g> # not supported
+    $<$<COMPILE_LANG_AND_ID:C,Clang>: -Wall -Wextra -Wpedantic -g -fsanitize=address,undefined> # not supported
+    $<$<COMPILE_LANG_AND_ID:C,MSVC>: /Wall /DEBUG /fsanitize=address,undefined>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -Wall -Wextra -Wpedantic -g> # not supported
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>: -Wall -Wextra -Wpedantic -g -fsanitize=address,undefined> # not supported
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>: /Wall /DEBUG /fsanitize=address,undefined>
+  >
 )
 TARGET_LINK_OPTIONS(${TARGET} PUBLIC
-  $<$<LINK_LANG_AND_ID:CXX,GNU,Clang>:-lX11 -g -fsanitize=address,undefined>
+  $<$<PLATFORM_ID:Linux>:
+    $<$<LINK_LANG_AND_ID:C,GNU,Clang>: -lX11 -g -fsanitize=address,undefined>
+    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang>: -lX11 -g -fsanitize=address,undefined>
+  >
+  $<$<PLATFORM_ID:Windows>:
+    $<$<LINK_LANG_AND_ID:C,GNU>: -g> # not supported
+    $<$<LINK_LANG_AND_ID:C,Clang>: -g -fsanitize=address,undefined> # not supported
+    $<$<LINK_LANG_AND_ID:C,MSVC>: /DEBUG /fsanitize=address,undefined>
+    $<$<LINK_LANG_AND_ID:CXX,GNU>: -g> # not supported
+    $<$<LINK_LANG_AND_ID:CXX,Clang>: -g -fsanitize=address,undefined> # not supported
+    $<$<LINK_LANG_AND_ID:CXX,MSVC>: /DEBUG /fsanitize=address,undefined>
+  >
 )
 
 TARGET_INCLUDE_DIRECTORIES(${TARGET} PRIVATE ${INC_DIR} "${SRC_DIR}/glengine")

@@ -48,6 +48,18 @@ build.ninja
 
 # Compilation output
 bin/
+x86/
+x64/
+Debug/
+Release/
 
-# VSCode
+# Visual Studio
+.vs/
 .vscode/
+
+# MSVC
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.dir/
+*.sln

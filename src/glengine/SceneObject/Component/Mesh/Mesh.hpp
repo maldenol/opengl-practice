@@ -1,6 +1,8 @@
 #ifndef GLENGINE_SCENEOBJECT_COMPONENT_MESH_MESH_HPP
 #define GLENGINE_SCENEOBJECT_COMPONENT_MESH_MESH_HPP
 
+#define _USE_MATH_DEFINES
+
 // STD
 #include <memory>
 #include <vector>

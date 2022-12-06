@@ -10,7 +10,18 @@ SET_TARGET_PROPERTIES(${TARGET} PROPERTIES CXX_STANDARD 17)
 SET_TARGET_PROPERTIES(${TARGET} PROPERTIES CXX_STANDARD_REQUIRED ON)
 
 TARGET_COMPILE_OPTIONS(${TARGET} PUBLIC
-  $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wall -Wextra -Wpedantic>
+  $<$<PLATFORM_ID:Linux>:
+    $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>: -Wall -Wextra -Wpedantic>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>: -Wall -Wextra -Wpedantic>
+  >
+  $<$<PLATFORM_ID:Windows>:
+    $<$<COMPILE_LANG_AND_ID:C,GNU>: -Wall -Wextra -Wpedantic> # not supported
+    $<$<COMPILE_LANG_AND_ID:C,Clang>: -Wall -Wextra -Wpedantic> # not supported
+    $<$<COMPILE_LANG_AND_ID:C,MSVC>: /Wall>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -Wall -Wextra -Wpedantic> # not supported
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>: -Wall -Wextra -Wpedantic> # not supported
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>: /Wall>
+  >
 )
 
 TARGET_INCLUDE_DIRECTORIES(${TARGET} PRIVATE ${INC_DIR})
