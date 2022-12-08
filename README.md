@@ -1,5 +1,5 @@
 # opengl-practice
-opengl-practice is a collection of applications and also a graphics library
+opengl-practice is a collection of applications and a graphics library
 which I made to practice at OpenGL (4.6 core) and rendering techniques.
 <br/>
 <br/>
@@ -9,20 +9,21 @@ which I made to practice at OpenGL (4.6 core) and rendering techniques.
 <summary>Click to see the description</summary>
 <br/>
 
-In src/ directory there are 6 subprojects: 5 programs and a library.
-Each program inherits all the content from previous one.
-They are made as a demonstation of techniques or the library abilities.
+In ```src/``` directory there are 6 subprojects: 5 applications and a library.
+Each application inherits all the content from the previous one.
+They are made as a demonstation of some techniques and abilities of the library.
 The library itself can handle next targets:
 1. Window creation and initialization of OpenGL context.
 2. Shader utilities which includes compile functions and also shader watcher -
 a thread-based function that looks after shader files and recompiles them after
-changes were made.
-3. SceneObject class with component-based structure. It also includes Component class,
-which is inherited by BaseCamera (and then OrthographicCamera and PerspectiveCamera),
+changes were detected.
+3. SceneObject class with the component-based structure.
+It also includes Component class, which is inherited by
+BaseCamera (and then OrthographicCamera and PerspectiveCamera),
 BaseLight (and then DirectionalLight, PointLight and SpotLight)
 and Mesh (and then Material (and then Texture)).
-There is also 3 camera controller classes for 3, 4 and 6 degrees of freedom;
-and also procedural Mesh generation algorithms with specific level of detail.
+There are also 3 camera controller classes for 3, 4 and 6 degrees of freedom;
+and also procedural mesh generation algorithms with the level of detail specified.
 4. Filesystem utilities and different texture loading functions.
 5. Function for debugging OpenGL.
 
@@ -102,7 +103,7 @@ The whole project is written in C++ using:
 3. GLM
 4. stb_image
 
-Therefore before building you need to satisfy all the dependencies
+Therefore, before building, you need to satisfy all the dependencies
 by taking these steps:
 1. Install Qt using your system package manager or [official installer](https://www.qt.io/download).
 2. Download [GLFW](https://www.glfw.org/download), build it,
@@ -116,12 +117,13 @@ and place it in ```include/```.
 5. Download [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h)
 and place it in ```include/stb/```.
 
-To build the application run these commands from the project root:
+To build the application run these commands from the project's root:
 ```bash
-cmake .
+cmake . -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
-You will have your projects builded in ```bin/``` directory.
+You will have your executables built in ```build/bin/Release/``` directory
+and libraries in ```build/lib/Release/```.
 
 </details>
 </br>
