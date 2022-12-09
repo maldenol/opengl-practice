@@ -120,7 +120,7 @@ and place it in ```include/stb/```.
 To build the application run these commands from the project's root:
 ```bash
 cmake . -DCMAKE_BUILD_TYPE=Release
-cmake --build .
+cmake --build . --config Release
 ```
 You will have your executables built in ```build/bin/Release/``` directory
 and libraries in ```build/lib/Release/```.
