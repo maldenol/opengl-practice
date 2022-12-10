@@ -30,7 +30,7 @@ and also procedural mesh generation algorithms with the level of detail specifie
 </details>
 </br>
 
-### Demo
+### Demo (YouTube video)
 [![Here must be demo](https://img.youtube.com/vi/NycRm2xKYW4/maxresdefault.jpg)](https://youtu.be/NycRm2xKYW4 "opengl-practice demo")
 </br>
 </br>
