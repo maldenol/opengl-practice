@@ -8,6 +8,7 @@
 #include <utility>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 

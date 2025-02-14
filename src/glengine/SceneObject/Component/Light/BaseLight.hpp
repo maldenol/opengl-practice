@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTALs
 #include <glm/glm.hpp>
 
 // "glengine" internal library

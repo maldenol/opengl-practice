@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
@@ -106,6 +107,7 @@ int main(int argc, char *argv[]) {
   GLuint lightSP      = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
+  glfwContextMutex.lock();
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
   std::atomic<bool> blinnPhongShadersAreRecompiled   = false;
   std::thread       blinnPhongShaderWatcherThread{shaderWatcher,
@@ -234,6 +236,7 @@ glm::radians(20.0f), glm::radians(18.0f)})     }
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
+  glfwContextMutex.unlock();
 
   // Configuring camera and cameraControllers
   gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});

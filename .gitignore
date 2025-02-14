@@ -63,3 +63,10 @@ Release/
 *.vcxproj.user
 *.dir/
 *.sln
+
+# Qt
+.qt/
+
+# ReSharper
+_ReSharper.Caches/
+

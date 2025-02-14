@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -244,6 +245,7 @@ int main(int argc, char *argv[]) {
   GLuint proceduralTextureSP   = glCreateProgram();
   // Running shaderWatcher threads
   std::mutex        glfwContextMutex{};
+  glfwContextMutex.lock();
   std::atomic<bool> blinnPhongShaderWatcherIsRunning = true;
   std::atomic<bool> blinnPhongShadersAreRecompiled   = false;
   std::thread       blinnPhongShaderWatcherThread{shaderWatcher,
@@ -366,9 +368,6 @@ int main(int argc, char *argv[]) {
   glBindTexture(GL_TEXTURE_2D, proceduralTexture);
   glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, kProceduralTextureSize[0], kProceduralTextureSize[1]);
   glBindTexture(GL_TEXTURE_2D, 0);
-  // Waiting for compute shader to link
-  while (!proceduralTextureShadersAreRecompiled)
-    ;
 
   // Loading textures
   std::vector<std::vector<std::shared_ptr<Mesh::Material::Texture>>> texturePtrVectors{
@@ -674,6 +673,7 @@ new Mesh{generateCube(1.0f, 1, true, skyboxSP, texturePtrVectors[2])})     }
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
+  glfwContextMutex.unlock();
 
   // Configuring camera and cameraControllers
   gCamera.setPosition(glm::vec3{0.0f, 1.0f, 2.0f});

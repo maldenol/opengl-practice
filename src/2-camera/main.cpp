@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -99,6 +100,7 @@ int main(int argc, char *argv[]) {
   GLuint shaderProgram = glCreateProgram();
   // Running shaderWatcher thread
   std::mutex        glfwContextMutex{};
+  glfwContextMutex.lock();
   std::atomic<bool> shaderWatcherIsRunning = true;
   std::atomic<bool> shadersAreRecompiled   = false;
   std::thread       shaderWatcherThread{shaderWatcher,
@@ -132,6 +134,7 @@ int main(int argc, char *argv[]) {
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
+  glfwContextMutex.unlock();
 
   // Configuring camera and cameraControllers
   gCamera.setPosition(glm::vec3{1.0f, 0.0f, 1.0f});

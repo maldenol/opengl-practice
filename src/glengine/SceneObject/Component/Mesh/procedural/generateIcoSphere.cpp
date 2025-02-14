@@ -5,6 +5,7 @@
 #include <cmath>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
 // Generates icosphere mesh based on radius, shader program and textures

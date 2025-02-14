@@ -2,6 +2,7 @@
 #include "../Mesh.hpp"
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
 // Generates quad sphere mesh based on radius, level-of-detail, enableCubemap, shader program and textures

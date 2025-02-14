@@ -2,6 +2,7 @@
 #define GLENGINE_SCENEOBJECT_COMPONENT_CAMERA_BASECAMERA_HPP
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 
 // "glengine" internal library

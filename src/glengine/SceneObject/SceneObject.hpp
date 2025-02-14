@@ -9,6 +9,7 @@
 #include <vector>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 
 namespace glengine {

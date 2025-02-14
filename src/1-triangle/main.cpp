@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
   GLuint shaderProgram = glCreateProgram();
   // Running shaderWatcher thread
   std::mutex        glfwContextMutex{};
+  glfwContextMutex.lock();
   std::atomic<bool> shaderWatcherIsRunning = true;
   std::atomic<bool> shadersAreRecompiled   = false;
   std::thread       shaderWatcherThread{shaderWatcher,
@@ -113,6 +114,7 @@ int main(int argc, char *argv[]) {
 
   // Releasing OpenGL context
   glfwMakeContextCurrent(nullptr);
+  glfwContextMutex.unlock();
 
   // Render cycle
   while (true) {

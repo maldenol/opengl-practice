@@ -5,6 +5,7 @@
 #include <utility>
 
 // GLM
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 
 using namespace glengine;
